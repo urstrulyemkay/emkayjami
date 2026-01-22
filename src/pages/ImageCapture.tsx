@@ -2,19 +2,26 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Camera, Check, RotateCcw, ChevronRight } from "lucide-react";
+import { ArrowLeft, Camera, Check, RotateCcw, ChevronRight, Loader2 } from "lucide-react";
 import { IMAGE_ANGLES, ImageAngle, CapturedImage } from "@/types/inspection";
+import { useStorageUpload } from "@/hooks/useStorageUpload";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const ImageCapture = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const vehicleData = location.state;
+  const { uploadFile, isUploading } = useStorageUpload();
+  const { toast } = useToast();
   
   const [currentAngleIndex, setCurrentAngleIndex] = useState(0);
   const [capturedImages, setCapturedImages] = useState<CapturedImage[]>([]);
   const [isCapturing, setIsCapturing] = useState(false);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewBlob, setPreviewBlob] = useState<Blob | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -22,6 +29,17 @@ const ImageCapture = () => {
 
   const currentAngle = IMAGE_ANGLES[currentAngleIndex];
   const progress = (capturedImages.length / IMAGE_ANGLES.length) * 100;
+
+  // Get current user
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getUser();
+  }, []);
 
   // Initialize camera
   useEffect(() => {
@@ -45,6 +63,10 @@ const ImageCapture = () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
+      // Cleanup preview URL
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
     };
   }, []);
 
@@ -61,34 +83,63 @@ const ImageCapture = () => {
     const ctx = canvas.getContext("2d");
     if (ctx) {
       ctx.drawImage(video, 0, 0);
-      const imageUri = canvas.toDataURL("image/jpeg", 0.9);
-      setPreviewImage(imageUri);
+      canvas.toBlob((blob) => {
+        if (blob) {
+          setPreviewBlob(blob);
+          setPreviewUrl(URL.createObjectURL(blob));
+        }
+      }, "image/jpeg", 0.9);
     }
     
     setIsCapturing(false);
   }, []);
 
-  const confirmImage = useCallback(() => {
-    if (!previewImage) return;
+  const confirmImage = useCallback(async () => {
+    if (!previewBlob || !userId) return;
+
+    const timestamp = Date.now();
+    const fileName = `${vehicleData?.inspectionId || 'temp'}_${currentAngle.angle}_${timestamp}.jpg`;
+
+    // Upload to storage
+    const result = await uploadFile("inspection-images", previewBlob, fileName, userId);
+    
+    if (!result) {
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const newImage: CapturedImage = {
-      id: `img_${Date.now()}`,
+      id: `img_${timestamp}`,
       angle: currentAngle.angle as ImageAngle,
-      uri: previewImage,
+      uri: result.path, // Store the storage path, not base64
       timestamp: new Date().toISOString(),
-      location: { latitude: 0, longitude: 0 }, // Would use geolocation API
+      location: { latitude: 0, longitude: 0 },
     };
 
     setCapturedImages((prev) => [...prev, newImage]);
-    setPreviewImage(null);
+    
+    // Cleanup preview
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewBlob(null);
+    setPreviewUrl(null);
 
     if (currentAngleIndex < IMAGE_ANGLES.length - 1) {
       setCurrentAngleIndex((prev) => prev + 1);
     }
-  }, [previewImage, currentAngle.angle, currentAngleIndex]);
+  }, [previewBlob, previewUrl, currentAngle.angle, currentAngleIndex, userId, uploadFile, vehicleData, toast]);
 
   const retakeImage = () => {
-    setPreviewImage(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewBlob(null);
+    setPreviewUrl(null);
   };
 
   const skipToNext = () => {
@@ -161,9 +212,9 @@ const ImageCapture = () => {
           <div className="absolute inset-0 flex items-center justify-center p-6">
             <p className="text-destructive text-center">{cameraError}</p>
           </div>
-        ) : previewImage ? (
+        ) : previewUrl ? (
           <img
-            src={previewImage}
+            src={previewUrl}
             alt="Captured"
             className="absolute inset-0 w-full h-full object-cover"
           />
@@ -178,13 +229,23 @@ const ImageCapture = () => {
         )}
         
         {/* Capture guide overlay */}
-        {!previewImage && !cameraError && (
+        {!previewUrl && !cameraError && (
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute inset-8 border-2 border-primary/50 rounded-xl" />
             <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-background/80 px-3 py-1 rounded-full">
               <p className="text-xs text-foreground font-medium">
                 Align {currentAngle.label.toLowerCase()} within frame
               </p>
+            </div>
+          </div>
+        )}
+
+        {/* Upload indicator */}
+        {isUploading && (
+          <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-2">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <p className="text-sm text-foreground">Uploading...</p>
             </div>
           </div>
         )}
@@ -221,19 +282,28 @@ const ImageCapture = () => {
 
       {/* Controls */}
       <div className="px-4 pb-8">
-        {previewImage ? (
+        {previewUrl ? (
           <div className="flex gap-3">
             <Button
               onClick={retakeImage}
               variant="outline"
               className="flex-1 h-14"
+              disabled={isUploading}
             >
               <RotateCcw className="w-5 h-5 mr-2" />
               Retake
             </Button>
-            <Button onClick={confirmImage} className="flex-1 h-14">
-              <Check className="w-5 h-5 mr-2" />
-              Confirm
+            <Button 
+              onClick={confirmImage} 
+              className="flex-1 h-14"
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              ) : (
+                <Check className="w-5 h-5 mr-2" />
+              )}
+              {isUploading ? "Uploading..." : "Confirm"}
             </Button>
           </div>
         ) : allImagesCaptured ? (

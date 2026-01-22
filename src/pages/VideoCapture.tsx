@@ -2,8 +2,11 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Video, Square, Check, RotateCcw, ChevronRight, Play } from "lucide-react";
+import { ArrowLeft, Video, Square, Check, RotateCcw, ChevronRight, Loader2 } from "lucide-react";
 import { VideoType, CapturedVideo } from "@/types/inspection";
+import { useStorageUpload } from "@/hooks/useStorageUpload";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const VIDEO_TYPES: { type: VideoType; label: string; description: string; minDuration: number }[] = [
   { type: "walkaround", label: "360° Walkaround", description: "Walk around the entire bike slowly", minDuration: 15 },
@@ -16,13 +19,17 @@ const VideoCapture = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const vehicleData = location.state;
+  const { uploadFile, isUploading } = useStorageUpload();
+  const { toast } = useToast();
 
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [capturedVideos, setCapturedVideos] = useState<CapturedVideo[]>([]);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [previewBlob, setPreviewBlob] = useState<Blob | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
@@ -33,6 +40,17 @@ const VideoCapture = () => {
 
   const currentVideo = VIDEO_TYPES[currentVideoIndex];
   const progress = (capturedVideos.length / VIDEO_TYPES.length) * 100;
+
+  // Get current user
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getUser();
+  }, []);
 
   // Initialize camera
   useEffect(() => {
@@ -60,6 +78,9 @@ const VideoCapture = () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
     };
   }, []);
 
@@ -79,8 +100,8 @@ const VideoCapture = () => {
 
     mediaRecorder.onstop = () => {
       const blob = new Blob(chunksRef.current, { type: "video/webm" });
-      const url = URL.createObjectURL(blob);
-      setPreviewUrl(url);
+      setPreviewBlob(blob);
+      setPreviewUrl(URL.createObjectURL(blob));
     };
 
     mediaRecorderRef.current = mediaRecorder;
@@ -103,31 +124,53 @@ const VideoCapture = () => {
     }
   }, [isRecording]);
 
-  const confirmVideo = useCallback(() => {
-    if (!previewUrl) return;
+  const confirmVideo = useCallback(async () => {
+    if (!previewBlob || !userId) return;
+
+    const timestamp = Date.now();
+    const fileName = `${vehicleData?.inspectionId || 'temp'}_${currentVideo.type}_${timestamp}.webm`;
+
+    // Upload to storage
+    const result = await uploadFile("inspection-videos", previewBlob, fileName, userId);
+    
+    if (!result) {
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload video. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const newVideo: CapturedVideo = {
-      id: `vid_${Date.now()}`,
+      id: `vid_${timestamp}`,
       type: currentVideo.type,
-      uri: previewUrl,
+      uri: result.path, // Store the storage path
       duration: recordingTime,
       timestamp: new Date().toISOString(),
       location: { latitude: 0, longitude: 0 },
     };
 
     setCapturedVideos((prev) => [...prev, newVideo]);
+    
+    // Cleanup preview
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewBlob(null);
     setPreviewUrl(null);
     setRecordingTime(0);
 
     if (currentVideoIndex < VIDEO_TYPES.length - 1) {
       setCurrentVideoIndex((prev) => prev + 1);
     }
-  }, [previewUrl, currentVideo.type, recordingTime, currentVideoIndex]);
+  }, [previewBlob, previewUrl, currentVideo.type, recordingTime, currentVideoIndex, userId, uploadFile, vehicleData, toast]);
 
   const retakeVideo = () => {
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
     }
+    setPreviewBlob(null);
     setPreviewUrl(null);
     setRecordingTime(0);
   };
@@ -225,6 +268,16 @@ const VideoCapture = () => {
             </p>
           </div>
         )}
+
+        {/* Upload indicator */}
+        {isUploading && (
+          <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-2">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <p className="text-sm text-foreground">Uploading video...</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Video Type Thumbnails */}
@@ -260,13 +313,26 @@ const VideoCapture = () => {
       <div className="px-4 pb-8">
         {previewUrl ? (
           <div className="flex gap-3">
-            <Button onClick={retakeVideo} variant="outline" className="flex-1 h-14">
+            <Button 
+              onClick={retakeVideo} 
+              variant="outline" 
+              className="flex-1 h-14"
+              disabled={isUploading}
+            >
               <RotateCcw className="w-5 h-5 mr-2" />
               Retake
             </Button>
-            <Button onClick={confirmVideo} className="flex-1 h-14">
-              <Check className="w-5 h-5 mr-2" />
-              Confirm
+            <Button 
+              onClick={confirmVideo} 
+              className="flex-1 h-14"
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              ) : (
+                <Check className="w-5 h-5 mr-2" />
+              )}
+              {isUploading ? "Uploading..." : "Confirm"}
             </Button>
           </div>
         ) : allVideosCaptured ? (
