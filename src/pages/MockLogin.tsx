@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { UserRole } from "@/types/inspection";
-import { User, Briefcase, Shield } from "lucide-react";
+import { User, Briefcase, Shield, Bike } from "lucide-react";
 
 const MockLogin = () => {
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ const MockLogin = () => {
     {
       role: "executive" as UserRole,
       title: "OEM Sales Executive",
-      description: "Capture inspections, manage consents",
+      description: "Capture 2-wheeler inspections",
       icon: Briefcase,
       primary: true,
     },
@@ -42,8 +42,13 @@ const MockLogin = () => {
       {/* Header */}
       <div className="flex-1 flex flex-col justify-center px-6 py-12">
         <div className="mb-12">
-          <h1 className="text-4xl font-bold text-foreground mb-2">DriveX</h1>
-          <p className="text-muted-foreground">Inspection Truth System</p>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+              <Bike className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <h1 className="text-3xl font-bold text-foreground">DriveX</h1>
+          </div>
+          <p className="text-muted-foreground">2-Wheeler Inspection Truth</p>
         </div>
 
         <div className="space-y-4">

@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import {
   Camera,
   ChevronRight,
-  Car,
   CheckCircle,
   Clock,
   TrendingUp,
   LogOut,
+  Bike,
 } from "lucide-react";
 
 const ExecutiveDashboard = () => {
@@ -22,26 +22,26 @@ const ExecutiveDashboard = () => {
     navigate("/login");
   };
 
-  // Mock data for recent inspections
+  // Mock data for recent inspections - 2 wheelers
   const recentInspections = [
     {
       id: "1",
       registration: "MH-12-AB-1234",
-      vehicle: "Honda City",
+      vehicle: "Honda Activa 6G",
       time: "15m ago",
       status: "completed",
     },
     {
       id: "2",
       registration: "MH-14-CD-5678",
-      vehicle: "Maruti Swift",
+      vehicle: "TVS Jupiter",
       time: "1h ago",
       status: "pending",
     },
     {
       id: "3",
       registration: "MH-01-EF-9012",
-      vehicle: "Hyundai Creta",
+      vehicle: "Royal Enfield Classic 350",
       time: "2h ago",
       status: "completed",
     },
@@ -150,7 +150,7 @@ const ExecutiveDashboard = () => {
               className="w-full p-4 rounded-xl border border-border bg-card flex items-center gap-4 text-left"
             >
               <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center">
-                <Car className="w-6 h-6 text-muted-foreground" />
+                <Bike className="w-6 h-6 text-muted-foreground" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-foreground truncate">
