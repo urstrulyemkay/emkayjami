@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Car, Search } from "lucide-react";
+import { ArrowLeft, Bike, Search } from "lucide-react";
 
 const NewInspection = () => {
   const navigate = useNavigate();
@@ -13,6 +13,7 @@ const NewInspection = () => {
     model: string;
     year: number;
     color: string;
+    engineCC: number;
   } | null>(null);
   const [isSearching, setIsSearching] = useState(false);
 
@@ -25,9 +26,10 @@ const NewInspection = () => {
     
     setVehicleDetails({
       make: "Honda",
-      model: "City",
-      year: 2022,
-      color: "White",
+      model: "Activa 6G",
+      year: 2023,
+      color: "Pearl White",
+      engineCC: 110,
     });
     setIsSearching(false);
   };
@@ -98,14 +100,14 @@ const NewInspection = () => {
           <div className="p-6 rounded-xl border border-border bg-card mb-6 animate-fade-in">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center">
-                <Car className="w-6 h-6 text-success" />
+                <Bike className="w-6 h-6 text-success" />
               </div>
               <div>
                 <p className="font-semibold text-foreground text-lg">
                   {vehicleDetails.make} {vehicleDetails.model}
                 </p>
                 <p className="text-muted-foreground">
-                  {vehicleDetails.year} • {vehicleDetails.color}
+                  {vehicleDetails.engineCC}cc • {vehicleDetails.color}
                 </p>
               </div>
             </div>
@@ -143,7 +145,7 @@ const NewInspection = () => {
                 <span className="w-6 h-6 rounded-full bg-secondary text-foreground text-sm flex items-center justify-center flex-shrink-0">
                   1
                 </span>
-                <p className="text-foreground text-sm">Enter the vehicle registration number</p>
+                <p className="text-foreground text-sm">Enter the 2-wheeler registration number</p>
               </div>
               <div className="flex gap-3">
                 <span className="w-6 h-6 rounded-full bg-secondary text-foreground text-sm flex items-center justify-center flex-shrink-0">

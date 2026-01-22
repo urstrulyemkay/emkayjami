@@ -1,4 +1,4 @@
-// Core types for DriveX Inspection Truth System
+// Core types for DriveX Inspection Truth System - 2 Wheelers
 
 export type UserRole = "executive" | "customer" | "admin";
 
@@ -22,6 +22,7 @@ export interface Vehicle {
   color: string;
   vin?: string;
   odometerReading?: number;
+  engineCC?: number;
 }
 
 export type ImageAngle =
@@ -32,11 +33,11 @@ export type ImageAngle =
   | "engine"
   | "chassis"
   | "odometer"
-  | "tyres_front"
-  | "tyres_rear"
-  | "dashboard"
-  | "defects"
-  | "battery";
+  | "front_tyre"
+  | "rear_tyre"
+  | "handlebar"
+  | "fuel_tank"
+  | "exhaust";
 
 export interface CapturedImage {
   id: string;
@@ -68,12 +69,12 @@ export interface CapturedVideo {
 export type DefectCategory =
   | "engine"
   | "transmission"
-  | "electronics"
-  | "chassis"
+  | "electricals"
+  | "frame"
   | "body"
   | "tyres"
   | "suspension"
-  | "braking";
+  | "brakes";
 
 export type DefectSeverity = "minor" | "moderate" | "major" | "critical";
 
@@ -136,30 +137,30 @@ export interface InspectionDelta {
   createdAt: string;
 }
 
-// Image angles configuration
+// Image angles configuration for 2-wheelers
 export const IMAGE_ANGLES: { angle: ImageAngle; label: string; description: string }[] = [
-  { angle: "front", label: "Front", description: "Full front view of the vehicle" },
-  { angle: "rear", label: "Rear", description: "Full rear view of the vehicle" },
-  { angle: "left", label: "Left Side", description: "Full left side view" },
-  { angle: "right", label: "Right Side", description: "Full right side view" },
-  { angle: "engine", label: "Engine Bay", description: "Open hood, engine visible" },
-  { angle: "chassis", label: "Chassis Number", description: "Clear view of chassis/VIN plate" },
-  { angle: "odometer", label: "Odometer", description: "Dashboard showing mileage" },
-  { angle: "tyres_front", label: "Front Tyres", description: "Both front tyres visible" },
-  { angle: "tyres_rear", label: "Rear Tyres", description: "Both rear tyres visible" },
-  { angle: "dashboard", label: "Dashboard", description: "Full dashboard and controls" },
-  { angle: "defects", label: "Visible Defects", description: "Any scratches, dents, damage" },
-  { angle: "battery", label: "Battery Area", description: "Battery and surrounding area" },
+  { angle: "front", label: "Front", description: "Full front view with headlight" },
+  { angle: "rear", label: "Rear", description: "Full rear view with tail light" },
+  { angle: "left", label: "Left Side", description: "Full left profile view" },
+  { angle: "right", label: "Right Side", description: "Full right profile view" },
+  { angle: "engine", label: "Engine", description: "Close-up of engine block" },
+  { angle: "chassis", label: "Chassis Number", description: "Frame number plate visible" },
+  { angle: "odometer", label: "Odometer", description: "Speedometer showing km reading" },
+  { angle: "front_tyre", label: "Front Tyre", description: "Front tyre tread and condition" },
+  { angle: "rear_tyre", label: "Rear Tyre", description: "Rear tyre tread and condition" },
+  { angle: "handlebar", label: "Handlebar", description: "Controls, mirrors, switches" },
+  { angle: "fuel_tank", label: "Fuel Tank", description: "Tank condition and cap" },
+  { angle: "exhaust", label: "Exhaust", description: "Silencer and exhaust pipe" },
 ];
 
-// Defect categories configuration
+// Defect categories configuration for 2-wheelers
 export const DEFECT_CATEGORIES: { category: DefectCategory; label: string; icon: string }[] = [
   { category: "engine", label: "Engine", icon: "🔧" },
   { category: "transmission", label: "Transmission", icon: "⚙️" },
-  { category: "electronics", label: "Electronics", icon: "⚡" },
-  { category: "chassis", label: "Chassis", icon: "🛞" },
-  { category: "body", label: "Body", icon: "🚗" },
+  { category: "electricals", label: "Electricals", icon: "⚡" },
+  { category: "frame", label: "Frame/Chassis", icon: "🏗️" },
+  { category: "body", label: "Body Panels", icon: "🛵" },
   { category: "tyres", label: "Tyres", icon: "🔘" },
   { category: "suspension", label: "Suspension", icon: "🔩" },
-  { category: "braking", label: "Braking", icon: "🛑" },
+  { category: "brakes", label: "Brakes", icon: "🛑" },
 ];
