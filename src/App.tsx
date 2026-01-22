@@ -7,6 +7,11 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import MockLogin from "./pages/MockLogin";
 import ExecutiveDashboard from "./pages/ExecutiveDashboard";
 import NewInspection from "./pages/NewInspection";
+import ImageCapture from "./pages/ImageCapture";
+import VideoCapture from "./pages/VideoCapture";
+import VoiceRecording from "./pages/VoiceRecording";
+import InspectionSummary from "./pages/InspectionSummary";
+import TrustDashboard from "./pages/TrustDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +54,46 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <NewInspection />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inspection/capture"
+        element={
+          <ProtectedRoute>
+            <ImageCapture />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inspection/video"
+        element={
+          <ProtectedRoute>
+            <VideoCapture />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inspection/voice"
+        element={
+          <ProtectedRoute>
+            <VoiceRecording />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inspection/summary"
+        element={
+          <ProtectedRoute>
+            <InspectionSummary />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/trust"
+        element={
+          <ProtectedRoute>
+            <TrustDashboard />
           </ProtectedRoute>
         }
       />
