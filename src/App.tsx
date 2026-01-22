@@ -5,12 +5,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import MockLogin from "./pages/MockLogin";
+import Auth from "./pages/Auth";
 import ExecutiveDashboard from "./pages/ExecutiveDashboard";
 import NewInspection from "./pages/NewInspection";
 import ImageCapture from "./pages/ImageCapture";
 import VideoCapture from "./pages/VideoCapture";
 import VoiceRecording from "./pages/VoiceRecording";
 import InspectionSummary from "./pages/InspectionSummary";
+import ConsentFlow from "./pages/ConsentFlow";
 import TrustDashboard from "./pages/TrustDashboard";
 import NotFound from "./pages/NotFound";
 
@@ -90,12 +92,24 @@ const AppRoutes = () => {
         }
       />
       <Route
+        path="/inspection/consent"
+        element={
+          <ProtectedRoute>
+            <ConsentFlow />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/trust"
         element={
           <ProtectedRoute>
             <TrustDashboard />
           </ProtectedRoute>
         }
+      />
+      <Route
+        path="/auth"
+        element={<Auth />}
       />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />

@@ -16,8 +16,7 @@ const InspectionSummary = () => {
   const totalVideos = 4;
 
   const handleSubmit = () => {
-    // Would submit to backend
-    navigate("/", { replace: true });
+    navigate("/inspection/consent", { state: inspectionData });
   };
 
   const getSeverityColor = (severity: string) => {
@@ -163,7 +162,7 @@ const InspectionSummary = () => {
         <div className="space-y-3">
           <Button onClick={handleSubmit} className="w-full h-14">
             <Send className="w-5 h-5 mr-2" />
-            Submit Inspection
+            Request Customer Consent
           </Button>
           <Button
             onClick={() => navigate("/inspection/capture", { state: inspectionData })}
