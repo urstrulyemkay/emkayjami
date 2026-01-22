@@ -14,7 +14,317 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      captured_images: {
+        Row: {
+          angle: string
+          captured_at: string
+          hash: string | null
+          id: string
+          inspection_id: string
+          latitude: number | null
+          longitude: number | null
+          uri: string
+        }
+        Insert: {
+          angle: string
+          captured_at?: string
+          hash?: string | null
+          id?: string
+          inspection_id: string
+          latitude?: number | null
+          longitude?: number | null
+          uri: string
+        }
+        Update: {
+          angle?: string
+          captured_at?: string
+          hash?: string | null
+          id?: string
+          inspection_id?: string
+          latitude?: number | null
+          longitude?: number | null
+          uri?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "captured_images_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "inspections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      captured_videos: {
+        Row: {
+          captured_at: string
+          duration: number
+          hash: string | null
+          id: string
+          inspection_id: string
+          latitude: number | null
+          longitude: number | null
+          uri: string
+          video_type: string
+        }
+        Insert: {
+          captured_at?: string
+          duration: number
+          hash?: string | null
+          id?: string
+          inspection_id: string
+          latitude?: number | null
+          longitude?: number | null
+          uri: string
+          video_type: string
+        }
+        Update: {
+          captured_at?: string
+          duration?: number
+          hash?: string | null
+          id?: string
+          inspection_id?: string
+          latitude?: number | null
+          longitude?: number | null
+          uri?: string
+          video_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "captured_videos_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "inspections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      defects: {
+        Row: {
+          category: string
+          confidence: number | null
+          created_at: string
+          description: string
+          extracted_from: string
+          id: string
+          inspection_id: string
+          severity: string
+        }
+        Insert: {
+          category: string
+          confidence?: number | null
+          created_at?: string
+          description: string
+          extracted_from: string
+          id?: string
+          inspection_id: string
+          severity: string
+        }
+        Update: {
+          category?: string
+          confidence?: number | null
+          created_at?: string
+          description?: string
+          extracted_from?: string
+          id?: string
+          inspection_id?: string
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "defects_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "inspections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inspection_deltas: {
+        Row: {
+          attribution: string
+          created_at: string
+          first_inspection_id: string
+          id: string
+          second_inspection_id: string
+        }
+        Insert: {
+          attribution: string
+          created_at?: string
+          first_inspection_id: string
+          id?: string
+          second_inspection_id: string
+        }
+        Update: {
+          attribution?: string
+          created_at?: string
+          first_inspection_id?: string
+          id?: string
+          second_inspection_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspection_deltas_first_inspection_id_fkey"
+            columns: ["first_inspection_id"]
+            isOneToOne: false
+            referencedRelation: "inspections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspection_deltas_second_inspection_id_fkey"
+            columns: ["second_inspection_id"]
+            isOneToOne: false
+            referencedRelation: "inspections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inspections: {
+        Row: {
+          ai_confidence: number | null
+          condition_score: number | null
+          consented_at: string | null
+          created_at: string
+          customer_id: string | null
+          engine_cc: number | null
+          executive_id: string
+          frozen_hash: string | null
+          id: string
+          odometer_reading: number | null
+          status: string
+          updated_at: string
+          vehicle_color: string | null
+          vehicle_make: string
+          vehicle_model: string
+          vehicle_registration: string
+          vehicle_vin: string | null
+          vehicle_year: number | null
+        }
+        Insert: {
+          ai_confidence?: number | null
+          condition_score?: number | null
+          consented_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          engine_cc?: number | null
+          executive_id: string
+          frozen_hash?: string | null
+          id?: string
+          odometer_reading?: number | null
+          status?: string
+          updated_at?: string
+          vehicle_color?: string | null
+          vehicle_make: string
+          vehicle_model: string
+          vehicle_registration: string
+          vehicle_vin?: string | null
+          vehicle_year?: number | null
+        }
+        Update: {
+          ai_confidence?: number | null
+          condition_score?: number | null
+          consented_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          engine_cc?: number | null
+          executive_id?: string
+          frozen_hash?: string | null
+          id?: string
+          odometer_reading?: number | null
+          status?: string
+          updated_at?: string
+          vehicle_color?: string | null
+          vehicle_make?: string
+          vehicle_model?: string
+          vehicle_registration?: string
+          vehicle_vin?: string | null
+          vehicle_year?: number | null
+        }
+        Relationships: []
+      }
+      user_profiles: {
+        Row: {
+          coins: number
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          role: string
+          streak: number
+          trust_level: string
+          trust_score: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          coins?: number
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          role?: string
+          streak?: number
+          trust_level?: string
+          trust_score?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          coins?: number
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          role?: string
+          streak?: number
+          trust_level?: string
+          trust_score?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      voice_recordings: {
+        Row: {
+          audio_uri: string
+          category: string
+          duration: number
+          id: string
+          inspection_id: string
+          recorded_at: string
+          transcript: string
+        }
+        Insert: {
+          audio_uri: string
+          category: string
+          duration: number
+          id?: string
+          inspection_id: string
+          recorded_at?: string
+          transcript: string
+        }
+        Update: {
+          audio_uri?: string
+          category?: string
+          duration?: number
+          id?: string
+          inspection_id?: string
+          recorded_at?: string
+          transcript?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_recordings_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "inspections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
