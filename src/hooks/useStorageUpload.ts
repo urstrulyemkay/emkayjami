@@ -5,7 +5,7 @@ type BucketType = "inspection-images" | "inspection-videos" | "voice-recordings"
 
 interface UploadResult {
   path: string;
-  publicUrl: string;
+  signedUrl: string;
 }
 
 export function useStorageUpload() {
@@ -37,15 +37,21 @@ export function useStorageUpload() {
           throw error;
         }
 
-        const { data: urlData } = supabase.storage
+        // Use signed URLs for private buckets instead of public URLs
+        const { data: signedUrlData, error: urlError } = await supabase.storage
           .from(bucket)
-          .getPublicUrl(data.path);
+          .createSignedUrl(data.path, 3600); // 1 hour expiry
+
+        if (urlError) {
+          console.error("Error creating signed URL:", urlError);
+          throw urlError;
+        }
 
         setUploadProgress(100);
         
         return {
           path: data.path,
-          publicUrl: urlData.publicUrl,
+          signedUrl: signedUrlData.signedUrl,
         };
       } catch (error) {
         console.error("Failed to upload file:", error);
