@@ -15,6 +15,9 @@ import VoiceRecording from "./pages/VoiceRecording";
 import InspectionSummary from "./pages/InspectionSummary";
 import ConsentFlow from "./pages/ConsentFlow";
 import TrustDashboard from "./pages/TrustDashboard";
+import AuctionSetup from "./pages/AuctionSetup";
+import AuctionLive from "./pages/AuctionLive";
+import AuctionResult from "./pages/AuctionResult";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -113,6 +116,38 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <TrustDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/auction/setup"
+        element={
+          <ProtectedRoute>
+            <AuctionSetup />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/auction/live"
+        element={
+          <ProtectedRoute>
+            <AuctionLive />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/auction/result"
+        element={
+          <ProtectedRoute>
+            <AuctionResult />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/auctions"
+        element={
+          <ProtectedRoute>
+            <AuctionSetup />
           </ProtectedRoute>
         }
       />
