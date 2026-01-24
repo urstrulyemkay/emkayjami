@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Clock, CheckCircle2, Gavel, Timer, TrendingUp, ChevronRight, Play } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle2, Gavel, Timer, TrendingUp, ChevronRight, Play, RefreshCw, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -21,6 +21,26 @@ interface Auction {
   winningBid?: number;
   totalBids: number;
   brokersInvited: number;
+}
+
+interface PendingVehicle {
+  id: string;
+  vehicle: {
+    make: string;
+    model: string;
+    year: number;
+    registration: string;
+  };
+  firstInspectionDate: Date;
+  daysWithCustomer: number;
+  originalResponses: Record<string, string>;
+  originalIssues: Array<{
+    checkpointId: string;
+    severity: "minor" | "major" | "critical";
+    stepId: number;
+    question: string;
+    originalValue: string;
+  }>;
 }
 
 // Mock data for auctions
@@ -93,6 +113,59 @@ const MOCK_PAST_AUCTIONS: Auction[] = [
   },
 ];
 
+// Mock data for pending delta inspections
+const MOCK_PENDING_VEHICLES: PendingVehicle[] = [
+  {
+    id: "pending-001",
+    vehicle: { make: "Yamaha", model: "FZ-S V3", year: 2022, registration: "KA-07-MN-4567" },
+    firstInspectionDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+    daysWithCustomer: 7,
+    originalResponses: {
+      "vb_owner_name": "verified",
+      "vb_chassis_match": "matches",
+      "eng_oil": "dark",
+      "body_dents": "minor",
+      "susp_front_tyre": "worn",
+    },
+    originalIssues: [
+      { checkpointId: "eng_oil", severity: "minor", stepId: 2, question: "Oil condition?", originalValue: "Dark" },
+      { checkpointId: "body_dents", severity: "minor", stepId: 3, question: "Dents or damage?", originalValue: "Minor dents" },
+      { checkpointId: "susp_front_tyre", severity: "minor", stepId: 5, question: "Front tyre condition?", originalValue: "Worn" },
+    ],
+  },
+  {
+    id: "pending-002",
+    vehicle: { make: "Honda", model: "CB Shine", year: 2021, registration: "KA-08-OP-8901" },
+    firstInspectionDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+    daysWithCustomer: 5,
+    originalResponses: {
+      "vb_owner_name": "verified",
+      "eng_exhaust": "white",
+      "elec_battery": "weak",
+      "body_paint": "faded",
+    },
+    originalIssues: [
+      { checkpointId: "eng_exhaust", severity: "minor", stepId: 2, question: "Exhaust smoke?", originalValue: "White smoke" },
+      { checkpointId: "elec_battery", severity: "minor", stepId: 4, question: "Battery condition?", originalValue: "Weak (slow crank)" },
+      { checkpointId: "body_paint", severity: "minor", stepId: 3, question: "Overall paint condition?", originalValue: "Faded" },
+    ],
+  },
+  {
+    id: "pending-003",
+    vehicle: { make: "Bajaj", model: "Dominar 400", year: 2023, registration: "KA-09-QR-2345" },
+    firstInspectionDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+    daysWithCustomer: 3,
+    originalResponses: {
+      "eng_sounds": "minor",
+      "susp_rear": "creaky",
+    },
+    originalIssues: [
+      { checkpointId: "eng_sounds", severity: "minor", stepId: 2, question: "Unusual engine sounds?", originalValue: "Minor sounds" },
+      { checkpointId: "susp_rear", severity: "minor", stepId: 5, question: "Rear suspension?", originalValue: "Creaky" },
+    ],
+  },
+];
+
 const formatTimeAgo = (date: Date): string => {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -115,7 +188,7 @@ const formatElapsedTime = (startTime: Date): string => {
 
 const AuctionsList = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"live" | "past">("live");
+  const [activeTab, setActiveTab] = useState<"pending" | "live" | "past">("pending");
 
   const handleViewLiveAuction = (auction: Auction) => {
     // Navigate to live auction view
@@ -149,6 +222,12 @@ const AuctionsList = () => {
     });
   };
 
+  const handleStartDeltaInspection = (pendingVehicle: PendingVehicle) => {
+    navigate("/inspection/delta", {
+      state: pendingVehicle,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -162,24 +241,123 @@ const AuctionsList = () => {
         <div className="flex-1">
           <h1 className="text-xl font-semibold text-foreground">My Auctions</h1>
           <p className="text-sm text-muted-foreground">
-            {MOCK_LIVE_AUCTIONS.length} live • {MOCK_PAST_AUCTIONS.length} completed
+            {MOCK_PENDING_VEHICLES.length} pending • {MOCK_LIVE_AUCTIONS.length} live • {MOCK_PAST_AUCTIONS.length} completed
           </p>
         </div>
       </header>
 
       {/* Tabs */}
       <div className="px-6">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "live" | "past")}>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "pending" | "live" | "past")}>
           <TabsList className="w-full">
-            <TabsTrigger value="live" className="flex-1 gap-2">
-              <Play className="w-4 h-4" />
+            <TabsTrigger value="pending" className="flex-1 gap-1 text-xs">
+              <RefreshCw className="w-3 h-3" />
+              Pending ({MOCK_PENDING_VEHICLES.length})
+            </TabsTrigger>
+            <TabsTrigger value="live" className="flex-1 gap-1 text-xs">
+              <Play className="w-3 h-3" />
               Live ({MOCK_LIVE_AUCTIONS.length})
             </TabsTrigger>
-            <TabsTrigger value="past" className="flex-1 gap-2">
-              <CheckCircle2 className="w-4 h-4" />
+            <TabsTrigger value="past" className="flex-1 gap-1 text-xs">
+              <CheckCircle2 className="w-3 h-3" />
               Past ({MOCK_PAST_AUCTIONS.length})
             </TabsTrigger>
           </TabsList>
+
+          {/* Pending Delta Inspections */}
+          <TabsContent value="pending" className="mt-4 space-y-3">
+            {MOCK_PENDING_VEHICLES.length === 0 ? (
+              <div className="text-center py-12">
+                <RefreshCw className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground">No pending re-inspections</p>
+              </div>
+            ) : (
+              <>
+                <div className="p-3 rounded-lg bg-info/10 border border-info/30 text-info text-sm mb-4">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <p>
+                      These vehicles require a delta inspection before handover. 
+                      Verify if issues have changed since the first inspection.
+                    </p>
+                  </div>
+                </div>
+                {MOCK_PENDING_VEHICLES.map((pending) => (
+                  <button
+                    key={pending.id}
+                    onClick={() => handleStartDeltaInspection(pending)}
+                    className="w-full p-4 rounded-xl border border-warning/50 bg-warning/5 text-left transition-all hover:bg-warning/10"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <p className="font-semibold text-foreground">
+                          {pending.vehicle.make} {pending.vehicle.model}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {pending.vehicle.registration} • {pending.vehicle.year}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-warning/20 text-warning">
+                        <RefreshCw className="w-3 h-3" />
+                        <span className="text-xs font-medium">PENDING</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Issues Found</p>
+                          <p className="font-bold text-lg text-foreground">
+                            {pending.originalIssues.length}
+                          </p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xs text-muted-foreground">Days</p>
+                          <p className="font-semibold text-foreground">{pending.daysWithCustomer}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xs text-muted-foreground">First Check</p>
+                          <p className="text-foreground text-sm">
+                            {formatTimeAgo(pending.firstInspectionDate)}
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-border">
+                      <div className="flex flex-wrap gap-1">
+                        {pending.originalIssues.slice(0, 3).map((issue, idx) => (
+                          <span
+                            key={idx}
+                            className={cn(
+                              "text-xs px-2 py-0.5 rounded-full",
+                              issue.severity === "critical"
+                                ? "bg-destructive/20 text-destructive"
+                                : issue.severity === "major"
+                                ? "bg-warning/20 text-warning"
+                                : "bg-info/20 text-info"
+                            )}
+                          >
+                            {issue.question.replace("?", "")}
+                          </span>
+                        ))}
+                        {pending.originalIssues.length > 3 && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">
+                            +{pending.originalIssues.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex items-center justify-end">
+                      <span className="text-xs text-primary font-medium">Start Delta Inspection →</span>
+                    </div>
+                  </button>
+                ))}
+              </>
+            )}
+          </TabsContent>
 
           {/* Live Auctions */}
           <TabsContent value="live" className="mt-4 space-y-3">
