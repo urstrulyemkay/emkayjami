@@ -2,27 +2,47 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Camera, Check, RotateCcw, ChevronRight, Loader2, X, AlertCircle } from "lucide-react";
+import { ArrowLeft, Camera, Check, RotateCcw, ChevronRight, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { IMAGE_ANGLES, ImageAngle, CapturedImage } from "@/types/inspection";
-import { useStorageUpload } from "@/hooks/useStorageUpload";
-import { supabase } from "@/integrations/supabase/client";
+import { useInspectionPersistence } from "@/hooks/useInspectionPersistence";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+
+interface VehicleData {
+  inspectionId?: string;
+  registration: string;
+  make: string;
+  model: string;
+  year: number;
+  color: string;
+  engineCC?: number;
+  odometerReading?: number;
+  customerName?: string;
+  customerPhone?: string;
+}
 
 const ImageCapture = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const vehicleData = location.state;
-  const { uploadFile, isUploading } = useStorageUpload();
+  const vehicleData = location.state as VehicleData | null;
   const { toast } = useToast();
   
+  // Use persistence hook with inspection ID from navigation state
+  const {
+    inspectionId,
+    userId,
+    isLoading: isPersistenceLoading,
+    capturedImages,
+    saveImage,
+    isAuthenticated,
+  } = useInspectionPersistence(vehicleData?.inspectionId);
+
   const [currentAngleIndex, setCurrentAngleIndex] = useState(0);
-  const [capturedImages, setCapturedImages] = useState<CapturedImage[]>([]);
   const [previewBlob, setPreviewBlob] = useState<Blob | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const [isCameraReady, setIsCameraReady] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -31,40 +51,37 @@ const ImageCapture = () => {
   const currentAngle = IMAGE_ANGLES[currentAngleIndex];
   const progress = (capturedImages.length / IMAGE_ANGLES.length) * 100;
 
+  // Find first uncaptured angle on load (to resume from where user left off)
+  useEffect(() => {
+    if (capturedImages.length > 0 && !isPersistenceLoading) {
+      const capturedAngles = new Set(capturedImages.map(img => img.angle));
+      const firstUncapturedIndex = IMAGE_ANGLES.findIndex(
+        angle => !capturedAngles.has(angle.angle)
+      );
+      if (firstUncapturedIndex !== -1 && firstUncapturedIndex !== currentAngleIndex) {
+        setCurrentAngleIndex(firstUncapturedIndex);
+      }
+    }
+  }, [capturedImages, isPersistenceLoading]);
+
   const attachStreamToVideo = useCallback(async () => {
     const video = videoRef.current;
     const stream = streamRef.current;
     if (!video || !stream) return;
 
-    // Re-attach stream (some mobile browsers drop it when toggling preview/img)
     if (video.srcObject !== stream) {
       video.srcObject = stream;
     }
 
     try {
-      // Ensure playback resumes
       await video.play();
     } catch {
-      // Ignore autoplay restrictions; user gesture (capture button) will resume
+      // Ignore autoplay restrictions
     }
 
     if (video.videoWidth > 0 && video.videoHeight > 0) {
       setIsCameraReady(true);
     }
-  }, []);
-
-  // Get current user - allow mock user for development
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUserId(user.id);
-      } else {
-        // For development/mock purposes, use a temp ID
-        setUserId(`temp_${Date.now()}`);
-      }
-    };
-    getUser();
   }, []);
 
   // Initialize camera
@@ -80,7 +97,6 @@ const ImageCapture = () => {
             setIsCameraReady(true);
           };
         }
-        // Attach and start playback
         await attachStreamToVideo();
       } catch (err) {
         setCameraError("Unable to access camera. Please grant camera permissions.");
@@ -96,7 +112,7 @@ const ImageCapture = () => {
     };
   }, [attachStreamToVideo]);
 
-  // When we leave preview mode (confirm/retake) or change angles, re-attach camera.
+  // Re-attach camera when leaving preview mode
   useEffect(() => {
     if (!previewUrl) {
       void attachStreamToVideo();
@@ -115,7 +131,6 @@ const ImageCapture = () => {
   const captureImage = useCallback(async () => {
     if (!videoRef.current || !canvasRef.current) return;
 
-    // Ensure camera is attached + playing before capturing
     if (!isCameraReady) {
       await attachStreamToVideo();
     }
@@ -155,49 +170,30 @@ const ImageCapture = () => {
       return;
     }
 
-    const timestamp = Date.now();
+    setIsSaving(true);
+
     const currentAngleValue = currentAngle.angle;
     const currentAngleLabel = currentAngle.label;
     const currentPreviewUrl = previewUrl;
     const currentIndex = currentAngleIndex;
-    
-    // Create image object first (for local state)
-    const newImage: CapturedImage = {
-      id: `img_${timestamp}`,
-      angle: currentAngleValue as ImageAngle,
-      uri: currentPreviewUrl || "",
-      timestamp: new Date().toISOString(),
-      location: { latitude: 0, longitude: 0 },
-    };
 
-    // If we have a user, try to upload
-    if (userId && !userId.startsWith("temp_")) {
-      const fileName = `${vehicleData?.inspectionId || 'temp'}_${currentAngleValue}_${timestamp}.jpg`;
-      const result = await uploadFile("inspection-images", previewBlob, fileName, userId);
-      
-      if (result) {
-        newImage.uri = result.path;
-      }
+    // Save image using persistence hook (handles storage + DB)
+    const savedImage = await saveImage(currentAngleValue, previewBlob);
+
+    setIsSaving(false);
+
+    if (savedImage) {
+      toast({
+        title: "Image saved",
+        description: `${currentAngleLabel} captured${isAuthenticated ? " and synced" : ""}`,
+      });
     }
 
-    // Add to captured images
-    setCapturedImages((prev) => {
-      const filtered = prev.filter(img => img.angle !== currentAngleValue);
-      return [...filtered, newImage];
-    });
-    
-    // Show success toast
-    toast({
-      title: "Image captured",
-      description: `${currentAngleLabel} saved successfully`,
-    });
-
-    // Cleanup preview - use the captured value to avoid stale closure
+    // Cleanup preview
     if (currentPreviewUrl) {
       URL.revokeObjectURL(currentPreviewUrl);
     }
     
-    // Clear preview state to show camera again
     setPreviewBlob(null);
     setPreviewUrl(null);
 
@@ -205,7 +201,7 @@ const ImageCapture = () => {
     if (currentIndex < IMAGE_ANGLES.length - 1) {
       setCurrentAngleIndex(currentIndex + 1);
     }
-  }, [previewBlob, previewUrl, currentAngle, currentAngleIndex, userId, uploadFile, vehicleData, toast]);
+  }, [previewBlob, previewUrl, currentAngle, currentAngleIndex, saveImage, isAuthenticated, toast]);
 
   const retakeImage = useCallback(() => {
     if (previewUrl) {
@@ -213,7 +209,6 @@ const ImageCapture = () => {
     }
     setPreviewBlob(null);
     setPreviewUrl(null);
-    // Ensure camera resumes immediately
     void attachStreamToVideo();
   }, [previewUrl, attachStreamToVideo]);
 
@@ -231,7 +226,7 @@ const ImageCapture = () => {
 
   const handleComplete = () => {
     navigate("/inspection/video", {
-      state: { ...vehicleData, images: capturedImages },
+      state: { ...vehicleData, inspectionId, images: capturedImages },
     });
   };
 
@@ -239,12 +234,20 @@ const ImageCapture = () => {
     return capturedImages.some((img) => img.angle === angle);
   };
 
-  const getCapturedImage = (angle: ImageAngle) => {
-    return capturedImages.find((img) => img.angle === angle);
-  };
-
   const allImagesCaptured = capturedImages.length === IMAGE_ANGLES.length;
   const currentAngleCaptured = isAngleCaptured(currentAngle.angle);
+
+  // Show loading while restoring progress
+  if (isPersistenceLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading inspection...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -262,14 +265,22 @@ const ImageCapture = () => {
             {currentAngleIndex + 1}/{IMAGE_ANGLES.length}
           </p>
         </div>
-        <div className="w-10 h-10 flex items-center justify-center">
+        <div className="flex flex-col items-center">
           <span className="text-sm font-semibold text-primary">{Math.round(progress)}%</span>
+          {isAuthenticated && (
+            <span className="text-[10px] text-success">Synced</span>
+          )}
         </div>
       </header>
 
       {/* Progress Bar */}
       <div className="px-4 py-2 bg-card">
         <Progress value={progress} className="h-1.5" />
+        {capturedImages.length > 0 && (
+          <p className="text-[10px] text-muted-foreground mt-1 text-center">
+            {capturedImages.length} images saved • Progress auto-saved
+          </p>
+        )}
       </div>
 
       {/* Current Angle Info Card */}
@@ -319,19 +330,16 @@ const ImageCapture = () => {
             />
             {/* Camera overlay guide */}
             <div className="absolute inset-0 pointer-events-none">
-              {/* Corner guides */}
               <div className="absolute top-6 left-6 w-12 h-12 border-l-2 border-t-2 border-primary/60 rounded-tl-lg" />
               <div className="absolute top-6 right-6 w-12 h-12 border-r-2 border-t-2 border-primary/60 rounded-tr-lg" />
               <div className="absolute bottom-6 left-6 w-12 h-12 border-l-2 border-b-2 border-primary/60 rounded-bl-lg" />
               <div className="absolute bottom-6 right-6 w-12 h-12 border-r-2 border-b-2 border-primary/60 rounded-br-lg" />
               
-              {/* Center target */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16">
                 <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-primary/40" />
                 <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-primary/40" />
               </div>
               
-              {/* Instruction banner */}
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-background/80 backdrop-blur-sm px-4 py-2 rounded-full">
                 <p className="text-xs text-foreground font-medium whitespace-nowrap">
                   Align {currentAngle.label.toLowerCase()}
@@ -341,8 +349,8 @@ const ImageCapture = () => {
           </>
         )}
 
-        {/* Upload overlay */}
-        {isUploading && (
+        {/* Saving overlay */}
+        {isSaving && (
           <div className="absolute inset-0 bg-background/90 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
             <Loader2 className="w-10 h-10 animate-spin text-primary" />
             <p className="text-sm font-medium text-foreground">Saving image...</p>
@@ -394,7 +402,7 @@ const ImageCapture = () => {
               onClick={retakeImage}
               variant="outline"
               className="flex-1 h-14 gap-2"
-              disabled={isUploading}
+              disabled={isSaving}
             >
               <RotateCcw className="w-5 h-5" />
               Retake
@@ -402,14 +410,14 @@ const ImageCapture = () => {
             <Button 
               onClick={confirmImage} 
               className="flex-1 h-14 gap-2"
-              disabled={isUploading}
+              disabled={isSaving}
             >
-              {isUploading ? (
+              {isSaving ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <Check className="w-5 h-5" />
               )}
-              {isUploading ? "Saving..." : "Confirm"}
+              {isSaving ? "Saving..." : "Confirm"}
             </Button>
           </div>
         ) : allImagesCaptured ? (
