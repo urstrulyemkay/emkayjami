@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Camera, Check, RotateCcw, ChevronRight, Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { ArrowLeft, Camera, Check, RotateCcw, ChevronRight, Loader2, AlertCircle, RefreshCw, Zap } from "lucide-react";
 import { IMAGE_ANGLES, ImageAngle, CapturedImage } from "@/types/inspection";
 import { useInspectionPersistence } from "@/hooks/useInspectionPersistence";
 import { useToast } from "@/hooks/use-toast";
@@ -230,6 +230,17 @@ const ImageCapture = () => {
     });
   };
 
+  // Skip all images for testing/QA purposes
+  const handleSkipAllImages = () => {
+    toast({
+      title: "Skipping image capture",
+      description: "Proceeding to video capture (test mode)",
+    });
+    navigate("/inspection/video", {
+      state: { ...vehicleData, inspectionId, images: capturedImages, skippedImages: true },
+    });
+  };
+
   const isAngleCaptured = (angle: ImageAngle) => {
     return capturedImages.some((img) => img.angle === angle);
   };
@@ -265,11 +276,23 @@ const ImageCapture = () => {
             {currentAngleIndex + 1}/{IMAGE_ANGLES.length}
           </p>
         </div>
-        <div className="flex flex-col items-center">
-          <span className="text-sm font-semibold text-primary">{Math.round(progress)}%</span>
-          {isAuthenticated && (
-            <span className="text-[10px] text-success">Synced</span>
-          )}
+        <div className="flex items-center gap-2">
+          <div className="flex flex-col items-center">
+            <span className="text-sm font-semibold text-primary">{Math.round(progress)}%</span>
+            {isAuthenticated && (
+              <span className="text-[10px] text-success">Synced</span>
+            )}
+          </div>
+          {/* Skip button for testing */}
+          <Button
+            onClick={handleSkipAllImages}
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2 text-xs gap-1 text-warning hover:text-warning hover:bg-warning/10"
+          >
+            <Zap className="w-3 h-3" />
+            Skip
+          </Button>
         </div>
       </header>
 
