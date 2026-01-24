@@ -39,7 +39,7 @@ export function useInspectionPersistence(
   const [capturedImages, setCapturedImages] = useState<CapturedImage[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Get current user on mount
+  // Get current user on mount - require authentication
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -47,8 +47,7 @@ export function useInspectionPersistence(
         setUserId(user.id);
         setIsAuthenticated(true);
       } else {
-        // For development, allow mock user
-        setUserId(`temp_${Date.now()}`);
+        setUserId(null);
         setIsAuthenticated(false);
       }
       setIsLoading(false);
@@ -56,14 +55,15 @@ export function useInspectionPersistence(
     getUser();
   }, []);
 
-  // Create a new inspection record
+  // Create a new inspection record - requires authentication
   const createInspection = useCallback(async (data: InspectionData): Promise<string | null> => {
     if (!userId || !isAuthenticated) {
-      console.log("User not authenticated, skipping DB create");
-      // Return a temp ID for development
-      const tempId = `temp_${Date.now()}`;
-      setInspectionId(tempId);
-      return tempId;
+      toast({
+        title: "Authentication required",
+        description: "Please log in to create an inspection",
+        variant: "destructive",
+      });
+      return null;
     }
 
     try {
@@ -101,7 +101,7 @@ export function useInspectionPersistence(
     }
   }, [userId, isAuthenticated, toast]);
 
-  // Save a captured image to storage and database
+  // Save a captured image to storage and database - requires authentication
   const saveImage = useCallback(async (
     angle: ImageAngle,
     blob: Blob
@@ -111,67 +111,74 @@ export function useInspectionPersistence(
       return null;
     }
 
+    if (!userId || !isAuthenticated) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to save images",
+        variant: "destructive",
+      });
+      return null;
+    }
+
     const timestamp = Date.now();
     const fileName = `${inspectionId}_${angle}_${timestamp}.jpg`;
 
-    // Create local image object first
-    const localUrl = URL.createObjectURL(blob);
-    const newImage: CapturedImage = {
-      id: `img_${timestamp}`,
-      angle,
-      uri: localUrl,
-      timestamp: new Date().toISOString(),
-      location: { latitude: 0, longitude: 0 },
-    };
-
-    // If authenticated, upload to storage and save to DB
-    if (userId && isAuthenticated && !inspectionId.startsWith("temp_")) {
-      try {
-        // Upload to storage
-        const result = await uploadFile("inspection-images", blob, fileName, userId);
-        
-        if (result) {
-          newImage.uri = result.path;
-          
-          // Save to database
-          const { data: savedImage, error } = await supabase
-            .from("captured_images")
-            .insert({
-              inspection_id: inspectionId,
-              angle: angle,
-              uri: result.path,
-              latitude: 0,
-              longitude: 0,
-              captured_at: new Date().toISOString(),
-            })
-            .select("id")
-            .single();
-
-          if (error) {
-            console.error("Error saving image to DB:", error);
-            // Don't fail - image is still in storage
-          } else if (savedImage) {
-            newImage.id = savedImage.id;
-          }
-        }
-      } catch (err) {
-        console.error("Error uploading image:", err);
-        // Keep local URL as fallback
+    try {
+      // Upload to storage
+      const result = await uploadFile("inspection-images", blob, fileName, userId);
+      
+      if (!result) {
+        throw new Error("Failed to upload image");
       }
+
+      // Save to database
+      const { data: savedImage, error } = await supabase
+        .from("captured_images")
+        .insert({
+          inspection_id: inspectionId,
+          angle: angle,
+          uri: result.path,
+          latitude: 0,
+          longitude: 0,
+          captured_at: new Date().toISOString(),
+        })
+        .select("id")
+        .single();
+
+      if (error) {
+        console.error("Error saving image to DB:", error);
+        throw error;
+      }
+
+      const newImage: CapturedImage = {
+        id: savedImage.id,
+        angle,
+        uri: result.path,
+        timestamp: new Date().toISOString(),
+        location: { latitude: 0, longitude: 0 },
+      };
+
+      // Update local state
+      setCapturedImages((prev) => {
+        const filtered = prev.filter((img) => img.angle !== angle);
+        return [...filtered, newImage];
+      });
+
+      return newImage;
+    } catch (err) {
+      console.error("Error saving image:", err);
+      toast({
+        title: "Failed to save image",
+        description: "Please try again",
+        variant: "destructive",
+      });
+      return null;
     }
-
-    // Update local state
-    setCapturedImages((prev) => {
-      const filtered = prev.filter((img) => img.angle !== angle);
-      return [...filtered, newImage];
-    });
-
-    return newImage;
-  }, [inspectionId, userId, isAuthenticated, uploadFile]);
+  }, [inspectionId, userId, isAuthenticated, uploadFile, toast]);
 
   // Load existing images for an inspection
   const loadExistingImages = useCallback(async () => {
-    if (!inspectionId || inspectionId.startsWith("temp_") || !isAuthenticated) {
+    if (!inspectionId || !isAuthenticated) {
       return;
     }
 
@@ -215,7 +222,7 @@ export function useInspectionPersistence(
 
   // Load existing images when inspection ID is set
   useEffect(() => {
-    if (inspectionId && isAuthenticated && !inspectionId.startsWith("temp_")) {
+    if (inspectionId && isAuthenticated) {
       loadExistingImages();
     }
   }, [inspectionId, isAuthenticated, loadExistingImages]);
