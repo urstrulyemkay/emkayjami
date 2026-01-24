@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, AlertTriangle, AlertCircle, XCircle, TrendingUp, TrendingDown, Minus, FileCheck, AlertOctagon, Plus } from "lucide-react";
+import { ArrowLeft, CheckCircle2, AlertTriangle, AlertCircle, XCircle, TrendingUp, TrendingDown, Minus, FileCheck, AlertOctagon, Plus, Gauge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -17,7 +17,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 interface DeltaComparisonState {
@@ -53,6 +52,38 @@ interface ComparisonItem {
   newSeverity: "ok" | "minor" | "major" | "critical";
   changeType: ChangeType;
 }
+
+// Calculate condition score from responses (0-100)
+const calculateConditionScore = (responses: Record<string, string>): number => {
+  const severityPoints = { ok: 0, minor: 5, major: 15, critical: 30 };
+  let totalDeductions = 0;
+  let checkpointCount = 0;
+
+  for (const step of INSPECTION_STEPS) {
+    for (const checkpoint of step.checkpoints) {
+      const value = responses[checkpoint.id];
+      if (value) {
+        checkpointCount++;
+        const option = checkpoint.options.find(o => o.value === value);
+        const severity = option?.severity || "ok";
+        totalDeductions += severityPoints[severity];
+      }
+    }
+  }
+
+  // Base score is 100, minus deductions (capped at 0)
+  const score = Math.max(0, 100 - totalDeductions);
+  return Math.round(score);
+};
+
+// Get score grade label
+const getScoreGrade = (score: number): { label: string; color: string } => {
+  if (score >= 90) return { label: "Excellent", color: "text-success" };
+  if (score >= 75) return { label: "Good", color: "text-success" };
+  if (score >= 60) return { label: "Fair", color: "text-warning" };
+  if (score >= 40) return { label: "Poor", color: "text-orange-500" };
+  return { label: "Critical", color: "text-destructive" };
+};
 
 const DeltaComparison = () => {
   const navigate = useNavigate();
@@ -165,6 +196,22 @@ const DeltaComparison = () => {
     });
   }, [comparisonData]);
 
+  // Calculate condition scores
+  const originalScore = useMemo(() => {
+    if (!comparisonData) return 0;
+    return calculateConditionScore(comparisonData.originalResponses);
+  }, [comparisonData]);
+
+  const newScore = useMemo(() => {
+    if (!comparisonData) return 0;
+    return calculateConditionScore(comparisonData.deltaResponses);
+  }, [comparisonData]);
+
+  const scoreDifference = newScore - originalScore;
+  const scoreDecreased = scoreDifference < 0;
+  const originalGrade = getScoreGrade(originalScore);
+  const newGrade = getScoreGrade(newScore);
+
   const newIssues = comparisons.filter(c => c.changeType === "new_issue");
   const worsened = comparisons.filter(c => c.changeType === "worsened");
   const improved = comparisons.filter(c => c.changeType === "improved");
@@ -173,6 +220,8 @@ const DeltaComparison = () => {
 
   const hasProblematicChanges = newIssues.length > 0 || worsened.length > 0;
   const unconfirmedNewIssues = newIssues.filter(i => !confirmedNewIssues.includes(i.checkpointId));
+  const [showScoreConfirm, setShowScoreConfirm] = useState(false);
+  const [scoreConfirmed, setScoreConfirmed] = useState(false);
 
   if (!comparisonData) {
     return (
@@ -222,6 +271,13 @@ const DeltaComparison = () => {
   };
 
   const handleApproveHandover = () => {
+    // First check for score decrease
+    if (scoreDecreased && !scoreConfirmed) {
+      setShowScoreConfirm(true);
+      return;
+    }
+    
+    // Then check for new issues
     if (unconfirmedNewIssues.length > 0) {
       setShowNewIssueConfirm(true);
       return;
@@ -234,6 +290,24 @@ const DeltaComparison = () => {
     navigate("/auctions", {
       state: { deltaCompleted: true, vehicleId: comparisonData.vehicle.registration },
     });
+  };
+
+  const handleConfirmScoreDecrease = () => {
+    setScoreConfirmed(true);
+    setShowScoreConfirm(false);
+    
+    // Continue to check for new issues
+    if (unconfirmedNewIssues.length > 0) {
+      setShowNewIssueConfirm(true);
+    } else {
+      toast({
+        title: "Handover Approved",
+        description: "Delta inspection completed with noted condition changes",
+      });
+      navigate("/auctions", {
+        state: { deltaCompleted: true, vehicleId: comparisonData.vehicle.registration },
+      });
+    }
   };
 
   const handleFlagIssues = () => {
@@ -330,6 +404,71 @@ const DeltaComparison = () => {
           </p>
         </div>
       </header>
+
+      {/* Vehicle Condition Score Comparison */}
+      <div className="px-6 pb-4">
+        <div className={cn(
+          "p-4 rounded-xl border",
+          scoreDecreased ? "border-destructive/50 bg-destructive/5" : 
+          scoreDifference > 0 ? "border-success/50 bg-success/5" : 
+          "border-border bg-card"
+        )}>
+          <div className="flex items-center gap-2 mb-3">
+            <Gauge className={cn(
+              "w-5 h-5",
+              scoreDecreased ? "text-destructive" : 
+              scoreDifference > 0 ? "text-success" : 
+              "text-muted-foreground"
+            )} />
+            <h3 className="text-sm font-semibold text-foreground">Vehicle Condition Score</h3>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            {/* First Inspection Score */}
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground mb-1">First Inspection</p>
+              <p className={cn("text-3xl font-bold", originalGrade.color)}>{originalScore}</p>
+              <p className={cn("text-xs font-medium", originalGrade.color)}>{originalGrade.label}</p>
+            </div>
+            
+            {/* Arrow with difference */}
+            <div className="flex flex-col items-center px-4">
+              {scoreDecreased ? (
+                <>
+                  <TrendingDown className="w-8 h-8 text-destructive" />
+                  <span className="text-sm font-bold text-destructive">{scoreDifference}</span>
+                </>
+              ) : scoreDifference > 0 ? (
+                <>
+                  <TrendingUp className="w-8 h-8 text-success" />
+                  <span className="text-sm font-bold text-success">+{scoreDifference}</span>
+                </>
+              ) : (
+                <>
+                  <Minus className="w-8 h-8 text-muted-foreground" />
+                  <span className="text-sm font-medium text-muted-foreground">No change</span>
+                </>
+              )}
+            </div>
+            
+            {/* Second Inspection Score */}
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground mb-1">Re-inspection</p>
+              <p className={cn("text-3xl font-bold", newGrade.color)}>{newScore}</p>
+              <p className={cn("text-xs font-medium", newGrade.color)}>{newGrade.label}</p>
+            </div>
+          </div>
+          
+          {scoreDecreased && (
+            <div className="mt-3 pt-3 border-t border-destructive/20">
+              <p className="text-sm text-destructive flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4" />
+                Vehicle condition has deteriorated by {Math.abs(scoreDifference)} points
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Summary Stats */}
       <div className="px-6 pb-4">
@@ -517,6 +656,55 @@ const DeltaComparison = () => {
             <AlertDialogCancel>Go Back</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmNewIssues}>
               Confirm & Proceed
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Score Decrease Confirmation Dialog */}
+      <AlertDialog open={showScoreConfirm} onOpenChange={setShowScoreConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="w-5 h-5" />
+              Vehicle Condition Deteriorated
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                <p>
+                  The vehicle condition score has decreased from the first inspection:
+                </p>
+                
+                <div className="flex items-center justify-center gap-6 py-4 bg-destructive/5 rounded-lg">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-foreground">{originalScore}</p>
+                    <p className="text-xs text-muted-foreground">First Inspection</p>
+                  </div>
+                  <TrendingDown className="w-8 h-8 text-destructive" />
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-destructive">{newScore}</p>
+                    <p className="text-xs text-muted-foreground">Re-inspection</p>
+                  </div>
+                </div>
+                
+                <p className="text-sm">
+                  <strong className="text-destructive">Score dropped by {Math.abs(scoreDifference)} points.</strong>
+                  {" "}This indicates the vehicle quality has worsened during the customer's possession.
+                </p>
+                
+                <p className="text-sm font-medium">
+                  Are you sure you want to approve the handover with this condition change?
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Review Again</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmScoreDecrease}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Confirm & Continue
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
