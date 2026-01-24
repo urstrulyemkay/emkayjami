@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Checkpoint, CheckpointOption } from "@/data/inspectionCheckpoints";
+import { useScribe, CommitStrategy } from "@elevenlabs/react";
 
 interface SectionVoiceRecorderProps {
   stepTitle: string;
@@ -91,11 +92,26 @@ export function SectionVoiceRecorder({
   const [fullTranscript, setFullTranscript] = useState("");
   const [recordingTime, setRecordingTime] = useState(0);
   const [usingFallback, setUsingFallback] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+
+  // Official ElevenLabs client (more reliable than manual WebSocket handling)
+  const scribe = useScribe({
+    modelId: "scribe_v2_realtime",
+    commitStrategy: CommitStrategy.VAD,
+    onPartialTranscript: (data: any) => {
+      // data: { text: string }
+      setPartialTranscript(data?.text || "");
+    },
+    onCommittedTranscript: (data: any) => {
+      const text = data?.text || "";
+      if (!text) return;
+      setFullTranscript((prev) => (prev + " " + text).trim());
+      setPartialTranscript("");
+      parseTranscriptAndAutoFill(text);
+      onTranscriptReceived?.(text);
+    },
+  });
 
   // Cleanup on unmount
   useEffect(() => {
@@ -269,135 +285,40 @@ export function SectionVoiceRecorder({
     setUsingFallback(false);
 
     try {
-      // Get Scribe token from edge function
       const { data, error } = await supabase.functions.invoke("elevenlabs-scribe-token");
-      
       if (error || !data?.token) {
         throw new Error(error?.message || "Failed to get transcription token");
       }
 
-      // Get microphone access
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
+      // Attempt ElevenLabs realtime first
+      const connectPromise = scribe.connect({
+        token: data.token,
+        microphone: {
           echoCancellation: true,
           noiseSuppression: true,
-          sampleRate: 16000,
+          autoGainControl: true,
         },
       });
-      streamRef.current = stream;
 
-      // Create WebSocket connection to ElevenLabs Scribe
-      const ws = new WebSocket("wss://api.elevenlabs.io/v1/speech-to-text/realtime");
-      wsRef.current = ws;
+      // If connection hangs, fallback to browser speech recognition
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("scribe_connect_timeout")), 6000)
+      );
 
-      // Set a timeout to fallback if connection takes too long
-      const connectionTimeout = setTimeout(() => {
-        if (!isRecording) {
-          console.log("ElevenLabs connection timeout, falling back to Web Speech API");
-          ws.close();
-          if (streamRef.current) {
-            streamRef.current.getTracks().forEach((track) => track.stop());
-          }
-          startWebSpeechRecognition();
+      await Promise.race([connectPromise, timeoutPromise]);
+
+      setIsRecording(true);
+      setIsConnecting(false);
+    } catch (err) {
+      console.error("Realtime transcription failed, falling back:", err);
+      try {
+        // Ensure scribe is disconnected before fallback
+        if (scribe.isConnected) {
+          scribe.disconnect();
         }
-      }, 5000);
-
-      ws.onopen = () => {
-        clearTimeout(connectionTimeout);
-        
-        // Send authentication with token
-        ws.send(JSON.stringify({
-          type: "auth",
-          token: data.token,
-        }));
-        
-        // Send configuration after auth
-        setTimeout(() => {
-          ws.send(JSON.stringify({
-            type: "config",
-            model_id: "scribe_v2_realtime",
-            audio_format: "pcm_16000",
-            sample_rate: 16000,
-            commit_strategy: "vad",
-            language_code: "en",
-          }));
-        }, 100);
-
-        // Start sending audio
-        const audioContext = new AudioContext({ sampleRate: 16000 });
-        audioContextRef.current = audioContext;
-
-        const source = audioContext.createMediaStreamSource(stream);
-        const processor = audioContext.createScriptProcessor(4096, 1, 1);
-
-        processor.onaudioprocess = (e) => {
-          if (ws.readyState === WebSocket.OPEN) {
-            const inputData = e.inputBuffer.getChannelData(0);
-            const pcmData = new Int16Array(inputData.length);
-            for (let i = 0; i < inputData.length; i++) {
-              pcmData[i] = Math.max(-32768, Math.min(32767, inputData[i] * 32768));
-            }
-            
-            // Convert to base64
-            const bytes = new Uint8Array(pcmData.buffer);
-            let binary = "";
-            for (let i = 0; i < bytes.byteLength; i++) {
-              binary += String.fromCharCode(bytes[i]);
-            }
-            const base64 = btoa(binary);
-            
-            ws.send(JSON.stringify({
-              type: "audio",
-              audio: base64,
-            }));
-          }
-        };
-
-        source.connect(processor);
-        processor.connect(audioContext.destination);
-        
-        setIsRecording(true);
-        setIsConnecting(false);
-      };
-
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        
-        if (data.type === "partial_transcript") {
-          setPartialTranscript(data.text || "");
-        } else if (data.type === "committed_transcript") {
-          const text = data.text || "";
-          setFullTranscript((prev) => prev + " " + text);
-          setPartialTranscript("");
-          
-          // Try to auto-fill based on transcript
-          parseTranscriptAndAutoFill(text);
-          onTranscriptReceived?.(text);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error("WebSocket error:", error);
-        clearTimeout(connectionTimeout);
-        stopRecording();
-        
-        // Fallback to Web Speech API
-        console.log("Falling back to Web Speech API");
-        startWebSpeechRecognition();
-      };
-
-      ws.onclose = () => {
-        clearTimeout(connectionTimeout);
-        if (!usingFallback) {
-          setIsRecording(false);
-          setIsConnecting(false);
-        }
-      };
-
-    } catch (error) {
-      console.error("Error starting recording:", error);
-      // Fallback to Web Speech API
-      console.log("Falling back to Web Speech API due to error");
+      } catch {
+        // ignore
+      }
       startWebSpeechRecognition();
     }
   };
@@ -409,28 +330,19 @@ export function SectionVoiceRecorder({
       recognitionRef.current = null;
     }
 
-    // Close WebSocket
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
-    }
-
-    // Stop audio context
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
-
-    // Stop media stream
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
+    // Stop ElevenLabs scribe
+    try {
+      if (scribe.isConnected) {
+        scribe.disconnect();
+      }
+    } catch {
+      // ignore
     }
 
     setIsRecording(false);
     setIsConnecting(false);
     setPartialTranscript("");
-  }, []);
+  }, [scribe]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
