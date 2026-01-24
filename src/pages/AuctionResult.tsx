@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Trophy, Check, Users, Timer, TrendingUp, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ interface ResultState {
 const AuctionResult = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [completedActions, setCompletedActions] = useState<Set<string>>(new Set());
   
   const resultState = location.state as ResultState | null;
 
@@ -37,11 +39,25 @@ const AuctionResult = () => {
   const { vehicle, winningBid, totalBids, averageBid, slaMetTime } = resultState;
 
   const nextActions = [
-    { id: "1", text: "Customer approved quotation", done: false },
-    { id: "2", text: "Confirm sale with winning broker", done: false },
-    { id: "3", text: "Schedule pickup and parking", done: false },
-    { id: "4", text: "Collect documents from customer", done: false },
+    { id: "1", text: "Customer approved quotation" },
+    { id: "2", text: "Confirm sale with winning broker" },
+    { id: "3", text: "Schedule pickup and parking" },
+    { id: "4", text: "Collect documents from customer" },
   ];
+
+  const toggleAction = (actionId: string) => {
+    setCompletedActions((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(actionId)) {
+        newSet.delete(actionId);
+      } else {
+        newSet.add(actionId);
+      }
+      return newSet;
+    });
+  };
+
+  const allActionsCompleted = completedActions.size === nextActions.length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -131,20 +147,28 @@ const AuctionResult = () => {
         <section>
           <h2 className="font-medium text-foreground mb-3">Next Actions</h2>
           <div className="space-y-2">
-            {nextActions.map((action) => (
-              <button
-                key={action.id}
-                className="w-full flex items-center gap-3 p-4 rounded-xl border border-border bg-card text-left"
-              >
-                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                  action.done ? "bg-success border-success" : "border-muted-foreground"
-                }`}>
-                  {action.done && <Check className="w-4 h-4 text-white" />}
-                </div>
-                <span className="flex-1 text-foreground">{action.text}</span>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
-            ))}
+            {nextActions.map((action) => {
+              const isDone = completedActions.has(action.id);
+              return (
+                <button
+                  key={action.id}
+                  onClick={() => toggleAction(action.id)}
+                  className={`w-full flex items-center gap-3 p-4 rounded-xl border bg-card text-left transition-all ${
+                    isDone ? "border-success bg-success/5" : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                    isDone ? "bg-success border-success" : "border-muted-foreground"
+                  }`}>
+                    {isDone && <Check className="w-4 h-4 text-white" />}
+                  </div>
+                  <span className={`flex-1 ${isDone ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                    {action.text}
+                  </span>
+                  {!isDone && <ChevronRight className="w-5 h-5 text-muted-foreground" />}
+                </button>
+              );
+            })}
           </div>
         </section>
 
