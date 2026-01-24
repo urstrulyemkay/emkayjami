@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Video, Square, Check, RotateCcw, ChevronRight, Loader2, SkipForward } from "lucide-react";
+import { ArrowLeft, Video, Square, Check, RotateCcw, ChevronRight, Loader2, SkipForward, Gavel } from "lucide-react";
 import { VideoType, CapturedVideo } from "@/types/inspection";
 import { useStorageUpload } from "@/hooks/useStorageUpload";
 import { supabase } from "@/integrations/supabase/client";
@@ -206,14 +206,35 @@ const VideoCapture = () => {
   const skipAllVideos = () => {
     toast({
       title: "Videos skipped",
-      description: "Proceeding to voice notes",
+      description: "Proceeding to consent & auction",
     });
     handleComplete();
   };
 
   const handleComplete = () => {
-    navigate("/inspection/voice", {
-      state: { ...vehicleData, videos: capturedVideos },
+    // Go directly to consent flow, which leads to auction
+    navigate("/inspection/consent", {
+      state: { 
+        ...vehicleData, 
+        videos: capturedVideos,
+        images: vehicleData?.images || [],
+        defects: vehicleData?.defects || [],
+      },
+    });
+  };
+
+  const handleStartAuction = () => {
+    // Direct path to auction setup
+    navigate("/auction/setup", {
+      state: {
+        registration: vehicleData?.registration,
+        make: vehicleData?.make,
+        model: vehicleData?.model,
+        year: vehicleData?.year,
+        conditionScore: 85, // Mock score for quick testing
+        consentGiven: true,
+        frozenAt: new Date().toISOString(),
+      },
     });
   };
 
@@ -384,10 +405,16 @@ const VideoCapture = () => {
             </Button>
           </div>
         ) : allVideosCaptured ? (
-          <Button onClick={handleComplete} className="w-full h-14 gap-2">
-            Continue to Voice Notes
-            <ChevronRight className="w-5 h-5" />
-          </Button>
+          <div className="flex gap-3">
+            <Button onClick={handleComplete} variant="outline" className="flex-1 h-14 gap-2">
+              Review & Consent
+              <ChevronRight className="w-5 h-5" />
+            </Button>
+            <Button onClick={handleStartAuction} className="flex-1 h-14 gap-2">
+              <Gavel className="w-5 h-5" />
+              Start Auction
+            </Button>
+          </div>
         ) : isRecording ? (
           <Button
             onClick={stopRecording}
