@@ -1,18 +1,19 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { format } from "date-fns";
 import { 
   ArrowLeft, Trophy, Check, Users, Timer, TrendingUp, ChevronRight, 
-  Calendar as CalendarIcon, Clock, Camera, Upload, X, FileText 
+  Calendar as CalendarIcon, Clock, Camera, Upload, X, FileText, Loader2 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Bid } from "@/data/auctionTypes";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useAuctionActions } from "@/hooks/useAuctionActions";
 
 interface ResultState {
   vehicle: {
@@ -26,13 +27,7 @@ interface ResultState {
   averageBid: number;
   slaMetTime: Date | null;
   auctionType: string;
-}
-
-interface CapturedDocument {
-  id: string;
-  name: string;
-  type: "image" | "file";
-  preview?: string;
+  inspectionId?: string;
 }
 
 const AuctionResult = () => {
@@ -42,14 +37,40 @@ const AuctionResult = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   
+  const resultState = location.state as ResultState | null;
+  
+  // Initialize hook with inspectionId from state
+  const {
+    pickupSchedule,
+    documents,
+    isLoading,
+    isSaving,
+    savePickupSchedule,
+    uploadDocument,
+    removeDocument,
+  } = useAuctionActions(resultState?.inspectionId || null);
+  
   const [completedActions, setCompletedActions] = useState<Set<string>>(new Set());
   const [scheduleDate, setScheduleDate] = useState<Date | undefined>();
   const [scheduleTime, setScheduleTime] = useState<string>("");
-  const [documents, setDocuments] = useState<CapturedDocument[]>([]);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [showDocumentsDialog, setShowDocumentsDialog] = useState(false);
-  
-  const resultState = location.state as ResultState | null;
+
+  // Sync completed actions with persisted data
+  useEffect(() => {
+    const newCompleted = new Set<string>();
+    if (pickupSchedule) {
+      newCompleted.add("3");
+      setScheduleDate(pickupSchedule.pickupDate);
+      setScheduleTime(pickupSchedule.pickupTime);
+    }
+    if (documents.length > 0) {
+      newCompleted.add("4");
+    }
+    if (newCompleted.size > 0) {
+      setCompletedActions((prev) => new Set([...prev, ...newCompleted]));
+    }
+  }, [pickupSchedule, documents]);
 
   if (!resultState || !resultState.winningBid) {
     return (
@@ -70,29 +91,26 @@ const AuctionResult = () => {
     "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM",
   ];
 
-  const handleScheduleConfirm = () => {
+  const handleScheduleConfirm = async () => {
     if (scheduleDate && scheduleTime) {
-      setCompletedActions((prev) => new Set(prev).add("3"));
-      setShowScheduleDialog(false);
-      toast({
-        title: "Pickup Scheduled",
-        description: `${format(scheduleDate, "PPP")} at ${scheduleTime}`,
-      });
+      const success = await savePickupSchedule(scheduleDate, scheduleTime);
+      if (success) {
+        setCompletedActions((prev) => new Set(prev).add("3"));
+        setShowScheduleDialog(false);
+        toast({
+          title: "Pickup Scheduled",
+          description: `${format(scheduleDate, "PPP")} at ${scheduleTime}`,
+        });
+      }
     }
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
-      Array.from(files).forEach((file) => {
-        const newDoc: CapturedDocument = {
-          id: `doc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          name: file.name,
-          type: file.type.startsWith("image/") ? "image" : "file",
-          preview: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
-        };
-        setDocuments((prev) => [...prev, newDoc]);
-      });
+      for (const file of Array.from(files)) {
+        await uploadDocument(file);
+      }
       toast({
         title: "Documents Added",
         description: `${files.length} file(s) uploaded`,
@@ -104,17 +122,17 @@ const AuctionResult = () => {
     }
   };
 
-  const handleCameraCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCameraCapture = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files[0]) {
       const file = files[0];
-      const newDoc: CapturedDocument = {
-        id: `doc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        name: `Photo_${format(new Date(), "yyyyMMdd_HHmmss")}.jpg`,
-        type: "image",
-        preview: URL.createObjectURL(file),
-      };
-      setDocuments((prev) => [...prev, newDoc]);
+      // Rename file for camera captures
+      const renamedFile = new File(
+        [file],
+        `Photo_${format(new Date(), "yyyyMMdd_HHmmss")}.jpg`,
+        { type: file.type }
+      );
+      await uploadDocument(renamedFile);
       toast({
         title: "Photo Captured",
         description: "Document photo added",
@@ -126,8 +144,8 @@ const AuctionResult = () => {
     }
   };
 
-  const removeDocument = (docId: string) => {
-    setDocuments((prev) => prev.filter((d) => d.id !== docId));
+  const handleRemoveDocument = async (docId: string) => {
+    await removeDocument(docId);
   };
 
   const handleDocumentsConfirm = () => {
@@ -375,10 +393,17 @@ const AuctionResult = () => {
 
               <Button
                 onClick={handleScheduleConfirm}
-                disabled={!scheduleDate || !scheduleTime}
+                disabled={!scheduleDate || !scheduleTime || isSaving}
                 className="w-full"
               >
-                Confirm Schedule
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Confirm Schedule"
+                )}
               </Button>
             </div>
           </DialogContent>
@@ -415,16 +440,18 @@ const AuctionResult = () => {
                   variant="outline"
                   onClick={() => cameraInputRef.current?.click()}
                   className="flex-1 h-20 flex-col gap-2"
+                  disabled={isSaving}
                 >
-                  <Camera className="w-6 h-6" />
+                  {isSaving ? <Loader2 className="w-6 h-6 animate-spin" /> : <Camera className="w-6 h-6" />}
                   <span className="text-xs">Take Photo</span>
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => fileInputRef.current?.click()}
                   className="flex-1 h-20 flex-col gap-2"
+                  disabled={isSaving}
                 >
-                  <Upload className="w-6 h-6" />
+                  {isSaving ? <Loader2 className="w-6 h-6 animate-spin" /> : <Upload className="w-6 h-6" />}
                   <span className="text-xs">Upload File</span>
                 </Button>
               </div>
@@ -455,10 +482,15 @@ const AuctionResult = () => {
                         {doc.name}
                       </span>
                       <button
-                        onClick={() => removeDocument(doc.id)}
+                        onClick={() => handleRemoveDocument(doc.id)}
                         className="p-1 rounded-full hover:bg-destructive/10"
+                        disabled={isSaving}
                       >
-                        <X className="w-4 h-4 text-destructive" />
+                        {isSaving ? (
+                          <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+                        ) : (
+                          <X className="w-4 h-4 text-destructive" />
+                        )}
                       </button>
                     </div>
                   ))}
