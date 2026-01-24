@@ -21,12 +21,17 @@ import {
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
-interface VehicleState {
-  registration: string;
-  make: string;
-  model: string;
-  year: number;
-  conditionGrade?: string;
+interface InspectionState {
+  registration?: string;
+  make?: string;
+  model?: string;
+  year?: number;
+  conditionScore?: number;
+  consentGiven?: boolean;
+  frozenAt?: string;
+  inspectionId?: string;
+  customerName?: string;
+  customerPhone?: string;
 }
 
 const AuctionSetup = () => {
@@ -34,7 +39,16 @@ const AuctionSetup = () => {
   const location = useLocation();
   const { toast } = useToast();
   
-  const vehicleData = location.state as VehicleState | null;
+  const inspectionState = location.state as InspectionState | null;
+  
+  // Map inspection data to vehicle format for auction
+  const vehicleData = inspectionState ? {
+    registration: inspectionState.registration || "KA-01-AB-1234",
+    make: inspectionState.make || "Honda",
+    model: inspectionState.model || "Activa 6G",
+    year: inspectionState.year || 2023,
+    conditionScore: inspectionState.conditionScore,
+  } : null;
 
   const [selectedAuctionType, setSelectedAuctionType] = useState<AuctionType>("flexible");
   const [selectedDuration, setSelectedDuration] = useState<number>(60);
@@ -78,12 +92,14 @@ const AuctionSetup = () => {
     // Navigate to live auction with config
     navigate("/auction/live", {
       state: {
-        vehicle: vehicleData || {
-          registration: "KA-01-AB-1234",
-          make: "Honda",
-          model: "Activa 6G",
-          year: 2023,
+        vehicle: {
+          registration: vehicleData?.registration || "KA-01-AB-1234",
+          make: vehicleData?.make || "Honda",
+          model: vehicleData?.model || "Activa 6G",
+          year: vehicleData?.year || 2023,
+          conditionScore: vehicleData?.conditionScore,
         },
+        inspection: inspectionState,
         auctionType: selectedAuctionType,
         duration: selectedDuration,
         brokerNetwork: selectedNetwork,
