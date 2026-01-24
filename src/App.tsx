@@ -20,6 +20,7 @@ import AuctionLive from "./pages/AuctionLive";
 import AuctionResult from "./pages/AuctionResult";
 import AuctionsList from "./pages/AuctionsList";
 import DeltaInspection from "./pages/DeltaInspection";
+import DeltaInspectionStepper from "./pages/DeltaInspectionStepper";
 import DeltaComparison from "./pages/DeltaComparison";
 import NotFound from "./pages/NotFound";
 
@@ -156,6 +157,14 @@ const AppRoutes = () => {
       />
       <Route
         path="/inspection/delta"
+        element={
+          <ProtectedRoute>
+            <DeltaInspectionStepper />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inspection/delta-old"
         element={
           <ProtectedRoute>
             <DeltaInspection />
