@@ -31,6 +31,28 @@ const ImageCapture = () => {
   const currentAngle = IMAGE_ANGLES[currentAngleIndex];
   const progress = (capturedImages.length / IMAGE_ANGLES.length) * 100;
 
+  const attachStreamToVideo = useCallback(async () => {
+    const video = videoRef.current;
+    const stream = streamRef.current;
+    if (!video || !stream) return;
+
+    // Re-attach stream (some mobile browsers drop it when toggling preview/img)
+    if (video.srcObject !== stream) {
+      video.srcObject = stream;
+    }
+
+    try {
+      // Ensure playback resumes
+      await video.play();
+    } catch {
+      // Ignore autoplay restrictions; user gesture (capture button) will resume
+    }
+
+    if (video.videoWidth > 0 && video.videoHeight > 0) {
+      setIsCameraReady(true);
+    }
+  }, []);
+
   // Get current user - allow mock user for development
   useEffect(() => {
     const getUser = async () => {
@@ -54,11 +76,12 @@ const ImageCapture = () => {
         });
         streamRef.current = stream;
         if (videoRef.current) {
-          videoRef.current.srcObject = stream;
           videoRef.current.onloadedmetadata = () => {
             setIsCameraReady(true);
           };
         }
+        // Attach and start playback
+        await attachStreamToVideo();
       } catch (err) {
         setCameraError("Unable to access camera. Please grant camera permissions.");
       }
@@ -71,7 +94,14 @@ const ImageCapture = () => {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
     };
-  }, []);
+  }, [attachStreamToVideo]);
+
+  // When we leave preview mode (confirm/retake) or change angles, re-attach camera.
+  useEffect(() => {
+    if (!previewUrl) {
+      void attachStreamToVideo();
+    }
+  }, [previewUrl, currentAngleIndex, attachStreamToVideo]);
 
   // Cleanup preview URL on unmount
   useEffect(() => {
@@ -83,7 +113,20 @@ const ImageCapture = () => {
   }, [previewUrl]);
 
   const captureImage = useCallback(async () => {
-    if (!videoRef.current || !canvasRef.current || !isCameraReady) return;
+    if (!videoRef.current || !canvasRef.current) return;
+
+    // Ensure camera is attached + playing before capturing
+    if (!isCameraReady) {
+      await attachStreamToVideo();
+    }
+    if (!videoRef.current.videoWidth || !videoRef.current.videoHeight) {
+      toast({
+        title: "Camera not ready",
+        description: "Please wait a moment and try again.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -100,7 +143,7 @@ const ImageCapture = () => {
         }
       }, "image/jpeg", 0.9);
     }
-  }, [isCameraReady]);
+  }, [isCameraReady, attachStreamToVideo, toast]);
 
   const confirmImage = useCallback(async () => {
     if (!previewBlob) {
@@ -170,7 +213,9 @@ const ImageCapture = () => {
     }
     setPreviewBlob(null);
     setPreviewUrl(null);
-  }, [previewUrl]);
+    // Ensure camera resumes immediately
+    void attachStreamToVideo();
+  }, [previewUrl, attachStreamToVideo]);
 
   const skipToNext = () => {
     if (currentAngleIndex < IMAGE_ANGLES.length - 1) {
