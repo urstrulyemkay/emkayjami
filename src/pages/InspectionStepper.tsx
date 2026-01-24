@@ -3,10 +3,10 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Camera, Video, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StepperProgress } from "@/components/inspection/StepperProgress";
-import { CheckpointCard } from "@/components/inspection/CheckpointCard";
+import { SimpleCheckpointCard } from "@/components/inspection/SimpleCheckpointCard";
+import { SectionVoiceRecorder } from "@/components/inspection/SectionVoiceRecorder";
 import {
   INSPECTION_STEPS,
-  InspectionStep,
   calculateStepCompletion,
   calculateOverallCompletion,
 } from "@/data/inspectionCheckpoints";
@@ -35,7 +35,7 @@ const InspectionStepper = () => {
   const [responses, setResponses] = useState<Record<string, string>>({});
   const [voiceNotes, setVoiceNotes] = useState<Record<string, string>>({});
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-  const [recordingCheckpointId, setRecordingCheckpointId] = useState<string | null>(null);
+  const [sectionTranscripts, setSectionTranscripts] = useState<Record<number, string>>({});
 
   // Redirect if no vehicle data
   useEffect(() => {
@@ -55,43 +55,19 @@ const InspectionStepper = () => {
     }));
   }, []);
 
-  const handleVoiceNote = useCallback((checkpointId: string, note: string) => {
-    setVoiceNotes((prev) => ({
+  const handleVoiceAutoFill = useCallback((checkpointId: string, value: string) => {
+    setResponses((prev) => ({
       ...prev,
-      [checkpointId]: note,
+      [checkpointId]: value,
     }));
   }, []);
 
-  const handleStartRecording = useCallback((checkpointId: string) => {
-    setRecordingCheckpointId(checkpointId);
-    // Mock recording - in production would use ElevenLabs Scribe
-    toast({
-      title: "Recording started",
-      description: "Speak your notes clearly",
-    });
-  }, [toast]);
-
-  const handleStopRecording = useCallback(() => {
-    if (recordingCheckpointId) {
-      // Mock transcription result
-      const mockTranscripts = [
-        "Engine appears to be in good condition with no visible leaks",
-        "Minor scratches on the left side panel",
-        "Battery seems weak, may need replacement soon",
-        "Tyres have adequate tread depth",
-        "All lights and indicators working properly",
-      ];
-      const randomTranscript = mockTranscripts[Math.floor(Math.random() * mockTranscripts.length)];
-      
-      handleVoiceNote(recordingCheckpointId, randomTranscript);
-      setRecordingCheckpointId(null);
-      
-      toast({
-        title: "Note recorded",
-        description: "Voice note has been transcribed",
-      });
-    }
-  }, [recordingCheckpointId, handleVoiceNote, toast]);
+  const handleTranscriptReceived = useCallback((transcript: string) => {
+    setSectionTranscripts((prev) => ({
+      ...prev,
+      [currentStep]: (prev[currentStep] || "") + " " + transcript,
+    }));
+  }, [currentStep]);
 
   const canProceed = () => {
     const requiredCheckpoints = currentStepData.checkpoints.filter((c) => c.required);
@@ -123,6 +99,7 @@ const InspectionStepper = () => {
           ...vehicleData,
           checkpointResponses: responses,
           voiceNotes,
+          sectionTranscripts,
         },
       });
     }
@@ -172,20 +149,26 @@ const InspectionStepper = () => {
         completedSteps={completedSteps}
       />
 
+      {/* Section Voice Recorder - At the top of checkpoints */}
+      <div className="px-4 pt-4">
+        <SectionVoiceRecorder
+          stepTitle={currentStepData.shortTitle}
+          checkpoints={currentStepData.checkpoints}
+          responses={responses}
+          onAutoFill={handleVoiceAutoFill}
+          onTranscriptReceived={handleTranscriptReceived}
+        />
+      </div>
+
       {/* Checkpoints */}
       <div className="flex-1 overflow-auto px-4 py-4">
-        <div className="space-y-4">
+        <div className="space-y-3">
           {currentStepData.checkpoints.map((checkpoint) => (
-            <CheckpointCard
+            <SimpleCheckpointCard
               key={checkpoint.id}
               checkpoint={checkpoint}
               selectedValue={responses[checkpoint.id]}
-              voiceNote={voiceNotes[checkpoint.id]}
               onSelect={(value) => handleSelectOption(checkpoint.id, value)}
-              onVoiceNote={(note) => handleVoiceNote(checkpoint.id, note)}
-              isRecording={recordingCheckpointId === checkpoint.id}
-              onStartRecording={() => handleStartRecording(checkpoint.id)}
-              onStopRecording={handleStopRecording}
             />
           ))}
         </div>
