@@ -113,7 +113,7 @@ const MOCK_PAST_AUCTIONS: Auction[] = [
   },
 ];
 
-// Mock data for pending delta inspections
+// Mock data for pending delta inspections with full original responses
 const MOCK_PENDING_VEHICLES: PendingVehicle[] = [
   {
     id: "pending-001",
@@ -121,11 +121,49 @@ const MOCK_PENDING_VEHICLES: PendingVehicle[] = [
     firstInspectionDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
     daysWithCustomer: 7,
     originalResponses: {
+      // Step 1: Vehicle Basics
       "vb_owner_name": "verified",
       "vb_chassis_match": "matches",
-      "eng_oil": "dark",
-      "body_dents": "minor",
-      "susp_front_tyre": "worn",
+      "vb_engine_match": "matches",
+      "vb_odometer": "genuine",
+      // Step 2: Engine
+      "eng_start": "easy_start",
+      "eng_idle": "stable",
+      "eng_sounds": "none",
+      "eng_oil": "dark", // Issue
+      "eng_air_filter": "dusty",
+      "eng_exhaust": "none",
+      "eng_transmission": "smooth",
+      // Step 3: Body
+      "body_paint": "good",
+      "body_rust": "none",
+      "body_dents": "minor", // Issue
+      "body_fairing": "intact",
+      "body_seat": "good",
+      "body_mirrors": "both_ok",
+      // Step 4: Electronics
+      "elec_headlight": "working",
+      "elec_taillight": "working",
+      "elec_indicators": "all_working",
+      "elec_horn": "working",
+      "elec_battery": "strong",
+      "elec_speedo": "working",
+      "elec_wiring": "intact",
+      // Step 5: Suspension
+      "susp_front": "smooth",
+      "susp_rear": "smooth",
+      "susp_front_brake": "responsive",
+      "susp_rear_brake": "responsive",
+      "susp_steering": "smooth",
+      "susp_front_tyre": "worn", // Issue
+      "susp_rear_tyre": "good",
+      // Step 6: Summary
+      "doc_rc": "present_valid",
+      "doc_insurance": "valid",
+      "doc_pollution": "valid",
+      "doc_loan": "clear",
+      "doc_challans": "none",
+      "overall_grade": "good",
     },
     originalIssues: [
       { checkpointId: "eng_oil", severity: "minor", stepId: 2, question: "Oil condition?", originalValue: "Dark" },
@@ -139,10 +177,45 @@ const MOCK_PENDING_VEHICLES: PendingVehicle[] = [
     firstInspectionDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
     daysWithCustomer: 5,
     originalResponses: {
+      // Step 1: Vehicle Basics
       "vb_owner_name": "verified",
-      "eng_exhaust": "white",
-      "elec_battery": "weak",
-      "body_paint": "faded",
+      "vb_chassis_match": "matches",
+      "vb_engine_match": "matches",
+      "vb_odometer": "genuine",
+      // Step 2: Engine
+      "eng_start": "easy_start",
+      "eng_idle": "stable",
+      "eng_sounds": "none",
+      "eng_oil": "clean",
+      "eng_exhaust": "white", // Issue
+      "eng_transmission": "smooth",
+      // Step 3: Body
+      "body_paint": "faded", // Issue
+      "body_rust": "none",
+      "body_dents": "none",
+      "body_fairing": "intact",
+      "body_seat": "good",
+      "body_mirrors": "both_ok",
+      // Step 4: Electronics
+      "elec_headlight": "working",
+      "elec_taillight": "working",
+      "elec_indicators": "all_working",
+      "elec_horn": "working",
+      "elec_battery": "weak", // Issue
+      "elec_speedo": "working",
+      // Step 5: Suspension
+      "susp_front": "smooth",
+      "susp_rear": "smooth",
+      "susp_front_brake": "responsive",
+      "susp_rear_brake": "responsive",
+      "susp_steering": "smooth",
+      "susp_front_tyre": "good",
+      "susp_rear_tyre": "good",
+      // Step 6: Summary
+      "doc_rc": "present_valid",
+      "doc_insurance": "valid",
+      "doc_pollution": "valid",
+      "doc_loan": "clear",
     },
     originalIssues: [
       { checkpointId: "eng_exhaust", severity: "minor", stepId: 2, question: "Exhaust smoke?", originalValue: "White smoke" },
@@ -156,8 +229,45 @@ const MOCK_PENDING_VEHICLES: PendingVehicle[] = [
     firstInspectionDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
     daysWithCustomer: 3,
     originalResponses: {
-      "eng_sounds": "minor",
-      "susp_rear": "creaky",
+      // Step 1: Vehicle Basics
+      "vb_owner_name": "verified",
+      "vb_chassis_match": "matches",
+      "vb_engine_match": "matches",
+      "vb_odometer": "genuine",
+      // Step 2: Engine
+      "eng_start": "easy_start",
+      "eng_idle": "stable",
+      "eng_sounds": "minor", // Issue
+      "eng_oil": "clean",
+      "eng_exhaust": "none",
+      "eng_transmission": "smooth",
+      // Step 3: Body
+      "body_paint": "excellent",
+      "body_rust": "none",
+      "body_dents": "none",
+      "body_fairing": "intact",
+      "body_seat": "good",
+      "body_mirrors": "both_ok",
+      // Step 4: Electronics
+      "elec_headlight": "working",
+      "elec_taillight": "working",
+      "elec_indicators": "all_working",
+      "elec_horn": "working",
+      "elec_battery": "strong",
+      "elec_speedo": "working",
+      // Step 5: Suspension
+      "susp_front": "smooth",
+      "susp_rear": "creaky", // Issue
+      "susp_front_brake": "responsive",
+      "susp_rear_brake": "responsive",
+      "susp_steering": "smooth",
+      "susp_front_tyre": "good",
+      "susp_rear_tyre": "good",
+      // Step 6: Summary
+      "doc_rc": "present_valid",
+      "doc_insurance": "valid",
+      "doc_pollution": "valid",
+      "doc_loan": "clear",
     },
     originalIssues: [
       { checkpointId: "eng_sounds", severity: "minor", stepId: 2, question: "Unusual engine sounds?", originalValue: "Minor sounds" },
