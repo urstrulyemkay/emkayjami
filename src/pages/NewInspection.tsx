@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Bike, Search, AlertTriangle, User, Loader2 } from "lucide-react";
+import { ArrowLeft, Bike, Search, AlertTriangle, User, Loader2, Zap } from "lucide-react";
 import {
   VEHICLE_MAKES,
   VEHICLE_MODELS,
@@ -99,6 +99,33 @@ const NewInspection = () => {
     setIsSearching(false);
   };
 
+  // Auto-fill all fields for testing
+  const handleAutoFillTest = () => {
+    const testNames = ["Rahul", "Amit", "Priya", "Vikram", "Sneha"];
+    const testPhones = ["9876543210", "8765432109", "7654321098", "9988776655", "8877665544"];
+    const testRegs = ["KA-01-AB-1234", "MH-02-CD-5678", "DL-03-EF-9012", "TN-04-GH-3456"];
+    const testMakes = ["Honda", "TVS", "Bajaj", "Yamaha", "Royal Enfield"];
+    
+    const randomMake = testMakes[Math.floor(Math.random() * testMakes.length)];
+    const modelsForMake = getModelsByMake(randomMake);
+    const randomModel = modelsForMake.length > 0 ? modelsForMake[Math.floor(Math.random() * modelsForMake.length)] : null;
+    
+    setCustomerName(testNames[Math.floor(Math.random() * testNames.length)]);
+    setCustomerPhone(testPhones[Math.floor(Math.random() * testPhones.length)]);
+    setRegistration(testRegs[Math.floor(Math.random() * testRegs.length)]);
+    setSelectedMake(randomMake);
+    setSelectedModel(randomModel?.model || "");
+    setSelectedYear((2020 + Math.floor(Math.random() * 5)).toString());
+    setSelectedColor(VEHICLE_COLORS[Math.floor(Math.random() * VEHICLE_COLORS.length)]);
+    setOdometerReading((5000 + Math.floor(Math.random() * 50000)).toString());
+    setVehicleFound(true);
+    
+    toast({
+      title: "Test data filled",
+      description: "All fields auto-filled for testing",
+    });
+  };
+
   const handleCreateNew = () => {
     setShowDuplicateWarning(false);
     setVehicleFound(true);
@@ -165,15 +192,25 @@ const NewInspection = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="flex items-center gap-4 px-6 pt-12 pb-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"
+      <header className="flex items-center justify-between px-6 pt-12 pb-6">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"
+          >
+            <ArrowLeft className="w-5 h-5 text-foreground" />
+          </button>
+          <h1 className="text-xl font-semibold text-foreground">New Inspection</h1>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleAutoFillTest}
+          className="gap-1 text-xs border-warning/50 text-warning hover:bg-warning/10"
         >
-          <ArrowLeft className="w-5 h-5 text-foreground" />
-        </button>
-        <h1 className="text-xl font-semibold text-foreground">New Inspection</h1>
+          <Zap className="w-3.5 h-3.5" />
+          Auto-Fill
+        </Button>
       </header>
 
       <div className="px-6 pb-8 space-y-6">
