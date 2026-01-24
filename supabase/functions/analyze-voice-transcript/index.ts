@@ -53,27 +53,36 @@ Deno.serve(async (req) => {
       );
     }
 
-    const systemPrompt = `You are an expert vehicle inspection assistant. Analyze the spoken transcript from a vehicle inspector and determine which inspection checkpoints can be filled based on what was said.
+    const systemPrompt = `You are an expert vehicle inspection assistant. Analyze the spoken transcript from a vehicle inspector using EXCEPTION-BASED logic.
 
-For each checkpoint, select the most appropriate option value based on the inspector's words. Only include checkpoints that are clearly mentioned or implied in the transcript.
+KEY INSIGHT: Inspectors only mention PROBLEMS. If something is NOT mentioned, it means it's OK/Good.
+
+Your task:
+1. Identify which checkpoints have ISSUES mentioned in the transcript
+2. For those with issues, return the appropriate problem severity option
+3. Return ONLY the checkpoints that have issues/problems mentioned
 
 IMPORTANT:
 - Return ONLY a valid JSON object with checkpoint IDs as keys and option values as values
-- Only include checkpoints where you have reasonable confidence from the transcript
+- ONLY include checkpoints where the inspector mentioned a PROBLEM or ISSUE
+- If something is described as "not available", "missing", "damaged", "not working", etc., include it with the appropriate severity
+- Do NOT include checkpoints that are working fine - those will be auto-filled as OK
 - Use exact option values (not labels)
-- If the transcript mentions something is "ok", "good", "fine", "working", etc., select the positive option
-- If damage, issues, or problems are mentioned, select the appropriate severity option
+
+Example: If inspector says "chassis number is not visible, everything else is fine"
+- Return: {"vb_chassis_match": "not_visible"} 
+- Do NOT include other fields - they will be auto-marked as OK
 
 Example output format:
-{"eng_start": "easy_start", "eng_oil": "clean", "body_paint": "good"}`;
+{"eng_oil": "low", "body_paint": "minor_scratches"}`;
 
     const userPrompt = `TRANSCRIPT FROM INSPECTOR:
 "${transcript}"
 
-CHECKPOINTS TO ANALYZE:
+CHECKPOINTS TO ANALYZE (only return ones with ISSUES mentioned):
 ${checkpointDescriptions}
 
-Based on the transcript above, return a JSON object mapping checkpoint IDs to the appropriate option values. Only include checkpoints that are mentioned or clearly implied.`;
+Remember: Inspector only calls out problems. Return ONLY checkpoints with issues mentioned. All other checkpoints will be auto-filled as OK.`;
 
     // Call Lovable AI Gateway
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -130,24 +139,49 @@ Based on the transcript above, return a JSON object mapping checkpoint IDs to th
       mappings = {};
     }
 
-    // Validate mappings - ensure values match actual options
-    const validatedMappings: Record<string, string> = {};
+    // Validate AI-detected issue mappings
+    const issueMappings: Record<string, string> = {};
     for (const [checkpointId, value] of Object.entries(mappings)) {
       const checkpoint = checkpoints.find(cp => cp.id === checkpointId);
       if (checkpoint) {
         const validOption = checkpoint.options.find(o => o.value === value);
         if (validOption) {
-          validatedMappings[checkpointId] = value;
+          issueMappings[checkpointId] = value;
         }
       }
     }
 
-    console.log("Validated mappings:", validatedMappings);
+    console.log("AI detected issues:", issueMappings);
+
+    // Now auto-fill ALL unfilled checkpoints with their "ok" option (best case)
+    // Exception: if AI detected an issue, use that instead
+    const finalMappings: Record<string, string> = {};
+    const unfilledCheckpoints = checkpoints.filter(cp => !existingResponses[cp.id]);
+    
+    for (const checkpoint of unfilledCheckpoints) {
+      if (issueMappings[checkpoint.id]) {
+        // AI detected an issue - use that
+        finalMappings[checkpoint.id] = issueMappings[checkpoint.id];
+      } else {
+        // No issue mentioned - default to OK/best option
+        const okOption = checkpoint.options.find(o => o.severity === "ok") || checkpoint.options[0];
+        if (okOption) {
+          finalMappings[checkpoint.id] = okOption.value;
+        }
+      }
+    }
+
+    const issueCount = Object.keys(issueMappings).length;
+    const okCount = Object.keys(finalMappings).length - issueCount;
+    
+    console.log(`Final mappings: ${issueCount} issues detected, ${okCount} auto-filled as OK`);
 
     return new Response(
       JSON.stringify({ 
-        mappings: validatedMappings,
-        count: Object.keys(validatedMappings).length,
+        mappings: finalMappings,
+        issueCount,
+        okCount,
+        totalFilled: Object.keys(finalMappings).length,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
