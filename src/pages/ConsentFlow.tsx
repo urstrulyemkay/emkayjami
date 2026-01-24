@@ -11,7 +11,8 @@ import {
   AlertCircle,
   Phone,
   Send,
-  Gavel
+  Gavel,
+  Zap
 } from "lucide-react";
 
 const ConsentFlow = () => {
@@ -76,33 +77,61 @@ const ConsentFlow = () => {
     navigate("/", { replace: true });
   };
 
+  // Skip consent for testing/QA purposes
+  const handleSkipConsent = () => {
+    navigate("/auction/setup", { 
+      state: { 
+        ...inspectionData,
+        conditionScore,
+        consentGiven: true,
+        consentSkipped: true, // Flag for testing
+        frozenAt: new Date().toISOString(),
+      },
+      replace: true 
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="flex items-center gap-4 px-6 pt-12 pb-6">
-        {step !== "confirm" && (
-          <button
-            onClick={() => {
-              if (step === "phone") navigate(-1);
-              else if (step === "otp") setStep("phone");
-              else if (step === "review") setStep("otp");
-            }}
-            className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"
-          >
-            <ArrowLeft className="w-5 h-5 text-foreground" />
-          </button>
-        )}
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">
-            {step === "confirm" ? "Consent Recorded" : "Customer Consent"}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {step === "phone" && "Verify customer phone number"}
-            {step === "otp" && "Enter OTP sent to customer"}
-            {step === "review" && "Review and confirm inspection report"}
-            {step === "confirm" && "Inspection frozen and secured"}
-          </p>
+      <header className="flex items-center justify-between px-6 pt-12 pb-6">
+        <div className="flex items-center gap-4">
+          {step !== "confirm" && (
+            <button
+              onClick={() => {
+                if (step === "phone") navigate(-1);
+                else if (step === "otp") setStep("phone");
+                else if (step === "review") setStep("otp");
+              }}
+              className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"
+            >
+              <ArrowLeft className="w-5 h-5 text-foreground" />
+            </button>
+          )}
+          <div>
+            <h1 className="text-xl font-semibold text-foreground">
+              {step === "confirm" ? "Consent Recorded" : "Customer Consent"}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {step === "phone" && "Verify customer phone number"}
+              {step === "otp" && "Enter OTP sent to customer"}
+              {step === "review" && "Review and confirm inspection report"}
+              {step === "confirm" && "Inspection frozen and secured"}
+            </p>
+          </div>
         </div>
+        {/* Skip button for testing */}
+        {step !== "confirm" && (
+          <Button
+            onClick={handleSkipConsent}
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2 text-xs gap-1 text-warning hover:text-warning hover:bg-warning/10"
+          >
+            <Zap className="w-3 h-3" />
+            Skip
+          </Button>
+        )}
       </header>
 
       <div className="px-6 pb-8">
