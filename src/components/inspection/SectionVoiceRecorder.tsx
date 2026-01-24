@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Loader2, Sparkles, Volume2 } from "lucide-react";
+import { Mic, MicOff, Loader2, Sparkles, Volume2, CheckCircle2, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -12,15 +12,68 @@ interface SectionVoiceRecorderProps {
   responses: Record<string, string>;
   onAutoFill: (checkpointId: string, value: string) => void;
   onTranscriptReceived?: (transcript: string) => void;
+  onMarkAllGood?: () => void;
+  onAutoFillTest?: () => void;
 }
 
 // Keywords to match for auto-filling
 const SEVERITY_KEYWORDS: Record<string, string[]> = {
-  ok: ["ok", "good", "fine", "working", "smooth", "clean", "intact", "excellent", "present", "valid", "verified", "matches", "genuine", "responsive", "stable", "strong", "clear", "none", "all working"],
+  ok: ["ok", "okay", "good", "fine", "working", "smooth", "clean", "intact", "excellent", "present", "valid", "verified", "matches", "genuine", "responsive", "stable", "strong", "clear", "none", "all working", "yes", "perfect", "great"],
   minor: ["minor", "slight", "small", "little", "worn", "faded", "dusty", "weak", "soft", "dim", "rough", "dark", "creaky", "expired", "tight"],
   major: ["major", "bad", "damaged", "broken", "failing", "cracked", "missing", "corroded", "leaking", "clogged", "severe", "not working", "bald", "grinding", "loose", "exposed"],
   critical: ["critical", "dangerous", "unsafe", "dead", "seized", "tampered", "mismatch", "does not match", "milky", "contaminated", "bent", "stalling"],
 };
+
+// SpeechRecognition types for Web Speech API
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionResultList {
+  length: number;
+  item(index: number): SpeechRecognitionResult;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionResult {
+  isFinal: boolean;
+  length: number;
+  item(index: number): SpeechRecognitionAlternative;
+  [index: number]: SpeechRecognitionAlternative;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+}
+
+interface SpeechRecognitionInstance extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  onstart: ((this: SpeechRecognitionInstance, ev: Event) => void) | null;
+  onresult: ((this: SpeechRecognitionInstance, ev: SpeechRecognitionEvent) => void) | null;
+  onerror: ((this: SpeechRecognitionInstance, ev: SpeechRecognitionErrorEvent) => void) | null;
+  onend: ((this: SpeechRecognitionInstance, ev: Event) => void) | null;
+}
+
+interface SpeechRecognitionConstructor {
+  new(): SpeechRecognitionInstance;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: SpeechRecognitionConstructor;
+    webkitSpeechRecognition: SpeechRecognitionConstructor;
+  }
+}
 
 export function SectionVoiceRecorder({
   stepTitle,
@@ -28,6 +81,8 @@ export function SectionVoiceRecorder({
   responses,
   onAutoFill,
   onTranscriptReceived,
+  onMarkAllGood,
+  onAutoFillTest,
 }: SectionVoiceRecorderProps) {
   const { toast } = useToast();
   const [isRecording, setIsRecording] = useState(false);
@@ -35,11 +90,12 @@ export function SectionVoiceRecorder({
   const [partialTranscript, setPartialTranscript] = useState("");
   const [fullTranscript, setFullTranscript] = useState("");
   const [recordingTime, setRecordingTime] = useState(0);
+  const [usingFallback, setUsingFallback] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -70,6 +126,7 @@ export function SectionVoiceRecorder({
 
   const parseTranscriptAndAutoFill = useCallback((transcript: string) => {
     const lowerTranscript = transcript.toLowerCase();
+    let filledCount = 0;
     
     // Check each checkpoint for potential matches
     checkpoints.forEach((checkpoint) => {
@@ -125,19 +182,91 @@ export function SectionVoiceRecorder({
 
         if (matchedOption) {
           onAutoFill(checkpoint.id, matchedOption.value);
-          toast({
-            title: "Auto-filled",
-            description: `${checkpoint.question.slice(0, 30)}... → ${matchedOption.label}`,
-          });
+          filledCount++;
         }
       }
     });
+
+    if (filledCount > 0) {
+      toast({
+        title: `Auto-filled ${filledCount} field${filledCount > 1 ? "s" : ""}`,
+        description: "Voice input matched checkpoint responses",
+      });
+    }
   }, [checkpoints, responses, onAutoFill, toast]);
+
+  // Fallback to Web Speech API
+  const startWebSpeechRecognition = useCallback(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      toast({
+        title: "Not supported",
+        description: "Speech recognition is not supported in this browser",
+        variant: "destructive",
+      });
+      setIsConnecting(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-IN";
+
+    recognition.onstart = () => {
+      setIsRecording(true);
+      setIsConnecting(false);
+      setUsingFallback(true);
+    };
+
+    recognition.onresult = (event) => {
+      let interim = "";
+      let final = "";
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          final += transcript;
+        } else {
+          interim += transcript;
+        }
+      }
+
+      setPartialTranscript(interim);
+      
+      if (final) {
+        setFullTranscript((prev) => prev + " " + final);
+        parseTranscriptAndAutoFill(final);
+        onTranscriptReceived?.(final);
+      }
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error:", event.error);
+      if (event.error !== "no-speech") {
+        toast({
+          title: "Recognition error",
+          description: `Error: ${event.error}`,
+          variant: "destructive",
+        });
+      }
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+      setIsConnecting(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  }, [parseTranscriptAndAutoFill, onTranscriptReceived, toast]);
 
   const startRecording = async () => {
     setIsConnecting(true);
     setFullTranscript("");
     setPartialTranscript("");
+    setUsingFallback(false);
 
     try {
       // Get Scribe token from edge function
@@ -161,7 +290,21 @@ export function SectionVoiceRecorder({
       const ws = new WebSocket("wss://api.elevenlabs.io/v1/speech-to-text/realtime");
       wsRef.current = ws;
 
+      // Set a timeout to fallback if connection takes too long
+      const connectionTimeout = setTimeout(() => {
+        if (!isRecording) {
+          console.log("ElevenLabs connection timeout, falling back to Web Speech API");
+          ws.close();
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach((track) => track.stop());
+          }
+          startWebSpeechRecognition();
+        }
+      }, 5000);
+
       ws.onopen = () => {
+        clearTimeout(connectionTimeout);
+        
         // Send authentication with token
         ws.send(JSON.stringify({
           type: "auth",
@@ -235,31 +378,37 @@ export function SectionVoiceRecorder({
 
       ws.onerror = (error) => {
         console.error("WebSocket error:", error);
+        clearTimeout(connectionTimeout);
         stopRecording();
-        toast({
-          title: "Connection error",
-          description: "Failed to connect to transcription service",
-          variant: "destructive",
-        });
+        
+        // Fallback to Web Speech API
+        console.log("Falling back to Web Speech API");
+        startWebSpeechRecognition();
       };
 
       ws.onclose = () => {
-        setIsRecording(false);
-        setIsConnecting(false);
+        clearTimeout(connectionTimeout);
+        if (!usingFallback) {
+          setIsRecording(false);
+          setIsConnecting(false);
+        }
       };
 
     } catch (error) {
       console.error("Error starting recording:", error);
-      setIsConnecting(false);
-      toast({
-        title: "Recording failed",
-        description: error instanceof Error ? error.message : "Unable to start recording",
-        variant: "destructive",
-      });
+      // Fallback to Web Speech API
+      console.log("Falling back to Web Speech API due to error");
+      startWebSpeechRecognition();
     }
   };
 
   const stopRecording = useCallback(() => {
+    // Stop Web Speech API if using fallback
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+
     // Close WebSocket
     if (wsRef.current) {
       wsRef.current.close();
@@ -299,7 +448,10 @@ export function SectionVoiceRecorder({
           </div>
           <div>
             <p className="text-sm font-semibold text-foreground">Voice Auto-Fill</p>
-            <p className="text-xs text-muted-foreground">Speak to fill {stepTitle} fields</p>
+            <p className="text-xs text-muted-foreground">
+              Speak to fill {stepTitle} fields
+              {usingFallback && " (Browser API)"}
+            </p>
           </div>
         </div>
         {isRecording && (
@@ -307,6 +459,32 @@ export function SectionVoiceRecorder({
             <div className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
             <span className="text-xs font-medium text-destructive">{formatTime(recordingTime)}</span>
           </div>
+        )}
+      </div>
+
+      {/* Quick Actions */}
+      <div className="flex gap-2 mb-3">
+        {onMarkAllGood && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 text-xs gap-1 h-9 border-success/50 text-success hover:bg-success/10"
+            onClick={onMarkAllGood}
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            Mark All Good
+          </Button>
+        )}
+        {onAutoFillTest && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 text-xs gap-1 h-9 border-warning/50 text-warning hover:bg-warning/10"
+            onClick={onAutoFillTest}
+          >
+            <Zap className="w-3.5 h-3.5" />
+            Auto-Fill (Test)
+          </Button>
         )}
       </div>
 

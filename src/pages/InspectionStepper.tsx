@@ -69,6 +69,51 @@ const InspectionStepper = () => {
     }));
   }, [currentStep]);
 
+  // Mark all checkpoints in current step as "OK/Good"
+  const handleMarkAllGood = useCallback(() => {
+    const newResponses: Record<string, string> = {};
+    
+    currentStepData.checkpoints.forEach((checkpoint) => {
+      // Find the "OK" or first option with severity "ok"
+      const okOption = checkpoint.options.find((opt) => opt.severity === "ok") || checkpoint.options[0];
+      if (okOption) {
+        newResponses[checkpoint.id] = okOption.value;
+      }
+    });
+
+    setResponses((prev) => ({ ...prev, ...newResponses }));
+    toast({
+      title: "All marked as Good",
+      description: `${currentStepData.checkpoints.length} fields filled`,
+    });
+  }, [currentStepData.checkpoints, toast]);
+
+  // Auto-fill with random realistic values for testing
+  const handleAutoFillTest = useCallback(() => {
+    const newResponses: Record<string, string> = {};
+    
+    currentStepData.checkpoints.forEach((checkpoint) => {
+      // 70% chance of OK, 20% minor, 8% major, 2% critical
+      const rand = Math.random();
+      let targetSeverity: "ok" | "minor" | "major" | "critical" = "ok";
+      
+      if (rand > 0.98) targetSeverity = "critical";
+      else if (rand > 0.90) targetSeverity = "major";
+      else if (rand > 0.70) targetSeverity = "minor";
+      
+      const matchingOption = checkpoint.options.find((opt) => opt.severity === targetSeverity);
+      const fallbackOption = checkpoint.options.find((opt) => opt.severity === "ok") || checkpoint.options[0];
+      
+      newResponses[checkpoint.id] = (matchingOption || fallbackOption).value;
+    });
+
+    setResponses((prev) => ({ ...prev, ...newResponses }));
+    toast({
+      title: "Test data filled",
+      description: `${currentStepData.checkpoints.length} fields auto-filled with realistic values`,
+    });
+  }, [currentStepData.checkpoints, toast]);
+
   const canProceed = () => {
     const requiredCheckpoints = currentStepData.checkpoints.filter((c) => c.required);
     return requiredCheckpoints.every((c) => responses[c.id] !== undefined);
@@ -157,6 +202,8 @@ const InspectionStepper = () => {
           responses={responses}
           onAutoFill={handleVoiceAutoFill}
           onTranscriptReceived={handleTranscriptReceived}
+          onMarkAllGood={handleMarkAllGood}
+          onAutoFillTest={handleAutoFillTest}
         />
       </div>
 
