@@ -10,7 +10,8 @@ import {
   CheckCircle2, 
   AlertCircle,
   Phone,
-  Send 
+  Send,
+  Gavel
 } from "lucide-react";
 
 const ConsentFlow = () => {
@@ -58,7 +59,20 @@ const ConsentFlow = () => {
     setStep("confirm");
   };
 
-  const handleComplete = () => {
+  const handleLaunchAuction = () => {
+    // Navigate to auction setup with inspection data
+    navigate("/auction/setup", { 
+      state: { 
+        ...inspectionData,
+        conditionScore,
+        consentGiven: true,
+        frozenAt: new Date().toISOString(),
+      },
+      replace: true 
+    });
+  };
+
+  const handleBackToDashboard = () => {
     navigate("/", { replace: true });
   };
 
@@ -257,7 +271,7 @@ const ConsentFlow = () => {
           </div>
         )}
 
-        {/* Confirmation Step */}
+        {/* Confirmation Step - Updated with Auction Launch */}
         {step === "confirm" && (
           <div className="space-y-6 text-center">
             <div className="w-20 h-20 rounded-full bg-success/10 flex items-center justify-center mx-auto">
@@ -289,9 +303,26 @@ const ConsentFlow = () => {
               </p>
             </div>
 
-            <Button onClick={handleComplete} className="w-full h-14">
-              Back to Dashboard
-            </Button>
+            {/* Auction Launch CTA */}
+            <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+              <Gavel className="w-8 h-8 text-primary mx-auto mb-2" />
+              <p className="text-sm font-medium text-foreground mb-1">
+                Ready to Sell?
+              </p>
+              <p className="text-xs text-muted-foreground mb-3">
+                Launch an auction to get the best price from verified brokers
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <Button onClick={handleLaunchAuction} className="w-full h-14 gap-2">
+                <Gavel className="w-5 h-5" />
+                Launch Auction
+              </Button>
+              <Button onClick={handleBackToDashboard} variant="outline" className="w-full h-12">
+                Back to Dashboard
+              </Button>
+            </div>
           </div>
         )}
       </div>
