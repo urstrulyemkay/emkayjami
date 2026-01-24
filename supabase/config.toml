@@ -1,1 +1,7 @@
 project_id = "fmrnhcjntvwidbbkbiby"
+
+[functions.elevenlabs-scribe-token]
+verify_jwt = false
+
+[functions.analyze-voice-transcript]
+verify_jwt = false

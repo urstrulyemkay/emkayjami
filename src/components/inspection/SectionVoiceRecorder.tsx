@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Loader2, Sparkles, Volume2, CheckCircle2, Zap } from "lucide-react";
+import { Mic, MicOff, Loader2, Sparkles, Volume2, CheckCircle2, Zap, Brain } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -88,12 +88,14 @@ export function SectionVoiceRecorder({
   const { toast } = useToast();
   const [isRecording, setIsRecording] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [partialTranscript, setPartialTranscript] = useState("");
   const [fullTranscript, setFullTranscript] = useState("");
   const [recordingTime, setRecordingTime] = useState(0);
   const [usingFallback, setUsingFallback] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const transcriptRef = useRef<string>("");
 
   // Official ElevenLabs client (more reliable than manual WebSocket handling)
   const scribe = useScribe({
@@ -106,9 +108,10 @@ export function SectionVoiceRecorder({
     onCommittedTranscript: (data: any) => {
       const text = data?.text || "";
       if (!text) return;
-      setFullTranscript((prev) => (prev + " " + text).trim());
+      const newTranscript = (transcriptRef.current + " " + text).trim();
+      transcriptRef.current = newTranscript;
+      setFullTranscript(newTranscript);
       setPartialTranscript("");
-      parseTranscriptAndAutoFill(text);
       onTranscriptReceived?.(text);
     },
   });
@@ -252,8 +255,9 @@ export function SectionVoiceRecorder({
       setPartialTranscript(interim);
       
       if (final) {
-        setFullTranscript((prev) => prev + " " + final);
-        parseTranscriptAndAutoFill(final);
+        const newTranscript = (transcriptRef.current + " " + final).trim();
+        transcriptRef.current = newTranscript;
+        setFullTranscript(newTranscript);
         onTranscriptReceived?.(final);
       }
     };
@@ -283,6 +287,7 @@ export function SectionVoiceRecorder({
     setFullTranscript("");
     setPartialTranscript("");
     setUsingFallback(false);
+    transcriptRef.current = ""; // Reset transcript ref
 
     try {
       const { data, error } = await supabase.functions.invoke("elevenlabs-scribe-token");
@@ -323,7 +328,58 @@ export function SectionVoiceRecorder({
     }
   };
 
+  // Analyze transcript with AI after recording
+  const analyzeTranscriptWithAI = useCallback(async (transcript: string) => {
+    if (!transcript.trim()) return;
+    
+    setIsAnalyzing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("analyze-voice-transcript", {
+        body: {
+          transcript: transcript.trim(),
+          checkpoints,
+          existingResponses: responses,
+        },
+      });
+
+      if (error) throw error;
+
+      const mappings = data?.mappings || {};
+      const count = Object.keys(mappings).length;
+
+      if (count > 0) {
+        // Apply all mappings
+        Object.entries(mappings).forEach(([checkpointId, value]) => {
+          onAutoFill(checkpointId, value as string);
+        });
+
+        toast({
+          title: `AI filled ${count} field${count > 1 ? "s" : ""}`,
+          description: "Based on your voice recording",
+        });
+      } else {
+        toast({
+          title: "No matches found",
+          description: "Try speaking more specifically about each checkpoint",
+        });
+      }
+    } catch (err) {
+      console.error("AI analysis failed:", err);
+      toast({
+        title: "Analysis failed",
+        description: "Falling back to keyword matching",
+        variant: "destructive",
+      });
+      // Fallback to local keyword matching
+      parseTranscriptAndAutoFill(transcript);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }, [checkpoints, responses, onAutoFill, toast, parseTranscriptAndAutoFill]);
+
   const stopRecording = useCallback(() => {
+    const currentTranscript = transcriptRef.current;
+    
     // Stop Web Speech API if using fallback
     if (recognitionRef.current) {
       recognitionRef.current.stop();
@@ -342,7 +398,12 @@ export function SectionVoiceRecorder({
     setIsRecording(false);
     setIsConnecting(false);
     setPartialTranscript("");
-  }, [scribe]);
+
+    // Analyze the full transcript after stopping
+    if (currentTranscript.trim()) {
+      analyzeTranscriptWithAI(currentTranscript);
+    }
+  }, [scribe, analyzeTranscriptWithAI]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -401,8 +462,14 @@ export function SectionVoiceRecorder({
       </div>
 
       {/* Transcript display */}
-      {(isRecording || fullTranscript) && (
+      {(isRecording || fullTranscript || isAnalyzing) && (
         <div className="mb-3 p-3 rounded-lg bg-background border border-border min-h-[60px]">
+          {isAnalyzing && (
+            <div className="flex items-center gap-2 text-primary mb-2">
+              <Brain className="w-4 h-4 animate-pulse" />
+              <span className="text-sm font-medium">AI analyzing transcript...</span>
+            </div>
+          )}
           {fullTranscript && (
             <p className="text-sm text-foreground">{fullTranscript}</p>
           )}
@@ -419,36 +486,55 @@ export function SectionVoiceRecorder({
       )}
 
       {/* Recording button */}
-      <Button
-        onClick={isRecording ? stopRecording : startRecording}
-        disabled={isConnecting}
-        variant={isRecording ? "destructive" : "default"}
-        className={cn(
-          "w-full h-12 gap-2",
-          isRecording && "animate-pulse"
+      <div className="flex gap-2">
+        <Button
+          onClick={isRecording ? stopRecording : startRecording}
+          disabled={isConnecting || isAnalyzing}
+          variant={isRecording ? "destructive" : "default"}
+          className={cn(
+            "flex-1 h-12 gap-2",
+            isRecording && "animate-pulse"
+          )}
+        >
+          {isConnecting ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Connecting...
+            </>
+          ) : isAnalyzing ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Analyzing...
+            </>
+          ) : isRecording ? (
+            <>
+              <MicOff className="w-5 h-5" />
+              Stop & Analyze
+            </>
+          ) : (
+            <>
+              <Mic className="w-5 h-5" />
+              Start Voice Recording
+            </>
+          )}
+        </Button>
+        
+        {/* Manual analyze button when there's a transcript but not recording */}
+        {fullTranscript && !isRecording && !isAnalyzing && (
+          <Button
+            onClick={() => analyzeTranscriptWithAI(fullTranscript)}
+            variant="outline"
+            className="h-12 gap-2 border-primary/50"
+          >
+            <Brain className="w-5 h-5" />
+            Re-analyze
+          </Button>
         )}
-      >
-        {isConnecting ? (
-          <>
-            <Loader2 className="w-5 h-5 animate-spin" />
-            Connecting...
-          </>
-        ) : isRecording ? (
-          <>
-            <MicOff className="w-5 h-5" />
-            Stop Recording
-          </>
-        ) : (
-          <>
-            <Mic className="w-5 h-5" />
-            Start Voice Recording
-          </>
-        )}
-      </Button>
+      </div>
 
       {/* Hint */}
       <p className="mt-2 text-xs text-center text-muted-foreground">
-        Speak naturally about the vehicle condition. AI will auto-fill matching fields.
+        Speak naturally about the vehicle condition. AI will auto-fill after you stop.
       </p>
     </div>
   );
