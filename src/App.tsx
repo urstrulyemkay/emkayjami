@@ -18,6 +18,7 @@ import TrustDashboard from "./pages/TrustDashboard";
 import AuctionSetup from "./pages/AuctionSetup";
 import AuctionLive from "./pages/AuctionLive";
 import AuctionResult from "./pages/AuctionResult";
+import AuctionsList from "./pages/AuctionsList";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -147,7 +148,7 @@ const AppRoutes = () => {
         path="/auctions"
         element={
           <ProtectedRoute>
-            <AuctionSetup />
+            <AuctionsList />
           </ProtectedRoute>
         }
       />
