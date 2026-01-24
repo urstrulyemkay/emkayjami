@@ -1,8 +1,18 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Trophy, Check, Users, Timer, TrendingUp, ChevronRight } from "lucide-react";
+import { format } from "date-fns";
+import { 
+  ArrowLeft, Trophy, Check, Users, Timer, TrendingUp, ChevronRight, 
+  Calendar as CalendarIcon, Clock, Camera, Upload, X, FileText 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Bid } from "@/data/auctionTypes";
+import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface ResultState {
   vehicle: {
@@ -18,10 +28,26 @@ interface ResultState {
   auctionType: string;
 }
 
+interface CapturedDocument {
+  id: string;
+  name: string;
+  type: "image" | "file";
+  preview?: string;
+}
+
 const AuctionResult = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  
   const [completedActions, setCompletedActions] = useState<Set<string>>(new Set());
+  const [scheduleDate, setScheduleDate] = useState<Date | undefined>();
+  const [scheduleTime, setScheduleTime] = useState<string>("");
+  const [documents, setDocuments] = useState<CapturedDocument[]>([]);
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [showDocumentsDialog, setShowDocumentsDialog] = useState(false);
   
   const resultState = location.state as ResultState | null;
 
@@ -38,14 +64,94 @@ const AuctionResult = () => {
 
   const { vehicle, winningBid, totalBids, averageBid, slaMetTime } = resultState;
 
-  const nextActions = [
-    { id: "1", text: "Customer approved quotation" },
-    { id: "2", text: "Confirm sale with winning broker" },
-    { id: "3", text: "Schedule pickup and parking" },
-    { id: "4", text: "Collect documents from customer" },
+  const timeSlots = [
+    "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
+    "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM",
+    "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM",
   ];
 
+  const handleScheduleConfirm = () => {
+    if (scheduleDate && scheduleTime) {
+      setCompletedActions((prev) => new Set(prev).add("3"));
+      setShowScheduleDialog(false);
+      toast({
+        title: "Pickup Scheduled",
+        description: `${format(scheduleDate, "PPP")} at ${scheduleTime}`,
+      });
+    }
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      Array.from(files).forEach((file) => {
+        const newDoc: CapturedDocument = {
+          id: `doc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          name: file.name,
+          type: file.type.startsWith("image/") ? "image" : "file",
+          preview: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
+        };
+        setDocuments((prev) => [...prev, newDoc]);
+      });
+      toast({
+        title: "Documents Added",
+        description: `${files.length} file(s) uploaded`,
+      });
+    }
+    // Reset input
+    if (event.target) {
+      event.target.value = "";
+    }
+  };
+
+  const handleCameraCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files[0]) {
+      const file = files[0];
+      const newDoc: CapturedDocument = {
+        id: `doc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        name: `Photo_${format(new Date(), "yyyyMMdd_HHmmss")}.jpg`,
+        type: "image",
+        preview: URL.createObjectURL(file),
+      };
+      setDocuments((prev) => [...prev, newDoc]);
+      toast({
+        title: "Photo Captured",
+        description: "Document photo added",
+      });
+    }
+    // Reset input
+    if (event.target) {
+      event.target.value = "";
+    }
+  };
+
+  const removeDocument = (docId: string) => {
+    setDocuments((prev) => prev.filter((d) => d.id !== docId));
+  };
+
+  const handleDocumentsConfirm = () => {
+    if (documents.length > 0) {
+      setCompletedActions((prev) => new Set(prev).add("4"));
+      setShowDocumentsDialog(false);
+      toast({
+        title: "Documents Collected",
+        description: `${documents.length} document(s) saved`,
+      });
+    }
+  };
+
   const toggleAction = (actionId: string) => {
+    // For scheduling and documents, open dialogs instead of toggling
+    if (actionId === "3" && !completedActions.has("3")) {
+      setShowScheduleDialog(true);
+      return;
+    }
+    if (actionId === "4" && !completedActions.has("4")) {
+      setShowDocumentsDialog(true);
+      return;
+    }
+    
     setCompletedActions((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(actionId)) {
@@ -56,6 +162,23 @@ const AuctionResult = () => {
       return newSet;
     });
   };
+
+  const getActionDetails = (actionId: string) => {
+    if (actionId === "3" && completedActions.has("3") && scheduleDate && scheduleTime) {
+      return `${format(scheduleDate, "MMM d")} at ${scheduleTime}`;
+    }
+    if (actionId === "4" && completedActions.has("4") && documents.length > 0) {
+      return `${documents.length} document(s)`;
+    }
+    return null;
+  };
+
+  const nextActions = [
+    { id: "1", text: "Customer approved quotation" },
+    { id: "2", text: "Confirm sale with winning broker" },
+    { id: "3", text: "Schedule pickup and parking" },
+    { id: "4", text: "Collect documents from customer" },
+  ];
 
   const allActionsCompleted = completedActions.size === nextActions.length;
 
@@ -149,6 +272,7 @@ const AuctionResult = () => {
           <div className="space-y-2">
             {nextActions.map((action) => {
               const isDone = completedActions.has(action.id);
+              const details = getActionDetails(action.id);
               return (
                 <button
                   key={action.id}
@@ -162,15 +286,195 @@ const AuctionResult = () => {
                   }`}>
                     {isDone && <Check className="w-4 h-4 text-white" />}
                   </div>
-                  <span className={`flex-1 ${isDone ? "text-muted-foreground line-through" : "text-foreground"}`}>
-                    {action.text}
-                  </span>
-                  {!isDone && <ChevronRight className="w-5 h-5 text-muted-foreground" />}
+                  <div className="flex-1">
+                    <span className={`${isDone ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                      {action.text}
+                    </span>
+                    {details && (
+                      <p className="text-xs text-success mt-0.5">{details}</p>
+                    )}
+                  </div>
+                  {!isDone && (
+                    action.id === "3" ? (
+                      <CalendarIcon className="w-5 h-5 text-primary" />
+                    ) : action.id === "4" ? (
+                      <Camera className="w-5 h-5 text-primary" />
+                    ) : (
+                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                    )
+                  )}
                 </button>
               );
             })}
           </div>
         </section>
+
+        {/* Schedule Pickup Dialog */}
+        <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Schedule Pickup</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              {/* Date Picker */}
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  Select Date
+                </label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !scheduleDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {scheduleDate ? format(scheduleDate, "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={scheduleDate}
+                      onSelect={setScheduleDate}
+                      disabled={(date) => date < new Date()}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Time Picker */}
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  Select Time
+                </label>
+                <Select value={scheduleTime} onValueChange={setScheduleTime}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose time slot">
+                      {scheduleTime || (
+                        <span className="flex items-center gap-2 text-muted-foreground">
+                          <Clock className="w-4 h-4" />
+                          Choose time slot
+                        </span>
+                      )}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timeSlots.map((time) => (
+                      <SelectItem key={time} value={time}>
+                        {time}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button
+                onClick={handleScheduleConfirm}
+                disabled={!scheduleDate || !scheduleTime}
+                className="w-full"
+              >
+                Confirm Schedule
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Documents Collection Dialog */}
+        <Dialog open={showDocumentsDialog} onOpenChange={setShowDocumentsDialog}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Collect Documents</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              {/* Hidden file inputs */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,.pdf,.doc,.docx"
+                multiple
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleCameraCapture}
+                className="hidden"
+              />
+
+              {/* Upload buttons */}
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => cameraInputRef.current?.click()}
+                  className="flex-1 h-20 flex-col gap-2"
+                >
+                  <Camera className="w-6 h-6" />
+                  <span className="text-xs">Take Photo</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex-1 h-20 flex-col gap-2"
+                >
+                  <Upload className="w-6 h-6" />
+                  <span className="text-xs">Upload File</span>
+                </Button>
+              </div>
+
+              {/* Document List */}
+              {documents.length > 0 && (
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  <p className="text-sm font-medium text-foreground">
+                    Documents ({documents.length})
+                  </p>
+                  {documents.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="flex items-center gap-3 p-2 rounded-lg bg-secondary"
+                    >
+                      {doc.preview ? (
+                        <img
+                          src={doc.preview}
+                          alt={doc.name}
+                          className="w-10 h-10 rounded object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded bg-primary/10 flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-primary" />
+                        </div>
+                      )}
+                      <span className="flex-1 text-sm text-foreground truncate">
+                        {doc.name}
+                      </span>
+                      <button
+                        onClick={() => removeDocument(doc.id)}
+                        className="p-1 rounded-full hover:bg-destructive/10"
+                      >
+                        <X className="w-4 h-4 text-destructive" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <Button
+                onClick={handleDocumentsConfirm}
+                disabled={documents.length === 0}
+                className="w-full"
+              >
+                Confirm Documents ({documents.length})
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Coin Reward */}
         <div className="flex items-center gap-4 p-4 rounded-xl bg-warning/10 border border-warning">
