@@ -158,19 +158,27 @@ export function SectionVoiceRecorder({
       streamRef.current = stream;
 
       // Create WebSocket connection to ElevenLabs Scribe
-      const ws = new WebSocket(
-        `wss://api.elevenlabs.io/v1/speech-to-text/scribe_v2_realtime?token=${data.token}`
-      );
+      const ws = new WebSocket("wss://api.elevenlabs.io/v1/speech-to-text/realtime");
       wsRef.current = ws;
 
       ws.onopen = () => {
-        // Send configuration
+        // Send authentication with token
         ws.send(JSON.stringify({
-          type: "config",
-          audio_format: "pcm_16000",
-          sample_rate: 16000,
-          commit_strategy: "vad",
+          type: "auth",
+          token: data.token,
         }));
+        
+        // Send configuration after auth
+        setTimeout(() => {
+          ws.send(JSON.stringify({
+            type: "config",
+            model_id: "scribe_v2_realtime",
+            audio_format: "pcm_16000",
+            sample_rate: 16000,
+            commit_strategy: "vad",
+            language_code: "en",
+          }));
+        }, 100);
 
         // Start sending audio
         const audioContext = new AudioContext({ sampleRate: 16000 });
