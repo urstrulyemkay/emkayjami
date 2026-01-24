@@ -19,6 +19,8 @@ import AuctionSetup from "./pages/AuctionSetup";
 import AuctionLive from "./pages/AuctionLive";
 import AuctionResult from "./pages/AuctionResult";
 import AuctionsList from "./pages/AuctionsList";
+import DeltaInspection from "./pages/DeltaInspection";
+import DeltaComparison from "./pages/DeltaComparison";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -149,6 +151,22 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <AuctionsList />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inspection/delta"
+        element={
+          <ProtectedRoute>
+            <DeltaInspection />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inspection/delta-comparison"
+        element={
+          <ProtectedRoute>
+            <DeltaComparison />
           </ProtectedRoute>
         }
       />
