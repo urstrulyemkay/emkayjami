@@ -113,19 +113,23 @@ const ImageCapture = () => {
     }
 
     const timestamp = Date.now();
+    const currentAngleValue = currentAngle.angle;
+    const currentAngleLabel = currentAngle.label;
+    const currentPreviewUrl = previewUrl;
+    const currentIndex = currentAngleIndex;
     
     // Create image object first (for local state)
     const newImage: CapturedImage = {
       id: `img_${timestamp}`,
-      angle: currentAngle.angle as ImageAngle,
-      uri: previewUrl || "", // Use local URL for now
+      angle: currentAngleValue as ImageAngle,
+      uri: currentPreviewUrl || "",
       timestamp: new Date().toISOString(),
       location: { latitude: 0, longitude: 0 },
     };
 
     // If we have a user, try to upload
     if (userId && !userId.startsWith("temp_")) {
-      const fileName = `${vehicleData?.inspectionId || 'temp'}_${currentAngle.angle}_${timestamp}.jpg`;
+      const fileName = `${vehicleData?.inspectionId || 'temp'}_${currentAngleValue}_${timestamp}.jpg`;
       const result = await uploadFile("inspection-images", previewBlob, fileName, userId);
       
       if (result) {
@@ -135,27 +139,28 @@ const ImageCapture = () => {
 
     // Add to captured images
     setCapturedImages((prev) => {
-      // Replace if already captured for this angle
-      const filtered = prev.filter(img => img.angle !== currentAngle.angle);
+      const filtered = prev.filter(img => img.angle !== currentAngleValue);
       return [...filtered, newImage];
     });
     
     // Show success toast
     toast({
       title: "Image captured",
-      description: `${currentAngle.label} saved successfully`,
+      description: `${currentAngleLabel} saved successfully`,
     });
 
-    // Cleanup preview
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
+    // Cleanup preview - use the captured value to avoid stale closure
+    if (currentPreviewUrl) {
+      URL.revokeObjectURL(currentPreviewUrl);
     }
+    
+    // Clear preview state to show camera again
     setPreviewBlob(null);
     setPreviewUrl(null);
 
     // Move to next angle if not at the end
-    if (currentAngleIndex < IMAGE_ANGLES.length - 1) {
-      setCurrentAngleIndex((prev) => prev + 1);
+    if (currentIndex < IMAGE_ANGLES.length - 1) {
+      setCurrentAngleIndex(currentIndex + 1);
     }
   }, [previewBlob, previewUrl, currentAngle, currentAngleIndex, userId, uploadFile, vehicleData, toast]);
 
