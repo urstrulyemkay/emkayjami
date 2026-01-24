@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Camera, Video, Mic, Check, AlertTriangle, ChevronRight, Send } from "lucide-react";
+import { ArrowLeft, Camera, Video, Mic, Check, AlertTriangle, ChevronRight, Send, Gavel } from "lucide-react";
 import { DEFECT_CATEGORIES } from "@/types/inspection";
 
 const InspectionSummary = () => {
@@ -17,6 +17,18 @@ const InspectionSummary = () => {
 
   const handleSubmit = () => {
     navigate("/inspection/consent", { state: inspectionData });
+  };
+
+  // Bypass consent for testing - go directly to auction
+  const handleStartAuctionDirect = () => {
+    navigate("/auction/setup", {
+      state: {
+        ...inspectionData,
+        conditionScore: Math.max(0, 100 - defects.length * 8),
+        consentGiven: true,
+        frozenAt: new Date().toISOString(),
+      },
+    });
   };
 
   const getSeverityColor = (severity: string) => {
@@ -163,6 +175,14 @@ const InspectionSummary = () => {
           <Button onClick={handleSubmit} className="w-full h-14">
             <Send className="w-5 h-5 mr-2" />
             Request Customer Consent
+          </Button>
+          <Button
+            onClick={handleStartAuctionDirect}
+            variant="secondary"
+            className="w-full h-12 gap-2 border border-warning/50 text-warning hover:bg-warning/10"
+          >
+            <Gavel className="w-5 h-5" />
+            Start Auction (Skip Consent)
           </Button>
           <Button
             onClick={() => navigate("/inspection/capture", { state: inspectionData })}
