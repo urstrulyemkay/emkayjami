@@ -10,20 +10,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Bike, Search, AlertTriangle, User, Phone } from "lucide-react";
+import { ArrowLeft, Bike, Search, AlertTriangle, User, Loader2 } from "lucide-react";
 import {
   VEHICLE_MAKES,
   VEHICLE_MODELS,
   getModelsByMake,
   getVehicleYears,
   VEHICLE_COLORS,
-  VehicleModel,
 } from "@/data/vehicleModels";
 import { useToast } from "@/hooks/use-toast";
+import { useInspectionPersistence } from "@/hooks/useInspectionPersistence";
 
 const NewInspection = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { createInspection, isLoading: isPersistenceLoading, isAuthenticated } = useInspectionPersistence();
 
   // Customer details
   const [customerName, setCustomerName] = useState("");
@@ -38,6 +39,7 @@ const NewInspection = () => {
   const [odometerReading, setOdometerReading] = useState("");
 
   const [isSearching, setIsSearching] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
   const [vehicleFound, setVehicleFound] = useState(false);
 
@@ -114,7 +116,7 @@ const NewInspection = () => {
     );
   };
 
-  const handleStartInspection = () => {
+  const handleStartInspection = async () => {
     if (!canProceed()) {
       toast({
         title: "Incomplete details",
@@ -124,17 +126,39 @@ const NewInspection = () => {
       return;
     }
 
+    setIsCreating(true);
+
+    const inspectionData = {
+      customerName,
+      customerPhone,
+      registration: registration.toUpperCase(),
+      make: selectedMake,
+      model: selectedModel,
+      year: parseInt(selectedYear),
+      color: selectedColor,
+      engineCC: selectedModelData?.engineCC || 0,
+      odometerReading: parseInt(odometerReading) || 0,
+    };
+
+    // Create inspection in database (or get temp ID for dev)
+    const inspectionId = await createInspection(inspectionData);
+
+    if (!inspectionId) {
+      toast({
+        title: "Failed to start inspection",
+        description: "Please try again",
+        variant: "destructive",
+      });
+      setIsCreating(false);
+      return;
+    }
+
+    setIsCreating(false);
+
     navigate("/inspection/stepper", {
       state: {
-        customerName,
-        customerPhone,
-        registration: registration.toUpperCase(),
-        make: selectedMake,
-        model: selectedModel,
-        year: parseInt(selectedYear),
-        color: selectedColor,
-        engineCC: selectedModelData?.engineCC || 0,
-        odometerReading: parseInt(odometerReading) || 0,
+        ...inspectionData,
+        inspectionId,
       },
     });
   };
@@ -395,11 +419,18 @@ const NewInspection = () => {
         {/* Start Inspection Button */}
         <Button
           onClick={handleStartInspection}
-          disabled={!canProceed()}
-          className="w-full h-14 text-base font-medium"
+          disabled={!canProceed() || isCreating}
+          className="w-full h-14 text-base font-medium gap-2"
           size="lg"
         >
-          Begin Inspection
+          {isCreating ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Creating Inspection...
+            </>
+          ) : (
+            "Begin Inspection"
+          )}
         </Button>
 
         {/* Instructions when form is empty */}
