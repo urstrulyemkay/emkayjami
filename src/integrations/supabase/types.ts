@@ -14,6 +14,82 @@ export type Database = {
   }
   public: {
     Tables: {
+      auction_documents: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          file_uri: string
+          id: string
+          inspection_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          file_uri: string
+          id?: string
+          inspection_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          file_uri?: string
+          id?: string
+          inspection_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auction_documents_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "inspections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      auction_pickups: {
+        Row: {
+          created_at: string
+          id: string
+          inspection_id: string
+          notes: string | null
+          pickup_date: string
+          pickup_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inspection_id: string
+          notes?: string | null
+          pickup_date: string
+          pickup_time: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inspection_id?: string
+          notes?: string | null
+          pickup_date?: string
+          pickup_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auction_pickups_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "inspections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       captured_images: {
         Row: {
           angle: string
