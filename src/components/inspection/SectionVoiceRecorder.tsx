@@ -116,6 +116,13 @@ export function SectionVoiceRecorder({
     },
   });
 
+  // Reset transcript when section changes
+  useEffect(() => {
+    setFullTranscript("");
+    setPartialTranscript("");
+    transcriptRef.current = "";
+  }, [stepTitle]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -330,7 +337,18 @@ export function SectionVoiceRecorder({
 
   // Analyze transcript with AI after recording
   const analyzeTranscriptWithAI = useCallback(async (transcript: string) => {
-    if (!transcript.trim()) return;
+    if (!transcript.trim()) {
+      toast({
+        title: "No transcript",
+        description: "Please speak something before analyzing",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log(`[Voice AI] Starting analysis for section: ${stepTitle}`);
+    console.log(`[Voice AI] Transcript: ${transcript}`);
+    console.log(`[Voice AI] Checkpoints count: ${checkpoints.length}`);
     
     setIsAnalyzing(true);
     try {
@@ -342,10 +360,14 @@ export function SectionVoiceRecorder({
         },
       });
 
+      console.log(`[Voice AI] Response:`, data);
+
       if (error) throw error;
 
       const mappings = data?.mappings || {};
       const count = Object.keys(mappings).length;
+      const issueCount = data?.issueCount || 0;
+      const okCount = data?.okCount || 0;
 
       if (count > 0) {
         // Apply all mappings
@@ -354,8 +376,15 @@ export function SectionVoiceRecorder({
         });
 
         toast({
-          title: `AI filled ${count} field${count > 1 ? "s" : ""}`,
-          description: "Based on your voice recording",
+          title: `AI filled ${count} field${count > 1 ? "s" : ""} in ${stepTitle}`,
+          description: issueCount > 0 
+            ? `${issueCount} issue${issueCount > 1 ? "s" : ""} detected, ${okCount} marked OK`
+            : `All ${okCount} fields marked as OK`,
+        });
+      } else if (data?.message === "All checkpoints already filled") {
+        toast({
+          title: "Already complete",
+          description: `All ${stepTitle} checkpoints are already filled`,
         });
       } else {
         toast({
@@ -364,7 +393,7 @@ export function SectionVoiceRecorder({
         });
       }
     } catch (err) {
-      console.error("AI analysis failed:", err);
+      console.error("[Voice AI] Analysis failed:", err);
       toast({
         title: "Analysis failed",
         description: "Falling back to keyword matching",
@@ -375,7 +404,7 @@ export function SectionVoiceRecorder({
     } finally {
       setIsAnalyzing(false);
     }
-  }, [checkpoints, responses, onAutoFill, toast, parseTranscriptAndAutoFill]);
+  }, [checkpoints, responses, onAutoFill, toast, parseTranscriptAndAutoFill, stepTitle]);
 
   const stopRecording = useCallback(() => {
     const currentTranscript = transcriptRef.current;
