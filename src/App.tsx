@@ -8,6 +8,7 @@ import MockLogin from "./pages/MockLogin";
 import Auth from "./pages/Auth";
 import ExecutiveDashboard from "./pages/ExecutiveDashboard";
 import NewInspection from "./pages/NewInspection";
+import InspectionStepper from "./pages/InspectionStepper";
 import ImageCapture from "./pages/ImageCapture";
 import VideoCapture from "./pages/VideoCapture";
 import VoiceRecording from "./pages/VoiceRecording";
@@ -56,6 +57,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <NewInspection />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inspection/stepper"
+        element={
+          <ProtectedRoute>
+            <InspectionStepper />
           </ProtectedRoute>
         }
       />
