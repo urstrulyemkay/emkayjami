@@ -283,12 +283,18 @@ const DeltaComparison = () => {
       return;
     }
     
-    toast({
-      title: "Handover Approved",
-      description: "Delta inspection completed successfully",
-    });
-    navigate("/auctions", {
-      state: { deltaCompleted: true, vehicleId: comparisonData.vehicle.registration },
+    // Navigate to customer consent flow
+    navigate("/inspection/delta-consent", {
+      state: {
+        vehicle: comparisonData.vehicle,
+        originalScore,
+        newScore,
+        scoreDifference,
+        newIssuesCount: newIssues.length,
+        worsenedCount: worsened.length,
+        improvedCount: improved.length,
+        resolvedCount: resolved.length,
+      },
     });
   };
 
@@ -296,18 +302,19 @@ const DeltaComparison = () => {
     setScoreConfirmed(true);
     setShowScoreConfirm(false);
     
-    // Continue to check for new issues
-    if (unconfirmedNewIssues.length > 0) {
-      setShowNewIssueConfirm(true);
-    } else {
-      toast({
-        title: "Handover Approved",
-        description: "Delta inspection completed with noted condition changes",
-      });
-      navigate("/auctions", {
-        state: { deltaCompleted: true, vehicleId: comparisonData.vehicle.registration },
-      });
-    }
+    // Navigate to customer consent flow
+    navigate("/inspection/delta-consent", {
+      state: {
+        vehicle: comparisonData.vehicle,
+        originalScore,
+        newScore,
+        scoreDifference,
+        newIssuesCount: newIssues.length,
+        worsenedCount: worsened.length,
+        improvedCount: improved.length,
+        resolvedCount: resolved.length,
+      },
+    });
   };
 
   const handleFlagIssues = () => {
