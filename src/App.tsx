@@ -22,6 +22,7 @@ import AuctionsList from "./pages/AuctionsList";
 import DeltaInspection from "./pages/DeltaInspection";
 import DeltaInspectionStepper from "./pages/DeltaInspectionStepper";
 import DeltaComparison from "./pages/DeltaComparison";
+import DeltaConsentFlow from "./pages/DeltaConsentFlow";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -176,6 +177,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <DeltaComparison />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inspection/delta-consent"
+        element={
+          <ProtectedRoute>
+            <DeltaConsentFlow />
           </ProtectedRoute>
         }
       />
