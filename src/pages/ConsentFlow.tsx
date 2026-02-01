@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
   ArrowLeft, 
@@ -9,22 +8,25 @@ import {
   FileCheck, 
   CheckCircle2, 
   AlertCircle,
-  Phone,
-  Send,
   Gavel,
-  Zap
+  Zap,
+  QrCode,
+  Smartphone,
+  RefreshCw
 } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 
 const ConsentFlow = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const inspectionData = location.state || {};
 
-  const [step, setStep] = useState<"phone" | "otp" | "review" | "confirm">("phone");
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
+  const [step, setStep] = useState<"qr_scan" | "waiting_approval" | "review" | "confirm">("qr_scan");
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  // QR Code / WhatsApp approval
+  const [approvalToken] = useState(() => `INS-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`);
 
   const defects = inspectionData.defects || [];
   const images = inspectionData.images || [];
@@ -35,17 +37,29 @@ const ConsentFlow = () => {
     defects.filter((d: any) => d.severity === "critical").length * 15 -
     defects.filter((d: any) => d.severity === "major").length * 10);
 
-  const handleSendOtp = async () => {
-    setLoading(true);
-    // Mock OTP send
-    await new Promise((r) => setTimeout(r, 1000));
-    setLoading(false);
-    setStep("otp");
+  // DriveX WhatsApp number (mock)
+  const driveXWhatsAppNumber = "919876543210";
+  
+  // Generate WhatsApp deep link with pre-filled message
+  const generateWhatsAppLink = () => {
+    const vehicleInfo = inspectionData.vehicle 
+      ? `${inspectionData.vehicle.make} ${inspectionData.vehicle.model}` 
+      : "Vehicle";
+    const registration = inspectionData.vehicle?.registration || "N/A";
+    
+    const message = encodeURIComponent(
+      `Hi DriveX, I want to approve the inspection report.\n\nApproval Token: ${approvalToken}\nVehicle: ${vehicleInfo}\nRegistration: ${registration}\nCondition Score: ${conditionScore}/100\n\nPlease confirm my approval.`
+    );
+    return `https://wa.me/${driveXWhatsAppNumber}?text=${message}`;
   };
 
-  const handleVerifyOtp = async () => {
+  const handleShowQR = () => {
+    setStep("waiting_approval");
+  };
+
+  // Simulate customer approval via WhatsApp (in production, this would be a webhook)
+  const handleCustomerApproved = async () => {
     setLoading(true);
-    // Mock OTP verification
     await new Promise((r) => setTimeout(r, 1000));
     setLoading(false);
     setStep("review");
@@ -99,9 +113,9 @@ const ConsentFlow = () => {
           {step !== "confirm" && (
             <button
               onClick={() => {
-                if (step === "phone") navigate(-1);
-                else if (step === "otp") setStep("phone");
-                else if (step === "review") setStep("otp");
+                if (step === "qr_scan") navigate(-1);
+                else if (step === "waiting_approval") setStep("qr_scan");
+                else if (step === "review") setStep("waiting_approval");
               }}
               className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"
             >
@@ -113,8 +127,8 @@ const ConsentFlow = () => {
               {step === "confirm" ? "Consent Recorded" : "Customer Consent"}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {step === "phone" && "Verify customer phone number"}
-              {step === "otp" && "Enter OTP sent to customer"}
+              {step === "qr_scan" && "Customer WhatsApp verification"}
+              {step === "waiting_approval" && "Waiting for customer approval"}
               {step === "review" && "Review and confirm inspection report"}
               {step === "confirm" && "Inspection frozen and secured"}
             </p>
@@ -135,76 +149,109 @@ const ConsentFlow = () => {
       </header>
 
       <div className="px-6 pb-8">
-        {/* Phone Step */}
-        {step === "phone" && (
+        {/* QR Scan Step */}
+        {step === "qr_scan" && (
           <div className="space-y-6">
             <div className="p-6 rounded-xl bg-card border border-border">
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                <Phone className="w-6 h-6 text-primary" />
+                <QrCode className="w-6 h-6 text-primary" />
               </div>
               <h2 className="text-lg font-semibold text-foreground mb-2">
-                Customer Verification
+                WhatsApp Approval
               </h2>
               <p className="text-sm text-muted-foreground mb-4">
-                Enter the customer's phone number to send a verification OTP
+                The customer can approve the inspection by scanning this QR code with their phone
               </p>
-              <Input
-                type="tel"
-                placeholder="+91 9876543210"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="h-12"
-              />
+              
+              <div className="flex flex-col items-center gap-4">
+                <div className="p-4 bg-white rounded-xl">
+                  <QRCodeSVG 
+                    value={generateWhatsAppLink()} 
+                    size={180}
+                    level="M"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  Scan to open WhatsApp with pre-filled approval message
+                </p>
+              </div>
+            </div>
+
+            {/* Quick Summary */}
+            <div className="p-4 rounded-xl bg-card border border-border space-y-3">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Images Captured</span>
+                <span className="text-foreground font-medium">{images.length}/12</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Videos Captured</span>
+                <span className="text-foreground font-medium">{videos.length}/4</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Defects Logged</span>
+                <span className="text-foreground font-medium">{defects.length}</span>
+              </div>
             </div>
 
             <Button
-              onClick={handleSendOtp}
-              disabled={phone.length < 10 || loading}
+              onClick={handleShowQR}
               className="w-full h-14"
             >
-              {loading ? "Sending..." : "Send OTP"}
-              <Send className="w-5 h-5 ml-2" />
+              <Smartphone className="w-5 h-5 mr-2" />
+              Customer is Scanning
             </Button>
           </div>
         )}
 
-        {/* OTP Step */}
-        {step === "otp" && (
+        {/* Waiting for WhatsApp Approval */}
+        {step === "waiting_approval" && (
           <div className="space-y-6">
-            <div className="p-6 rounded-xl bg-card border border-border">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                <Shield className="w-6 h-6 text-primary" />
+            <div className="p-6 rounded-xl bg-card border border-border text-center">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <RefreshCw className="w-8 h-8 text-primary animate-spin" />
               </div>
               <h2 className="text-lg font-semibold text-foreground mb-2">
-                Enter OTP
+                Waiting for Approval
               </h2>
               <p className="text-sm text-muted-foreground mb-4">
-                Enter the 6-digit OTP sent to {phone}
+                Ask the customer to send the WhatsApp message to complete approval
               </p>
-              <Input
-                type="text"
-                placeholder="Enter 6-digit OTP"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                className="h-12 text-center text-2xl tracking-widest font-mono"
-                maxLength={6}
-              />
+              
+              <div className="p-4 bg-secondary rounded-xl mb-4">
+                <p className="text-xs text-muted-foreground mb-1">Approval Token</p>
+                <p className="text-sm font-mono text-foreground">{approvalToken}</p>
+              </div>
+              
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-success/10 border border-success/30">
+                <Shield className="w-5 h-5 text-success flex-shrink-0" />
+                <p className="text-xs text-success text-left">
+                  Once the customer sends the message on WhatsApp, click below to confirm
+                </p>
+              </div>
+            </div>
+
+            {/* Show QR again option */}
+            <div className="p-4 rounded-xl bg-card border border-border">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-medium text-foreground">Show QR Code Again</span>
+              </div>
+              <div className="flex justify-center p-3 bg-white rounded-lg">
+                <QRCodeSVG 
+                  value={generateWhatsAppLink()} 
+                  size={120}
+                  level="M"
+                />
+              </div>
             </div>
 
             <Button
-              onClick={handleVerifyOtp}
-              disabled={otp.length !== 6 || loading}
+              onClick={handleCustomerApproved}
+              disabled={loading}
               className="w-full h-14"
             >
-              {loading ? "Verifying..." : "Verify OTP"}
+              {loading ? "Verifying..." : "Customer Approved via WhatsApp"}
+              <CheckCircle2 className="w-5 h-5 ml-2" />
             </Button>
-
-            <button
-              onClick={handleSendOtp}
-              className="w-full text-center text-sm text-muted-foreground hover:text-primary"
-            >
-              Resend OTP
-            </button>
           </div>
         )}
 
