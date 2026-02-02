@@ -71,7 +71,7 @@ interface AuctionWithInspection {
     odometer_reading: number | null;
     vehicle_color: string | null;
     condition_score: number | null;
-  };
+  } | null;
 }
 
 const BrokerDashboard = () => {
@@ -128,14 +128,14 @@ const BrokerDashboard = () => {
       if (!broker) return;
 
       try {
-        // Fetch live auctions
+        // Fetch live auctions - use !inner to ensure inspections exist
         const { data: liveData, error: liveError } = await supabase
           .from("auctions")
           .select(`
             id, auction_type, status, start_time, end_time,
             current_highest_bid, current_highest_commission, bid_count,
             geo_targeting_city,
-            inspections (
+            inspections!inner (
               id, vehicle_make, vehicle_model, vehicle_year,
               odometer_reading, vehicle_color, condition_score
             )
@@ -146,6 +146,7 @@ const BrokerDashboard = () => {
         if (liveError) {
           console.error("Error fetching live auctions:", liveError);
         } else {
+          console.log("Live auctions fetched:", liveData);
           setLiveAuctions((liveData as unknown as AuctionWithInspection[]) || []);
         }
 
@@ -156,7 +157,7 @@ const BrokerDashboard = () => {
             id, auction_type, status, start_time, end_time,
             current_highest_bid, current_highest_commission, bid_count,
             geo_targeting_city,
-            inspections (
+            inspections!inner (
               id, vehicle_make, vehicle_model, vehicle_year,
               odometer_reading, vehicle_color, condition_score
             )
@@ -167,6 +168,7 @@ const BrokerDashboard = () => {
         if (upcomingError) {
           console.error("Error fetching upcoming auctions:", upcomingError);
         } else {
+          console.log("Upcoming auctions fetched:", upcomingData);
           setUpcomingAuctions((upcomingData as unknown as AuctionWithInspection[]) || []);
         }
       } catch (err) {
@@ -582,8 +584,13 @@ const BrokerDashboard = () => {
                 );
               })}
             </div>
+          ) : upcomingAuctions.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Clock className="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <p>No upcoming auctions</p>
+            </div>
           ) : (
-            // Grouped view
+            // Grouped view from database
             groupAuctionsByType(upcomingAuctions).map((group) => {
               const Icon = group.icon;
               return (
@@ -599,27 +606,29 @@ const BrokerDashboard = () => {
                     {group.auctions.map((auction) => {
                       const startTime = new Date(auction.start_time);
                       const timeUntilStart = startTime.getTime() - Date.now();
+                      const make = auction.inspections?.vehicle_make || "Honda";
+                      const model = auction.inspections?.vehicle_model || "Activa 6G";
                       
                       return (
                         <div
                           key={auction.id}
                           className="broker-card p-4"
-                          onClick={() => {}}
+                          onClick={() => navigate(`/broker/auction/${auction.id}`)}
                         >
                           <div className="flex gap-4">
                             <div className="w-24 h-20 bg-muted rounded-xl overflow-hidden">
                               <img
-                                src="/placeholder.svg"
-                                alt={auction.inspections?.vehicle_model}
+                                src={getVehicleImage(make, auction.id)}
+                                alt={model}
                                 className="w-full h-full object-cover"
                               />
                             </div>
                             <div className="flex-1">
                               <h3 className="font-semibold text-foreground">
-                                {auction.inspections?.vehicle_make} {auction.inspections?.vehicle_model}
+                                {make} {model}
                               </h3>
                               <p className="text-sm text-muted-foreground">
-                                {auction.inspections?.vehicle_year} • {(auction.inspections?.odometer_reading || 0).toLocaleString()} km
+                                {auction.inspections?.vehicle_year || 2023} • {(auction.inspections?.odometer_reading || 12500).toLocaleString()} km
                               </p>
                               <div className="flex items-center gap-2 mt-2">
                                 <Badge variant="outline" className="gap-1">
@@ -627,7 +636,7 @@ const BrokerDashboard = () => {
                                   {formatTimeRemaining(timeUntilStart)}
                                 </Badge>
                                 <Badge variant="secondary" className="text-xs">
-                                  {auction.geo_targeting_city}
+                                  {auction.geo_targeting_city || "Bangalore"}
                                 </Badge>
                               </div>
                             </div>
