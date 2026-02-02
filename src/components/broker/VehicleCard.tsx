@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { 
@@ -5,7 +6,6 @@ import {
   TrendingUp, Zap, Scale, Calendar, Target 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
 // Shared bike thumbnails
 export const BIKE_THUMBNAILS: Record<string, string> = {
   "Honda": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop",
@@ -53,6 +53,22 @@ interface VehicleCardProps {
 const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) => {
   const thumbnail = BIKE_THUMBNAILS[vehicle.make] || BIKE_THUMBNAILS["default"];
   
+  // Real-time countdown state
+  const [timeLeft, setTimeLeft] = useState(status.timeRemaining || 0);
+  
+  // Update countdown every second
+  useEffect(() => {
+    if (status.type !== "live" || status.timeRemaining === undefined) return;
+    
+    setTimeLeft(status.timeRemaining);
+    
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => Math.max(0, prev - 1000));
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [status.type, status.timeRemaining]);
+  
   const formatTime = (ms: number) => {
     if (ms <= 0) return "00:00";
     const hours = Math.floor(ms / (1000 * 60 * 60));
@@ -90,7 +106,7 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
     return configs[grade];
   };
 
-  const isUrgentTime = status.timeRemaining !== undefined && status.timeRemaining < 5 * 60 * 1000 && status.timeRemaining > 0;
+  const isUrgentTime = timeLeft < 5 * 60 * 1000 && timeLeft > 0;
   const gradeConfig = getGradeConfig(vehicle.grade);
   const auctionConfig = status.auctionType ? getAuctionTypeConfig(status.auctionType) : null;
 
@@ -176,7 +192,7 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
               {status.type === "live" && status.timeRemaining !== undefined && (
                 <div className={`flex items-center gap-1 shrink-0 text-xs font-medium ${isUrgentTime ? "text-destructive" : "text-muted-foreground"}`}>
                   <Clock className="w-3 h-3" />
-                  {formatTime(status.timeRemaining)}
+                  {formatTime(timeLeft)}
                 </div>
               )}
             </div>
