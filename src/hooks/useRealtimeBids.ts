@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateEffectiveScore } from "@/data/brokerMockData";
+import { toast } from "sonner";
 
 export interface RealtimeBid {
   id: string;
@@ -24,6 +25,39 @@ export interface AuctionState {
   lastBidTimestamp: string | null;
   wasOutbid: boolean;
 }
+
+// Trigger outbid notification - shows toast and sends push notification
+const triggerOutbidNotification = async (brokerId: string, auctionId: string, newHighestBid: number) => {
+  // Show immediate toast notification
+  toast.error("You've been outbid!", {
+    description: `New highest bid: ₹${newHighestBid.toLocaleString()}`,
+    action: {
+      label: "View Auction",
+      onClick: () => {
+        window.location.href = `/broker/auction/${auctionId}`;
+      },
+    },
+  });
+
+  // Try to send push notification via edge function
+  try {
+    await supabase.functions.invoke("send-push-notification", {
+      body: {
+        broker_id: brokerId,
+        title: "You've been outbid! 🔔",
+        body: `Someone placed a higher bid of ₹${newHighestBid.toLocaleString()}. Act fast!`,
+        data: {
+          url: `/broker/auction/${auctionId}`,
+          auction_id: auctionId,
+        },
+        tag: `outbid-${auctionId}`,
+        requireInteraction: true,
+      },
+    });
+  } catch (err) {
+    console.error("Failed to send push notification:", err);
+  }
+};
 
 export const useRealtimeBids = (auctionId: string, brokerId: string | undefined) => {
   const [auctionState, setAuctionState] = useState<AuctionState>({
@@ -79,6 +113,12 @@ export const useRealtimeBids = (auctionId: string, brokerId: string | undefined)
       
       // Check if user was outbid (had a bid, was winning, now not winning)
       const wasOutbid = previousWinningRef.current === true && !isWinning && myBid !== null;
+      
+      // Trigger outbid notification
+      if (wasOutbid && brokerId) {
+        triggerOutbidNotification(brokerId, auctionId, highestBid?.bid_amount || 0);
+      }
+      
       previousWinningRef.current = isWinning;
 
       const latestBidTime = typedBids.length > 0 ? typedBids[0].placed_at : null;

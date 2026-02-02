@@ -4,19 +4,22 @@ import { useBrokerAuth } from "@/contexts/BrokerAuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
 import {
   ArrowLeft, Star, Shield, Coins, TrendingUp, Award,
-  AlertTriangle, LogOut, Settings, ChevronRight, Building
+  AlertTriangle, LogOut, Settings, ChevronRight, Building, Bell
 } from "lucide-react";
 import BrokerBottomNav from "@/components/broker/BrokerBottomNav";
 import { useBrokerBids } from "@/hooks/useBrokerBids";
 import { useBrokerStrikes } from "@/hooks/useBrokerStrikes";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
   TRUST_BREAKDOWN,
   LEVELS,
   getLevelFromScore,
   getProgressToNextLevel,
 } from "@/data/brokerMockData";
+import { toast } from "sonner";
 
 const BrokerProfile = () => {
   const navigate = useNavigate();
@@ -25,7 +28,22 @@ const BrokerProfile = () => {
   // Real-time hooks
   const { stats, loading: bidsLoading } = useBrokerBids(broker?.id);
   const { activeStrikes, strikesCount, loading: strikesLoading } = useBrokerStrikes(broker?.id);
+  const { isSupported, isSubscribed, permission, loading: notifLoading, subscribe, unsubscribe } = usePushNotifications(broker?.id);
 
+  const handleNotificationToggle = async () => {
+    try {
+      if (isSubscribed) {
+        await unsubscribe();
+        toast.success("Notifications disabled");
+      } else {
+        await subscribe();
+        toast.success("Notifications enabled! You'll be notified when outbid.");
+      }
+    } catch (err) {
+      console.error("Notification toggle error:", err);
+      toast.error("Failed to update notification settings");
+    }
+  };
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       navigate("/broker/login");
@@ -262,26 +280,63 @@ const BrokerProfile = () => {
         )}
       </div>
 
+      {/* Notification Settings */}
+      <div className="px-4 mt-6">
+        <h3 className="font-semibold mb-3">Notifications</h3>
+        <div className="bg-card border rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Bell className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Push Notifications</p>
+                <p className="text-xs text-muted-foreground">
+                  Get notified when you're outbid
+                </p>
+              </div>
+            </div>
+            {isSupported ? (
+              <Switch
+                checked={isSubscribed}
+                onCheckedChange={handleNotificationToggle}
+                disabled={notifLoading}
+              />
+            ) : (
+              <Badge variant="outline" className="text-xs">Not supported</Badge>
+            )}
+          </div>
+          {permission === "denied" && (
+            <p className="text-xs text-destructive mt-3">
+              Notifications blocked. Enable them in your browser settings.
+            </p>
+          )}
+        </div>
+      </div>
+
       {/* Quick Actions */}
       <div className="px-4 mt-6">
         <h3 className="font-semibold mb-3">Settings</h3>
         <div className="space-y-2">
-          {[
-            { label: "Preferences", icon: Settings },
-            { label: "Notifications", icon: Award },
-            { label: "Help & Support", icon: Shield },
-          ].map((item) => (
-            <button
-              key={item.label}
-              className="w-full flex items-center justify-between p-4 bg-card border rounded-xl hover:bg-muted/50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <item.icon className="w-5 h-5 text-muted-foreground" />
-                <span className="font-medium">{item.label}</span>
-              </div>
-              <ChevronRight className="w-5 h-5 text-muted-foreground" />
-            </button>
-          ))}
+          <button
+            className="w-full flex items-center justify-between p-4 bg-card border rounded-xl hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <Settings className="w-5 h-5 text-muted-foreground" />
+              <span className="font-medium text-foreground">Preferences</span>
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </button>
+          <button
+            onClick={() => navigate("/broker/help")}
+            className="w-full flex items-center justify-between p-4 bg-card border rounded-xl hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <Shield className="w-5 h-5 text-muted-foreground" />
+              <span className="font-medium text-foreground">Help & Support</span>
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </button>
         </div>
       </div>
 
