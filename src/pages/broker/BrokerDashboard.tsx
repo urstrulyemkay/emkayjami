@@ -324,28 +324,28 @@ const BrokerDashboard = () => {
           </div>
 
           {/* Stats Row - Interactive */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 overflow-x-auto">
             <button 
               onClick={() => setCoinsSheetOpen(true)}
-              className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 hover:bg-white/20 transition-colors active:scale-95"
+              className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 py-2 hover:bg-white/20 transition-colors active:scale-95 shrink-0"
             >
-              <Coins className="w-4 h-4 text-amber-400" />
-              <span className="font-medium">{broker.coins_balance.toLocaleString()}</span>
-              <ChevronRight className="w-3 h-3 opacity-60" />
+              <Coins className="w-4 h-4 text-amber-400 shrink-0" />
+              <span className="font-medium whitespace-nowrap">{broker.coins_balance.toLocaleString()}</span>
+              <ChevronRight className="w-3 h-3 opacity-60 shrink-0" />
             </button>
             <button 
               onClick={() => setLevelSheetOpen(true)}
-              className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 hover:bg-white/20 transition-colors active:scale-95"
+              className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 py-2 hover:bg-white/20 transition-colors active:scale-95 shrink-0"
             >
-              <Star className="w-4 h-4 text-amber-400" />
-              <span className="font-medium">Lvl {broker.level}</span>
-              <ChevronRight className="w-3 h-3 opacity-60" />
+              <Star className="w-4 h-4 text-amber-400 shrink-0" />
+              <span className="font-medium whitespace-nowrap">Lvl {broker.level}</span>
+              <ChevronRight className="w-3 h-3 opacity-60 shrink-0" />
             </button>
             <button 
               onClick={() => setTrustSheetOpen(true)}
-              className="hover:opacity-80 transition-opacity active:scale-95"
+              className="hover:opacity-80 transition-opacity active:scale-95 shrink-0"
             >
-              <Badge className="bg-white/20 text-white border-0 gap-1">
+              <Badge className="bg-white/20 text-white border-0 gap-1 whitespace-nowrap">
                 {levelConfig.name}
                 <ChevronRight className="w-3 h-3" />
               </Badge>
