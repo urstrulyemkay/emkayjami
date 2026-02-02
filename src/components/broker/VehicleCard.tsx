@@ -3,21 +3,21 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { 
   Clock, ChevronRight, Trophy, AlertTriangle, 
-  TrendingUp, Zap, Scale, Calendar, Target 
+  TrendingUp, Zap, Scale, Calendar, Target, MapPin
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Shared bike thumbnails
+// Reliable bike thumbnail URLs - same as BrokerAuctionCard for consistency
 export const BIKE_THUMBNAILS: Record<string, string> = {
-  "Honda": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop",
-  "TVS": "https://images.unsplash.com/photo-1449426468159-d96dbf08f19f?w=400&h=300&fit=crop",
-  "Bajaj": "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400&h=300&fit=crop",
-  "Royal Enfield": "https://images.unsplash.com/photo-1558980664-769d59546b3d?w=400&h=300&fit=crop",
-  "Yamaha": "https://images.unsplash.com/photo-1580310614729-ccd69652491d?w=400&h=300&fit=crop",
-  "Hero": "https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=400&h=300&fit=crop",
-  "Suzuki": "https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=400&h=300&fit=crop",
-  "KTM": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop",
-  "default": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop",
+  "Honda": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80",
+  "TVS": "https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=400&h=400&fit=crop&q=80",
+  "Bajaj": "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400&h=400&fit=crop&q=80",
+  "Royal Enfield": "https://images.unsplash.com/photo-1558980664-769d59546b3d?w=400&h=400&fit=crop&q=80",
+  "Yamaha": "https://images.unsplash.com/photo-1580310614729-ccd69652491d?w=400&h=400&fit=crop&q=80",
+  "Hero": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80",
+  "Suzuki": "https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=400&h=400&fit=crop&q=80",
+  "KTM": "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400&h=400&fit=crop&q=80",
+  "default": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80",
 };
 
 export interface VehicleInfo {
@@ -73,15 +73,14 @@ const getAuctionConfig = (type?: string) => {
 
 // Get grade color config
 const getGradeConfig = (grade?: string) => {
-  if (!grade) return null;
-  const configs: Record<string, string> = {
-    A: "bg-accent text-accent-foreground",
-    B: "bg-info text-info-foreground",
-    C: "bg-warning text-warning-foreground",
-    D: "bg-muted text-foreground",
-    E: "bg-destructive text-destructive-foreground",
+  const configs: Record<string, { bg: string; text: string }> = {
+    A: { bg: "bg-accent", text: "text-accent-foreground" },
+    B: { bg: "bg-info", text: "text-info-foreground" },
+    C: { bg: "bg-warning", text: "text-warning-foreground" },
+    D: { bg: "bg-muted", text: "text-foreground" },
+    E: { bg: "bg-destructive", text: "text-destructive-foreground" },
   };
-  return configs[grade] || "bg-muted text-foreground";
+  return grade ? configs[grade] || configs.C : configs.C;
 };
 
 const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) => {
@@ -121,83 +120,104 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
   const gradeConfig = getGradeConfig(vehicle.grade);
   const auctionConfig = getAuctionConfig(status.auctionType);
 
+  // Ensure we always have valid values
+  const displayYear = vehicle.year || 2023;
+  const displayKms = vehicle.kms || 15000;
+  const displayCity = vehicle.city || "Bangalore";
+  const displayGrade = vehicle.grade || "B";
+
   return (
     <div
       className={cn(
         "bg-card border rounded-xl overflow-hidden transition-all",
-        onClick && "cursor-pointer hover:border-primary/30 hover:shadow-md",
+        onClick && "cursor-pointer hover:border-primary/30 hover:shadow-lg active:scale-[0.99]",
         status.type === "lost" && "opacity-60",
         className
       )}
       onClick={onClick}
     >
       <div className="flex gap-4 p-4">
-        {/* Thumbnail */}
+        {/* Thumbnail with Grade */}
         <div className={cn(
-          "relative w-[88px] h-[88px] bg-muted rounded-xl overflow-hidden shrink-0",
+          "relative w-20 h-20 bg-muted rounded-xl overflow-hidden shrink-0",
           status.type === "lost" && "grayscale"
         )}>
           <img
             src={thumbnail}
             alt={`${vehicle.make} ${vehicle.model}`}
             className="w-full h-full object-cover"
+            loading="lazy"
           />
-          {/* Grade Badge */}
-          {gradeConfig && (
-            <div className={`absolute bottom-2 left-2 text-[11px] px-2 py-0.5 rounded-md font-bold ${gradeConfig}`}>
-              {vehicle.grade}
-            </div>
-          )}
+          {/* Grade Badge - bottom left */}
+          <div className={cn(
+            "absolute bottom-1.5 left-1.5 text-[10px] px-1.5 py-0.5 rounded font-bold",
+            gradeConfig.bg, gradeConfig.text
+          )}>
+            {displayGrade}
+          </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-          {/* Top Row: Title + Status/Timer */}
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h3 className="font-semibold text-[15px] text-foreground leading-snug truncate">
+        <div className="flex-1 min-w-0 flex flex-col justify-between">
+          {/* Row 1: Title + Status */}
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <h3 className="font-semibold text-[15px] text-foreground leading-tight truncate">
                 {vehicle.make} {vehicle.model}
               </h3>
-              <p className="text-[13px] text-muted-foreground mt-0.5">
-                {vehicle.year || "2023"} · {((vehicle.kms || 0) / 1000).toFixed(0)}k km
+              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
+                <span>{displayYear}</span>
+                <span className="text-muted-foreground/50">•</span>
+                <span>{(displayKms / 1000).toFixed(0)}k km</span>
+                <span className="text-muted-foreground/50">•</span>
+                <span className="flex items-center gap-0.5">
+                  <MapPin className="w-3 h-3" />
+                  {displayCity}
+                </span>
               </p>
             </div>
             
-            {/* Right side - Timer or Status Badge */}
+            {/* Status Indicator */}
             <div className="shrink-0">
+              {/* Live: Timer */}
               {status.type === "live" && status.timeRemaining !== undefined && (
                 <div className={cn(
-                  "flex items-center gap-1.5 px-2 py-1 rounded-lg",
-                  isUrgentTime ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"
+                  "flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium",
+                  isUrgentTime 
+                    ? "bg-destructive/10 text-destructive" 
+                    : "bg-muted text-muted-foreground"
                 )}>
                   <Clock className={cn("w-3.5 h-3.5", isUrgentTime && "animate-pulse")} />
-                  <span className="text-sm font-mono font-medium">{formatTime(timeLeft)}</span>
+                  <span className="font-mono">{formatTime(timeLeft)}</span>
                 </div>
               )}
               
+              {/* Won: Badge */}
               {status.type === "won" && (
-                <Badge className="bg-accent/10 text-accent border-0 gap-1">
+                <Badge className="bg-accent/10 text-accent border-0 gap-1 text-xs">
                   <Trophy className="w-3 h-3" />
                   Won
                 </Badge>
               )}
               
+              {/* Lost: Badge */}
               {status.type === "lost" && (
-                <Badge variant="secondary" className="text-muted-foreground">
+                <Badge variant="secondary" className="text-xs">
                   Lost
                 </Badge>
               )}
             </div>
           </div>
           
-          {/* Bottom Row: Price + Actions */}
+          {/* Row 2: Price + Actions */}
           <div className="flex items-center justify-between mt-3">
-            {/* Left: Price info */}
+            {/* Price Section */}
             <div className="flex items-baseline gap-2">
+              {/* Live bids */}
               {status.type === "live" && status.bidAmount !== undefined && status.bidAmount > 0 && (
                 <>
                   <span className={cn(
-                    "font-bold text-xl",
+                    "font-bold text-lg",
                     status.bidDifference !== undefined && status.bidDifference >= 0 
                       ? "text-accent" 
                       : "text-foreground"
@@ -212,9 +232,10 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
                 </>
               )}
               
+              {/* Won bids */}
               {status.type === "won" && status.bidAmount !== undefined && (
                 <>
-                  <span className="font-bold text-xl text-foreground">
+                  <span className="font-bold text-lg text-foreground">
                     {formatPrice(status.bidAmount)}
                   </span>
                   {status.commission !== undefined && status.commission > 0 && (
@@ -225,36 +246,37 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
                 </>
               )}
               
+              {/* Lost bids */}
               {status.type === "lost" && (
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-muted-foreground">
-                    Your bid: <span className="font-medium text-foreground">{formatPrice(status.bidAmount || 0)}</span>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-muted-foreground">
+                    You: <span className="font-medium text-foreground">{formatPrice(status.bidAmount || 0)}</span>
                   </span>
-                  <span className="text-sm text-muted-foreground">
-                    Winner: <span className="font-medium text-accent">{formatPrice(status.winningBid || 0)}</span>
+                  <span className="text-muted-foreground">
+                    Won: <span className="font-medium text-accent">{formatPrice(status.winningBid || 0)}</span>
                   </span>
                 </div>
               )}
             </div>
 
-            {/* Right: Actions */}
+            {/* Actions Section */}
             <div className="flex items-center gap-2 shrink-0">
-              {/* Live: Show bid status or raise button */}
+              {/* Live: Bid status or Raise */}
               {status.type === "live" && (
                 <>
                   {status.bidDifference !== undefined && status.bidDifference >= 0 ? (
-                    <Badge className="bg-accent/10 text-accent border-0 text-xs">
+                    <Badge className="bg-accent/10 text-accent border-0 text-[10px]">
                       Winning
                     </Badge>
                   ) : status.bidDifference !== undefined && status.bidDifference < 0 ? (
-                    <button className="h-7 px-3 text-xs bg-warning text-warning-foreground hover:bg-warning/90 rounded-lg flex items-center gap-1 font-medium transition-colors">
+                    <button className="h-6 px-2.5 text-[10px] bg-warning text-warning-foreground hover:bg-warning/90 rounded-lg flex items-center gap-1 font-medium transition-colors">
                       <TrendingUp className="w-3 h-3" />
-                      Raise Bid
+                      Raise
                     </button>
                   ) : null}
                   
                   {auctionConfig && (
-                    <Badge variant="outline" className="text-xs gap-1 px-2">
+                    <Badge variant="outline" className="text-[10px] gap-1 px-1.5">
                       {auctionConfig.icon}
                       {auctionConfig.name}
                     </Badge>
@@ -262,23 +284,23 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
                 </>
               )}
 
-              {/* Won: Show progress or urgent warning */}
+              {/* Won: Urgent warning or Progress */}
               {status.type === "won" && (
                 <>
                   {status.isUrgent && status.remainingDays !== undefined && (
-                    <Badge variant="destructive" className="text-xs gap-1">
+                    <Badge variant="destructive" className="text-[10px] gap-1">
                       <AlertTriangle className="w-3 h-3" />
-                      {status.remainingDays}d left
+                      {status.remainingDays}d
                     </Badge>
                   )}
                   
                   {status.serviceProgress !== undefined && (
                     <div className="flex items-center gap-2">
-                      <div className="w-16">
+                      <div className="w-12">
                         <Progress value={status.serviceProgress} className="h-1.5" />
                       </div>
                       <span className={cn(
-                        "text-xs font-medium",
+                        "text-[10px] font-medium",
                         status.serviceProgress === 100 ? "text-accent" : "text-muted-foreground"
                       )}>
                         {status.serviceProgress}%
@@ -286,13 +308,13 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
                     </div>
                   )}
                   
-                  <ChevronRight className="w-4 h-4 text-muted-foreground/60" />
+                  <ChevronRight className="w-4 h-4 text-muted-foreground/40" />
                 </>
               )}
 
               {/* Lost: Show difference */}
               {status.type === "lost" && status.bidDifference !== undefined && (
-                <span className="text-xs text-destructive font-medium">
+                <span className="text-[10px] text-destructive font-medium">
                   -{formatPrice(Math.abs(status.bidDifference))}
                 </span>
               )}
