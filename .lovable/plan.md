@@ -1,114 +1,102 @@
 
-# Fix: Highest Bid Mismatch Between Display and Activity
+# Fill Vehicle Information with Dummy Data
 
-## Problem Identified
+## Current Situation
 
-The "HIGHEST BID" card shows ₹36,500 but the Activity shows a leading bid of ₹38,000. This is a data synchronization issue.
+The auction cards are pulling data from the database which already has realistic vehicle information:
+- **TVS Apache RTR 160** - 2023, 12,450 km, Red
+- **Bajaj Pulsar NS200** - 2022, 18,200 km, Black
+- **Hero Splendor Plus** - 2021, 28,500 km, Blue
+- **Yamaha FZ-S V3** - 2023, 8,500 km, Yellow
+- **Royal Enfield Classic 350** - 2022, 15,000 km, Green
+- **Honda Activa 6G** - 2022, 22,000 km, White
 
-**Root Cause**: The `auctions.current_highest_bid` field in the database is out of sync with the actual highest bid in `broker_bids`. 
-
-Looking at the data:
-| Bid Amount | Commission | Effective Score | Status |
-|------------|------------|-----------------|--------|
-| ₹38,000 | ₹1,000 | 32,450 | active |
-| ₹36,500 | ₹800 | 31,145 | active |
-| ₹35,000 | ₹500 | 29,825 | active |
-
-The `auctions` table shows `current_highest_bid: 36500`, but the actual highest by effective score is ₹38,000.
+However, all cards show `/placeholder.svg` for thumbnails, and variants are empty.
 
 ---
 
 ## Solution
 
-### Two-Part Fix:
+Update the `transformAuctionForCard` function in `BrokerDashboard.tsx` to provide:
 
-**1. Fix the Display Logic (Immediate)**
-Instead of trusting the `auctions.current_highest_bid` field, derive the highest bid directly from the actual bids data which is already fetched and sorted by effective score.
-
-**Changes in `useRealtimeBids.ts`:**
-```text
-In fetchBids():
-- After fetching bids (already sorted by effective_score DESC)
-- Set currentHighestBid from the first bid's bid_amount (bids[0].bid_amount)
-- Set currentHighestCommission from first bid's commission_amount
-- This ensures the displayed value always matches the activity feed
-```
-
-**2. Fix the Update Logic (Prevent Future Issues)**
-When placing a new bid, don't blindly update `current_highest_bid` based on comparison. Instead, after inserting the bid, re-query the actual highest bid and update the auctions table correctly.
-
-**Changes in `placeBid()` function:**
-```text
-After inserting the new bid:
-- Query broker_bids for this auction, sorted by effective_score DESC, limit 1
-- Update auctions.current_highest_bid with that bid's amount
-- Update auctions.current_highest_commission with that bid's commission
-```
+1. **Realistic placeholder images** using external bike images (Unsplash URLs) mapped by vehicle make
+2. **Vehicle variants** based on the make/model combination
+3. **Better fallback handling** for any missing data
 
 ---
 
-## File Changes
+## Changes
 
-### `src/hooks/useRealtimeBids.ts`
+### File: `src/pages/broker/BrokerDashboard.tsx`
 
-**Fix 1 - fetchBids (lines ~109-137):**
-- Derive currentHighestBid from actual bids data instead of trusting auction table
-- Use `typedBids[0]?.bid_amount` instead of `auction?.current_highest_bid`
-
-**Fix 2 - placeBid (lines ~181-211):**
-- After inserting bid, query for actual highest bid by effective_score
-- Update auctions table with the correct highest bid values
-
----
-
-## Technical Details
-
-The fix prioritizes the bids data as the source of truth since:
-1. Bids are sorted by `effective_score DESC` when fetched
-2. The first bid in the array is always the actual leader
-3. This matches what's shown in the Activity feed
+Add a mapping object for realistic dummy thumbnails and variants:
 
 ```typescript
-// In fetchBids - use actual bid data for highest bid
-const highestBid = typedBids[0];
-const actualHighestBid = highestBid?.bid_amount || 0;
-const actualHighestCommission = highestBid?.commission_amount || 0;
+// Bike thumbnail URLs by make (using placeholder bike images)
+const BIKE_THUMBNAILS: Record<string, string> = {
+  "TVS": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop",
+  "Bajaj": "https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=400&h=300&fit=crop",
+  "Hero": "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400&h=300&fit=crop",
+  "Yamaha": "https://images.unsplash.com/photo-1547549082-6bc09f2049ae?w=400&h=300&fit=crop",
+  "Royal Enfield": "https://images.unsplash.com/photo-1558980664-769d59546b3d?w=400&h=300&fit=crop",
+  "Honda": "https://images.unsplash.com/photo-1571646750667-720cacc6a570?w=400&h=300&fit=crop",
+  "Suzuki": "https://images.unsplash.com/photo-1571646750667-720cacc6a570?w=400&h=300&fit=crop",
+  "default": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop",
+};
 
-setAuctionState({
-  currentHighestBid: actualHighestBid,  // Changed from auction table value
-  currentHighestCommission: actualHighestCommission,
-  // ...rest
-});
+// Model variants for common bikes
+const BIKE_VARIANTS: Record<string, string> = {
+  "Apache RTR 160": "4V BS6",
+  "Pulsar NS200": "ABS",
+  "Splendor Plus": "i3S",
+  "FZ-S V3": "FI",
+  "Classic 350": "Signals",
+  "Activa 6G": "DLX",
+  "Access 125": "SE",
+  "Jupiter": "ZX",
+};
 ```
 
-```typescript
-// In placeBid - query actual highest after insert
-const { data: actualHighest } = await supabase
-  .from("broker_bids")
-  .select("bid_amount, commission_amount")
-  .eq("auction_id", auctionId)
-  .eq("status", "active")
-  .order("effective_score", { ascending: false })
-  .limit(1)
-  .single();
+Update the `transformAuctionForCard` function to use these mappings:
 
-// Update with actual highest
-await supabase
-  .from("auctions")
-  .update({
-    current_highest_bid: actualHighest?.bid_amount || bidAmount,
-    current_highest_commission: actualHighest?.commission_amount || commission,
-    bid_count: (currentAuction?.bid_count || 0) + 1,
-  })
-  .eq("id", auctionId);
+```typescript
+const transformAuctionForCard = (auction: AuctionWithInspection) => {
+  const endTime = new Date(auction.end_time);
+  const timeRemaining = Math.max(0, endTime.getTime() - Date.now());
+  const grade = getGradeFromScore(auction.inspections?.condition_score);
+  const make = auction.inspections?.vehicle_make || "Unknown";
+  const model = auction.inspections?.vehicle_model || "Vehicle";
+
+  return {
+    id: auction.id,
+    vehicle: {
+      make: make,
+      model: model,
+      variant: BIKE_VARIANTS[model] || "",
+      year: auction.inspections?.vehicle_year || 2023,
+      kms: auction.inspections?.odometer_reading || 0,
+      city: auction.geo_targeting_city || "Bangalore",
+      grade: grade,
+      thumbnail: BIKE_THUMBNAILS[make] || BIKE_THUMBNAILS["default"],
+    },
+    // ... rest remains same
+  };
+};
 ```
 
 ---
 
 ## Result
 
-After this fix:
-- The "HIGHEST BID" card will always show the bid with the highest effective score
-- This will match the "Leading" badge in the Activity feed
-- Future bids will correctly update the auction table
-- The realtime subscription will also work correctly since it now derives from actual bid data
+After this change:
+- Each bike will display a realistic motorcycle image based on its make
+- Variants will be shown (e.g., "Apache RTR 160 4V BS6")
+- Better visual appearance in the dashboard cards
+
+---
+
+## Note for Images
+
+You mentioned you'll provide actual images later. When ready:
+1. Upload the images through Lovable's chat
+2. I'll update the thumbnail mapping to use those local images instead of Unsplash URLs
