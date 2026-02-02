@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, TrendingUp, Trophy, XCircle, Clock, Gavel, ChevronRight, AlertTriangle } from "lucide-react";
+import { ArrowLeft, TrendingUp, Trophy, XCircle, Clock, Gavel, ChevronRight, AlertTriangle, MapPin } from "lucide-react";
 import BrokerBottomNav from "@/components/broker/BrokerBottomNav";
 import { useBrokerBids } from "@/hooks/useBrokerBids";
 import { useBrokerWonVehicles } from "@/hooks/useBrokerWonVehicles";
@@ -15,6 +15,18 @@ import {
   getAuctionTypeConfig,
   calculateEffectiveScore,
 } from "@/data/brokerMockData";
+
+// Vehicle thumbnails by make
+const BIKE_THUMBNAILS: Record<string, string> = {
+  "Honda": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop",
+  "TVS": "https://images.unsplash.com/photo-1449426468159-d96dbf08f19f?w=400&h=300&fit=crop",
+  "Bajaj": "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400&h=300&fit=crop",
+  "Royal Enfield": "https://images.unsplash.com/photo-1558980664-769d59546b3d?w=400&h=300&fit=crop",
+  "Yamaha": "https://images.unsplash.com/photo-1580310614729-ccd69652491d?w=400&h=300&fit=crop",
+  "Hero": "https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=400&h=300&fit=crop",
+  "Suzuki": "https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=400&h=300&fit=crop",
+  "default": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop",
+};
 
 const BrokerBids = () => {
   const navigate = useNavigate();
@@ -142,64 +154,79 @@ const BrokerBids = () => {
               const auctionType = bid.auction?.auction_type || "flexible";
               const config = getAuctionTypeConfig(auctionType as any);
               const effectiveScore = calculateEffectiveScore(bid.bid_amount, bid.commission_amount);
+              const make = bid.auction?.inspections?.vehicle_make || "Honda";
+              const thumbnail = BIKE_THUMBNAILS[make] || BIKE_THUMBNAILS["default"];
 
               return (
                 <div
                   key={bid.id}
-                  className="bg-card border rounded-xl p-4 cursor-pointer hover:border-primary/50"
+                  className="bg-card border rounded-xl overflow-hidden cursor-pointer hover:border-primary/50"
                   onClick={() => navigate(`/broker/auction/${bid.auction_id}`)}
                 >
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-semibold">
+                  <div className="flex gap-4 p-4">
+                    {/* Vehicle Image */}
+                    <div className="relative w-24 h-20 bg-muted rounded-xl overflow-hidden shrink-0">
+                      <img
+                        src={thumbnail}
+                        alt={bid.auction?.inspections?.vehicle_model || "Vehicle"}
+                        className="w-full h-full object-cover"
+                      />
+                      <Badge
+                        className={`absolute top-1 right-1 text-xs ${
+                          bid.status === "winning"
+                            ? "bg-accent text-accent-foreground"
+                            : "bg-destructive text-destructive-foreground"
+                        }`}
+                      >
+                        {bid.status === "winning" ? "WINNING" : "OUTBID"}
+                      </Badge>
+                    </div>
+
+                    {/* Vehicle Info */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-foreground truncate">
                         {bid.auction?.inspections?.vehicle_make} {bid.auction?.inspections?.vehicle_model}
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        {bid.auction?.inspections?.vehicle_year}
+                        {bid.auction?.inspections?.vehicle_year} • {(bid.auction?.inspections?.odometer_reading || 0).toLocaleString()} km
                       </p>
+                      
+                      {/* Time remaining */}
+                      <div className="flex items-center gap-2 mt-2 text-sm">
+                        <Clock className="w-3 h-3 text-muted-foreground" />
+                        <span className={timeRemaining < 5 * 60 * 1000 ? "text-destructive font-medium" : "text-muted-foreground"}>
+                          {formatTimeRemaining(timeRemaining)}
+                        </span>
+                        <Badge variant="outline" className="text-xs">
+                          {config.icon} {config.name}
+                        </Badge>
+                      </div>
                     </div>
-                    <Badge
-                      className={
-                        bid.status === "winning"
-                          ? "bg-green-500 text-white"
-                          : "bg-red-500 text-white"
-                      }
-                    >
-                      {bid.status.toUpperCase()}
-                    </Badge>
-                  </div>
-                  
-                  {/* Time remaining */}
-                  <div className="flex items-center gap-2 mb-2 text-sm text-muted-foreground">
-                    <Clock className="w-3 h-3" />
-                    <span>{formatTimeRemaining(timeRemaining)} remaining</span>
-                    <Badge variant="outline" className="text-xs">
-                      {config.icon} {config.name}
-                    </Badge>
                   </div>
 
-                  <div className="flex justify-between items-center">
+                  {/* Footer */}
+                  <div className="px-4 py-3 border-t bg-muted/30 flex justify-between items-center">
                     <div>
                       <p className="text-sm text-muted-foreground">Your bid</p>
-                      <p className="font-semibold">
+                      <p className="font-semibold text-foreground">
                         ₹{bid.bid_amount.toLocaleString()}
                         {bid.commission_amount > 0 && (
-                          <span className="text-amber-600 text-sm"> + ₹{bid.commission_amount.toLocaleString()}</span>
+                          <span className="text-warning text-sm"> + ₹{bid.commission_amount.toLocaleString()}</span>
                         )}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Effective: {effectiveScore.toFixed(0)}
+                        Score: {effectiveScore.toFixed(0)}
                       </p>
                     </div>
                     {bid.status === "outbid" && bid.auction && (
                       <div className="text-right">
-                        <p className="text-xs text-muted-foreground">Current highest</p>
-                        <p className="text-sm font-medium text-red-600">
+                        <p className="text-xs text-muted-foreground">Highest</p>
+                        <p className="text-sm font-medium text-destructive">
                           ₹{(bid.auction.current_highest_bid || 0).toLocaleString()}
                         </p>
-                        <Button size="sm" className="mt-1 bg-amber-500 hover:bg-amber-600">
+                        <Button size="sm" className="mt-1 bg-warning text-warning-foreground hover:bg-warning/90">
                           <TrendingUp className="w-4 h-4 mr-1" />
-                          Increase
+                          Raise
                         </Button>
                       </div>
                     )}
@@ -213,13 +240,13 @@ const BrokerBids = () => {
         <TabsContent value="won" className="space-y-3 mt-0">
           {/* Urgent banner */}
           {urgentCount > 0 && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-amber-600" />
+            <div className="bg-warning/10 border border-warning/20 rounded-lg p-3 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-warning" />
               <div>
-                <p className="text-sm font-medium text-amber-800">
+                <p className="text-sm font-medium text-foreground">
                   {urgentCount} vehicle{urgentCount > 1 ? "s" : ""} need{urgentCount === 1 ? "s" : ""} RC transfer soon
                 </p>
-                <p className="text-xs text-amber-600">Complete before deadline to avoid penalties</p>
+                <p className="text-xs text-muted-foreground">Complete before deadline to avoid penalties</p>
               </div>
             </div>
           )}
@@ -240,70 +267,79 @@ const BrokerBids = () => {
               const serviceProgress = wonVehicle ? getServiceProgress(wonVehicle) : 0;
               const remainingDays = wonVehicle ? getRemainingDays(wonVehicle.rc_transfer_deadline) : 180;
               const isUrgent = remainingDays <= 30 && wonVehicle?.rc_transfer_status !== "completed";
+              const make = bid.auction?.inspections?.vehicle_make || "Honda";
+              const thumbnail = BIKE_THUMBNAILS[make] || BIKE_THUMBNAILS["default"];
               
               return (
                 <div
                   key={bid.id}
-                  className="bg-card border rounded-xl p-4 cursor-pointer hover:border-primary/50 transition-colors"
+                  className="bg-card border rounded-xl overflow-hidden cursor-pointer hover:border-primary/50 transition-colors"
                   onClick={() => wonVehicle && navigate(`/broker/won/${wonVehicle.id}`)}
                 >
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-semibold">
-                        {bid.auction?.inspections?.vehicle_make} {bid.auction?.inspections?.vehicle_model}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {bid.auction?.inspections?.vehicle_year}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {isUrgent && (
-                        <Badge variant="destructive" className="text-xs">
-                          <AlertTriangle className="w-3 h-3 mr-1" />
-                          {remainingDays}d left
-                        </Badge>
-                      )}
-                      <Badge className="bg-green-500 text-white">
+                  <div className="flex gap-4 p-4">
+                    {/* Vehicle Image */}
+                    <div className="relative w-24 h-20 bg-muted rounded-xl overflow-hidden shrink-0">
+                      <img
+                        src={thumbnail}
+                        alt={bid.auction?.inspections?.vehicle_model || "Vehicle"}
+                        className="w-full h-full object-cover"
+                      />
+                      <Badge className="absolute top-1 right-1 text-xs bg-accent text-accent-foreground">
                         <Trophy className="w-3 h-3 mr-1" />
                         WON
                       </Badge>
                     </div>
-                  </div>
-                  
-                  {/* Service Progress */}
-                  {wonVehicle && (
-                    <div className="mb-3">
-                      <div className="flex justify-between items-center text-xs mb-1">
-                        <span className="text-muted-foreground">Service Progress</span>
-                        <span className={serviceProgress === 100 ? "text-green-600 font-medium" : "text-muted-foreground"}>
-                          {serviceProgress}%
-                        </span>
+
+                    {/* Vehicle Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-semibold text-foreground truncate">
+                            {bid.auction?.inspections?.vehicle_make} {bid.auction?.inspections?.vehicle_model}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {bid.auction?.inspections?.vehicle_year} • {(bid.auction?.inspections?.odometer_reading || 0).toLocaleString()} km
+                          </p>
+                        </div>
+                        {isUrgent && (
+                          <Badge variant="destructive" className="text-xs shrink-0">
+                            <AlertTriangle className="w-3 h-3 mr-1" />
+                            {remainingDays}d
+                          </Badge>
+                        )}
                       </div>
-                      <Progress value={serviceProgress} className="h-2" />
+                      
+                      {/* Service Progress */}
+                      <div className="mt-2">
+                        <div className="flex justify-between items-center text-xs mb-1">
+                          <span className="text-muted-foreground">Service</span>
+                          <span className={serviceProgress === 100 ? "text-accent font-medium" : "text-muted-foreground"}>
+                            {serviceProgress}%
+                          </span>
+                        </div>
+                        <Progress value={serviceProgress} className="h-1.5" />
+                      </div>
                     </div>
-                  )}
-                  
-                  <div className="flex justify-between items-center mt-3">
+                  </div>
+
+                  {/* Footer */}
+                  <div className="px-4 py-3 border-t bg-muted/30 flex justify-between items-center">
                     <div>
                       <p className="text-sm text-muted-foreground">Winning bid</p>
-                      <p className="font-semibold text-green-600">
+                      <p className="font-semibold text-accent">
                         ₹{bid.bid_amount.toLocaleString()}
                         {bid.commission_amount > 0 && (
-                          <span className="text-amber-600 text-sm"> + ₹{bid.commission_amount.toLocaleString()}</span>
+                          <span className="text-warning text-sm"> + ₹{bid.commission_amount.toLocaleString()}</span>
                         )}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      {wonVehicle ? (
-                        serviceProgress === 100 ? (
-                          <Badge variant="outline" className="text-green-600 border-green-200">
-                            Completed
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary">In Progress</Badge>
-                        )
+                      {serviceProgress === 100 ? (
+                        <Badge variant="outline" className="text-accent border-accent/20">
+                          Completed
+                        </Badge>
                       ) : (
-                        <Badge variant="secondary">Processing</Badge>
+                        <Badge variant="secondary">In Progress</Badge>
                       )}
                       <ChevronRight className="w-5 h-5 text-muted-foreground" />
                     </div>
@@ -326,43 +362,64 @@ const BrokerBids = () => {
               <p className="text-sm">Great job on your bidding strategy!</p>
             </div>
           ) : (
-            lostBids.map((bid) => (
-              <div
-                key={bid.id}
-                className="bg-card border rounded-xl p-4"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h3 className="font-semibold">
-                      {bid.auction?.inspections?.vehicle_make} {bid.auction?.inspections?.vehicle_model}
-                    </h3>
+            lostBids.map((bid) => {
+              const make = bid.auction?.inspections?.vehicle_make || "Honda";
+              const thumbnail = BIKE_THUMBNAILS[make] || BIKE_THUMBNAILS["default"];
+              const winningBid = bid.auction?.current_highest_bid || 0;
+              const difference = winningBid - bid.bid_amount;
+              
+              return (
+                <div
+                  key={bid.id}
+                  className="bg-card border rounded-xl overflow-hidden"
+                >
+                  <div className="flex gap-4 p-4">
+                    {/* Vehicle Image */}
+                    <div className="relative w-24 h-20 bg-muted rounded-xl overflow-hidden shrink-0 grayscale opacity-75">
+                      <img
+                        src={thumbnail}
+                        alt={bid.auction?.inspections?.vehicle_model || "Vehicle"}
+                        className="w-full h-full object-cover"
+                      />
+                      <Badge variant="secondary" className="absolute top-1 right-1 text-xs">
+                        LOST
+                      </Badge>
+                    </div>
+
+                    {/* Vehicle Info */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-foreground truncate">
+                        {bid.auction?.inspections?.vehicle_make} {bid.auction?.inspections?.vehicle_model}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {bid.auction?.inspections?.vehicle_year} • {(bid.auction?.inspections?.odometer_reading || 0).toLocaleString()} km
+                      </p>
+                      
+                      <div className="flex items-center gap-4 mt-2 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Your bid: </span>
+                          <span className="font-medium">₹{bid.bid_amount.toLocaleString()}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Winning: </span>
+                          <span className="font-medium text-accent">₹{winningBid.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Analysis Footer */}
+                  <div className="px-4 py-3 border-t bg-muted/30">
                     <p className="text-sm text-muted-foreground">
-                      {bid.auction?.inspections?.vehicle_year}
+                      ❌ Lost by <span className="font-medium text-foreground">₹{difference.toLocaleString()}</span>
+                    </p>
+                    <p className="text-xs text-warning mt-1">
+                      💡 Consider adding commission to boost your effective score
                     </p>
                   </div>
-                  <Badge variant="secondary">LOST</Badge>
                 </div>
-                
-                <div className="mb-3">
-                  <p className="text-sm text-muted-foreground">Your bid</p>
-                  <p className="font-semibold">
-                    ₹{bid.bid_amount.toLocaleString()}
-                    {bid.commission_amount > 0 && (
-                      <span className="text-amber-600 text-sm"> + ₹{bid.commission_amount.toLocaleString()}</span>
-                    )}
-                  </p>
-                </div>
-
-                <div className="bg-muted rounded-lg p-3">
-                  <p className="text-sm">
-                    ❌ Your bid was lower than the winning bid.
-                  </p>
-                  <p className="text-xs text-amber-600 mt-2">
-                    💡 Tip: Increase your bid amount or commission on similar vehicles.
-                  </p>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </TabsContent>
       </Tabs>

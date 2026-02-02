@@ -44,6 +44,62 @@ export interface WonVehicle {
   };
 }
 
+// Mock won vehicles data for demo
+const MOCK_WON_VEHICLES: WonVehicle[] = [
+  {
+    id: "mock-wv-1", broker_id: "mock-broker", auction_id: "mock-auction-won-1", bid_id: "mock-won-1",
+    won_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    payment_status: "completed", payment_completed_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    pickup_status: "completed", pickup_scheduled_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), pickup_completed_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    delivery_status: "pending", delivered_at: null,
+    rc_transfer_status: "pending", rc_transfer_deadline: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], rc_transfer_proof_uri: null, rc_transferred_at: null,
+    name_transfer_status: "pending", name_transferred_at: null,
+    insurance_status: "pending", notes: null,
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date().toISOString(),
+    auction: { id: "mock-auction-won-1", status: "ended", current_highest_bid: 45000, inspections: { vehicle_make: "Bajaj", vehicle_model: "Pulsar NS200", vehicle_year: 2023, vehicle_registration: "KA-01-MN-5678", vehicle_color: "Red", odometer_reading: 8500 } },
+    bid: { bid_amount: 45000, commission_amount: 1800 }
+  },
+  {
+    id: "mock-wv-2", broker_id: "mock-broker", auction_id: "mock-auction-won-2", bid_id: "mock-won-2",
+    won_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    payment_status: "completed", payment_completed_at: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+    pickup_status: "completed", pickup_scheduled_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), pickup_completed_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    delivery_status: "completed", delivered_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+    rc_transfer_status: "pending", rc_transfer_deadline: new Date(Date.now() + 18 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], rc_transfer_proof_uri: null, rc_transferred_at: null,
+    name_transfer_status: "pending", name_transferred_at: null,
+    insurance_status: "completed", notes: "Customer very happy",
+    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date().toISOString(),
+    auction: { id: "mock-auction-won-2", status: "ended", current_highest_bid: 38000, inspections: { vehicle_make: "Yamaha", vehicle_model: "FZ-S V3", vehicle_year: 2022, vehicle_registration: "KA-03-XY-9012", vehicle_color: "Blue", odometer_reading: 15800 } },
+    bid: { bid_amount: 38000, commission_amount: 1500 }
+  },
+  {
+    id: "mock-wv-3", broker_id: "mock-broker", auction_id: "mock-auction-won-3", bid_id: "mock-won-3",
+    won_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+    payment_status: "completed", payment_completed_at: new Date(Date.now() - 13 * 24 * 60 * 60 * 1000).toISOString(),
+    pickup_status: "completed", pickup_scheduled_at: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(), pickup_completed_at: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
+    delivery_status: "completed", delivered_at: new Date(Date.now() - 11 * 24 * 60 * 60 * 1000).toISOString(),
+    rc_transfer_status: "completed", rc_transfer_deadline: new Date(Date.now() + 166 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], rc_transfer_proof_uri: "https://example.com/rc.jpg", rc_transferred_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    name_transfer_status: "completed", name_transferred_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+    insurance_status: "completed", notes: "Completed all formalities",
+    created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date().toISOString(),
+    auction: { id: "mock-auction-won-3", status: "ended", current_highest_bid: 28000, inspections: { vehicle_make: "Hero", vehicle_model: "Splendor Plus", vehicle_year: 2021, vehicle_registration: "MH-12-AB-3456", vehicle_color: "Black", odometer_reading: 32000 } },
+    bid: { bid_amount: 28000, commission_amount: 1200 }
+  },
+  {
+    id: "mock-wv-4", broker_id: "mock-broker", auction_id: "mock-auction-won-4", bid_id: "mock-won-4",
+    won_at: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
+    payment_status: "completed", payment_completed_at: new Date(Date.now() - 44 * 24 * 60 * 60 * 1000).toISOString(),
+    pickup_status: "completed", pickup_scheduled_at: new Date(Date.now() - 43 * 24 * 60 * 60 * 1000).toISOString(), pickup_completed_at: new Date(Date.now() - 43 * 24 * 60 * 60 * 1000).toISOString(),
+    delivery_status: "completed", delivered_at: new Date(Date.now() - 42 * 24 * 60 * 60 * 1000).toISOString(),
+    rc_transfer_status: "completed", rc_transfer_deadline: new Date(Date.now() + 135 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], rc_transfer_proof_uri: "https://example.com/rc2.jpg", rc_transferred_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    name_transfer_status: "completed", name_transferred_at: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString(),
+    insurance_status: "completed", notes: "Smooth transaction",
+    created_at: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date().toISOString(),
+    auction: { id: "mock-auction-won-4", status: "ended", current_highest_bid: 42000, inspections: { vehicle_make: "Suzuki", vehicle_model: "Access 125", vehicle_year: 2023, vehicle_registration: "DL-05-CD-7890", vehicle_color: "Pearl White", odometer_reading: 5200 } },
+    bid: { bid_amount: 42000, commission_amount: 2000 }
+  },
+];
+
 interface UseBrokerWonVehiclesReturn {
   wonVehicles: WonVehicle[];
   loading: boolean;
@@ -105,7 +161,12 @@ export function useBrokerWonVehicles(brokerId: string | undefined): UseBrokerWon
         bid: Array.isArray(item.bid) ? item.bid[0] : item.bid,
       }));
 
-      setWonVehicles(transformedData);
+      // Use mock data if database is empty
+      if (transformedData.length === 0) {
+        setWonVehicles(MOCK_WON_VEHICLES);
+      } else {
+        setWonVehicles(transformedData);
+      }
     } catch (err) {
       console.error("Error fetching won vehicles:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch won vehicles");
