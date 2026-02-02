@@ -139,7 +139,7 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
       <div className="flex gap-4 p-4">
         {/* Thumbnail with Grade */}
         <div className={cn(
-          "relative w-20 h-20 bg-muted rounded-xl overflow-hidden shrink-0",
+          "relative w-24 h-24 bg-muted rounded-xl overflow-hidden shrink-0",
           status.type === "lost" && "grayscale"
         )}>
           <img
@@ -150,7 +150,7 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
           />
           {/* Grade Badge - bottom left */}
           <div className={cn(
-            "absolute bottom-1.5 left-1.5 text-[10px] px-1.5 py-0.5 rounded font-bold",
+            "absolute bottom-2 left-2 text-[11px] px-2 py-0.5 rounded-md font-bold",
             gradeConfig.bg, gradeConfig.text
           )}>
             {displayGrade}
@@ -158,23 +158,13 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-w-0 flex flex-col justify-between">
+        <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
           {/* Row 1: Title + Status */}
-          <div className="flex items-start justify-between gap-2">
+          <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <h3 className="font-semibold text-[15px] text-foreground leading-tight truncate">
+              <h3 className="font-semibold text-base text-foreground leading-tight">
                 {vehicle.make} {vehicle.model}
               </h3>
-              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
-                <span>{displayYear}</span>
-                <span className="text-muted-foreground/50">•</span>
-                <span>{(displayKms / 1000).toFixed(0)}k km</span>
-                <span className="text-muted-foreground/50">•</span>
-                <span className="flex items-center gap-0.5">
-                  <MapPin className="w-3 h-3" />
-                  {displayCity}
-                </span>
-              </p>
             </div>
             
             {/* Status Indicator */}
@@ -182,7 +172,7 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
               {/* Live: Timer */}
               {status.type === "live" && status.timeRemaining !== undefined && (
                 <div className={cn(
-                  "flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium",
+                  "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium",
                   isUrgentTime 
                     ? "bg-destructive/10 text-destructive" 
                     : "bg-muted text-muted-foreground"
@@ -194,22 +184,34 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
               
               {/* Won: Badge */}
               {status.type === "won" && (
-                <Badge className="bg-accent/10 text-accent border-0 gap-1 text-xs">
-                  <Trophy className="w-3 h-3" />
+                <Badge className="bg-accent/10 text-accent border-0 gap-1 text-xs px-2.5 py-1">
+                  <Trophy className="w-3.5 h-3.5" />
                   Won
                 </Badge>
               )}
               
               {/* Lost: Badge */}
               {status.type === "lost" && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-xs px-2.5 py-1">
                   Lost
                 </Badge>
               )}
             </div>
           </div>
+
+          {/* Row 2: Specs */}
+          <p className="text-sm text-muted-foreground mt-1.5 flex items-center gap-2">
+            <span>{displayYear}</span>
+            <span className="text-muted-foreground/40">•</span>
+            <span>{(displayKms / 1000).toFixed(0)}k km</span>
+            <span className="text-muted-foreground/40">•</span>
+            <span className="flex items-center gap-1">
+              <MapPin className="w-3.5 h-3.5" />
+              {displayCity}
+            </span>
+          </p>
           
-          {/* Row 2: Price + Actions */}
+          {/* Row 3: Price + Actions */}
           <div className="flex items-center justify-between mt-3">
             {/* Price Section */}
             <div className="flex items-baseline gap-2">
@@ -217,7 +219,7 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
               {status.type === "live" && status.bidAmount !== undefined && status.bidAmount > 0 && (
                 <>
                   <span className={cn(
-                    "font-bold text-lg",
+                    "font-bold text-xl",
                     status.bidDifference !== undefined && status.bidDifference >= 0 
                       ? "text-accent" 
                       : "text-foreground"
@@ -225,7 +227,7 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
                     {formatPrice(status.bidAmount)}
                   </span>
                   {status.commission !== undefined && status.commission > 0 && (
-                    <span className="text-xs text-warning font-medium">
+                    <span className="text-sm text-warning font-medium">
                       +{formatPrice(status.commission)}
                     </span>
                   )}
@@ -235,11 +237,11 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
               {/* Won bids */}
               {status.type === "won" && status.bidAmount !== undefined && (
                 <>
-                  <span className="font-bold text-lg text-foreground">
+                  <span className="font-bold text-xl text-foreground">
                     {formatPrice(status.bidAmount)}
                   </span>
                   {status.commission !== undefined && status.commission > 0 && (
-                    <span className="text-xs text-warning font-medium">
+                    <span className="text-sm text-warning font-medium">
                       +{formatPrice(status.commission)}
                     </span>
                   )}
@@ -248,7 +250,7 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
               
               {/* Lost bids */}
               {status.type === "lost" && (
-                <div className="flex items-center gap-2 text-xs">
+                <div className="flex items-center gap-3 text-sm">
                   <span className="text-muted-foreground">
                     You: <span className="font-medium text-foreground">{formatPrice(status.bidAmount || 0)}</span>
                   </span>
@@ -265,18 +267,18 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
               {status.type === "live" && (
                 <>
                   {status.bidDifference !== undefined && status.bidDifference >= 0 ? (
-                    <Badge className="bg-accent/10 text-accent border-0 text-[10px]">
+                    <Badge className="bg-accent/10 text-accent border-0 text-xs px-2.5 py-1">
                       Winning
                     </Badge>
                   ) : status.bidDifference !== undefined && status.bidDifference < 0 ? (
-                    <button className="h-6 px-2.5 text-[10px] bg-warning text-warning-foreground hover:bg-warning/90 rounded-lg flex items-center gap-1 font-medium transition-colors">
-                      <TrendingUp className="w-3 h-3" />
+                    <button className="h-7 px-3 text-xs bg-warning text-warning-foreground hover:bg-warning/90 rounded-lg flex items-center gap-1.5 font-medium transition-colors">
+                      <TrendingUp className="w-3.5 h-3.5" />
                       Raise
                     </button>
                   ) : null}
                   
                   {auctionConfig && (
-                    <Badge variant="outline" className="text-[10px] gap-1 px-1.5">
+                    <Badge variant="outline" className="text-xs gap-1 px-2.5 py-1">
                       {auctionConfig.icon}
                       {auctionConfig.name}
                     </Badge>
@@ -288,19 +290,19 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
               {status.type === "won" && (
                 <>
                   {status.isUrgent && status.remainingDays !== undefined && (
-                    <Badge variant="destructive" className="text-[10px] gap-1">
-                      <AlertTriangle className="w-3 h-3" />
+                    <Badge variant="destructive" className="text-xs gap-1 px-2.5 py-1">
+                      <AlertTriangle className="w-3.5 h-3.5" />
                       {status.remainingDays}d
                     </Badge>
                   )}
                   
                   {status.serviceProgress !== undefined && (
                     <div className="flex items-center gap-2">
-                      <div className="w-12">
+                      <div className="w-14">
                         <Progress value={status.serviceProgress} className="h-1.5" />
                       </div>
                       <span className={cn(
-                        "text-[10px] font-medium",
+                        "text-xs font-medium",
                         status.serviceProgress === 100 ? "text-accent" : "text-muted-foreground"
                       )}>
                         {status.serviceProgress}%
@@ -308,13 +310,13 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
                     </div>
                   )}
                   
-                  <ChevronRight className="w-4 h-4 text-muted-foreground/40" />
+                  <ChevronRight className="w-5 h-5 text-muted-foreground/40" />
                 </>
               )}
 
               {/* Lost: Show difference */}
               {status.type === "lost" && status.bidDifference !== undefined && (
-                <span className="text-[10px] text-destructive font-medium">
+                <span className="text-xs text-destructive font-medium">
                   -{formatPrice(Math.abs(status.bidDifference))}
                 </span>
               )}

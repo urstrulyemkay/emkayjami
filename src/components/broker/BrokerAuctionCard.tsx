@@ -122,7 +122,7 @@ const BrokerAuctionCard = ({ auction, onClick }: AuctionCardProps) => {
     >
       <div className="flex gap-4 p-4">
         {/* Thumbnail with Grade */}
-        <div className="relative w-20 h-20 bg-muted rounded-xl overflow-hidden shrink-0">
+        <div className="relative w-24 h-24 bg-muted rounded-xl overflow-hidden shrink-0">
           <img
             src={thumbnail}
             alt={`${auction.vehicle.make} ${auction.vehicle.model}`}
@@ -131,7 +131,7 @@ const BrokerAuctionCard = ({ auction, onClick }: AuctionCardProps) => {
           />
           {/* Grade Badge - bottom left */}
           <div className={cn(
-            "absolute bottom-1.5 left-1.5 text-[10px] px-1.5 py-0.5 rounded font-bold",
+            "absolute bottom-2 left-2 text-[11px] px-2 py-0.5 rounded-md font-bold",
             gradeConfig.bg, gradeConfig.text
           )}>
             {auction.vehicle.grade}
@@ -139,29 +139,19 @@ const BrokerAuctionCard = ({ auction, onClick }: AuctionCardProps) => {
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-w-0 flex flex-col justify-between">
+        <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
           {/* Row 1: Title + Timer */}
-          <div className="flex items-start justify-between gap-2">
+          <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <h3 className="font-semibold text-[15px] text-foreground leading-tight truncate">
+              <h3 className="font-semibold text-base text-foreground leading-tight">
                 {auction.vehicle.make} {auction.vehicle.model}
               </h3>
-              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
-                <span>{auction.vehicle.year}</span>
-                <span className="text-muted-foreground/50">•</span>
-                <span>{(auction.vehicle.kms / 1000).toFixed(0)}k km</span>
-                <span className="text-muted-foreground/50">•</span>
-                <span className="flex items-center gap-0.5">
-                  <MapPin className="w-3 h-3" />
-                  {auction.vehicle.city}
-                </span>
-              </p>
             </div>
             
             {/* Timer Pill */}
             {auction.auctionType !== "one_click" && (
               <div className={cn(
-                "flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium shrink-0",
+                "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium shrink-0",
                 isUrgent 
                   ? "bg-destructive/10 text-destructive" 
                   : "bg-muted text-muted-foreground"
@@ -171,33 +161,45 @@ const BrokerAuctionCard = ({ auction, onClick }: AuctionCardProps) => {
               </div>
             )}
           </div>
+
+          {/* Row 2: Specs */}
+          <p className="text-sm text-muted-foreground mt-1.5 flex items-center gap-2">
+            <span>{auction.vehicle.year}</span>
+            <span className="text-muted-foreground/40">•</span>
+            <span>{(auction.vehicle.kms / 1000).toFixed(0)}k km</span>
+            <span className="text-muted-foreground/40">•</span>
+            <span className="flex items-center gap-1">
+              <MapPin className="w-3.5 h-3.5" />
+              {auction.vehicle.city}
+            </span>
+          </p>
           
-          {/* Row 2: Price + Meta */}
+          {/* Row 3: Price + Meta */}
           <div className="flex items-center justify-between mt-3">
             {/* Price Section */}
             {auction.auctionType === "one_click" ? (
               <span className="text-sm font-medium text-primary">Submit Best Bid →</span>
             ) : (
               <div className="flex items-baseline gap-2">
-                <span className="font-bold text-lg text-foreground">
+                <span className="font-bold text-xl text-foreground">
                   {formatPrice(auction.currentHighestBid)}
                 </span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-sm text-muted-foreground">
                   {auction.bidCount} bids
                 </span>
               </div>
             )}
 
             {/* Auction Type + Arrow */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <Badge variant="outline" className={cn(
-                "text-[10px] gap-1 px-2 py-0.5 font-medium border-muted-foreground/20",
+                "text-xs gap-1 px-2.5 py-1 font-medium border-muted-foreground/20",
                 auctionConfig.color
               )}>
                 {auctionConfig.icon}
                 {auctionConfig.name}
               </Badge>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/40" />
+              <ChevronRight className="w-5 h-5 text-muted-foreground/40" />
             </div>
           </div>
         </div>
