@@ -476,7 +476,7 @@ const BrokerAuctionDetail = () => {
               )}
               <div className="border-t pt-2 mt-2 flex justify-between">
                 <span className="font-medium">Total to pay DriveX</span>
-                <span className="font-bold text-lg">₹{bidAmount.toLocaleString()}</span>
+                <span className="font-bold text-lg">₹{(bidAmount + commission).toLocaleString()}</span>
               </div>
               <div className="flex items-center justify-between pt-2">
                 <span className="text-sm text-muted-foreground">Bid ranking</span>
