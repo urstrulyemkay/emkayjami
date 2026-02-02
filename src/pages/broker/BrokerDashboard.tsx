@@ -5,9 +5,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { 
   Coins, Star, TrendingUp, Gavel, Clock, MapPin, 
-  Filter, Bell, User, LogOut, Zap, Scale, Calendar, Target
+  Filter, Bell, User, LogOut, Zap, Scale, Calendar, Target,
+  Shield, ChevronRight, Gift, Award, AlertTriangle, Check
 } from "lucide-react";
 import BrokerAuctionCard from "@/components/broker/BrokerAuctionCard";
 import BrokerBottomNav from "@/components/broker/BrokerBottomNav";
@@ -15,6 +24,8 @@ import {
   BROKER_STATS,
   getLevelFromScore,
   formatTimeRemaining,
+  LEVELS,
+  getProgressToNextLevel,
 } from "@/data/brokerMockData";
 
 // Bike thumbnail URLs by make (using placeholder bike images)
@@ -70,6 +81,11 @@ const BrokerDashboard = () => {
   const [liveAuctions, setLiveAuctions] = useState<AuctionWithInspection[]>([]);
   const [upcomingAuctions, setUpcomingAuctions] = useState<AuctionWithInspection[]>([]);
   const [loadingAuctions, setLoadingAuctions] = useState(true);
+  
+  // Educational sheets state
+  const [coinsSheetOpen, setCoinsSheetOpen] = useState(false);
+  const [levelSheetOpen, setLevelSheetOpen] = useState(false);
+  const [trustSheetOpen, setTrustSheetOpen] = useState(false);
 
   // Auction type configuration
   const auctionTypes = [
@@ -190,7 +206,8 @@ const BrokerDashboard = () => {
   }
 
   const levelConfig = getLevelFromScore(broker.trust_score);
-
+  const nextLevel = LEVELS[broker.level] || LEVELS[LEVELS.length - 1];
+  const progressToNext = getProgressToNextLevel(broker.trust_score, broker.level);
   // Helper to get grade from condition score
   const getGradeFromScore = (score: number | null): string => {
     if (!score) return "C";
@@ -257,19 +274,33 @@ const BrokerDashboard = () => {
             </div>
           </div>
 
-          {/* Stats Row */}
+          {/* Stats Row - Interactive */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
+            <button 
+              onClick={() => setCoinsSheetOpen(true)}
+              className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 hover:bg-white/20 transition-colors active:scale-95"
+            >
               <Coins className="w-4 h-4 text-amber-400" />
               <span className="font-medium">{broker.coins_balance.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
+              <ChevronRight className="w-3 h-3 opacity-60" />
+            </button>
+            <button 
+              onClick={() => setLevelSheetOpen(true)}
+              className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 hover:bg-white/20 transition-colors active:scale-95"
+            >
               <Star className="w-4 h-4 text-amber-400" />
               <span className="font-medium">Lvl {broker.level}</span>
-            </div>
-            <Badge className="bg-white/20 text-white border-0">
-              {levelConfig.name}
-            </Badge>
+              <ChevronRight className="w-3 h-3 opacity-60" />
+            </button>
+            <button 
+              onClick={() => setTrustSheetOpen(true)}
+              className="hover:opacity-80 transition-opacity active:scale-95"
+            >
+              <Badge className="bg-white/20 text-white border-0 gap-1">
+                {levelConfig.name}
+                <ChevronRight className="w-3 h-3" />
+              </Badge>
+            </button>
           </div>
         </div>
       </div>
@@ -519,6 +550,222 @@ const BrokerDashboard = () => {
 
       {/* Bottom Navigation */}
       <BrokerBottomNav activeTab="home" />
+
+      {/* Coins Education Sheet */}
+      <Sheet open={coinsSheetOpen} onOpenChange={setCoinsSheetOpen}>
+        <SheetContent side="bottom" className="rounded-t-3xl max-h-[85vh] overflow-y-auto">
+          <SheetHeader className="text-left pb-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center mb-2">
+              <Coins className="w-6 h-6 text-amber-500" />
+            </div>
+            <SheetTitle className="text-xl">Coins Balance</SheetTitle>
+            <SheetDescription>
+              Earn and spend coins to unlock rewards and boost your bids
+            </SheetDescription>
+          </SheetHeader>
+          
+          <div className="space-y-6 pb-6">
+            {/* Current Balance */}
+            <div className="bg-amber-500/10 rounded-2xl p-4 text-center">
+              <p className="text-3xl font-bold text-amber-600">{broker.coins_balance.toLocaleString()}</p>
+              <p className="text-sm text-muted-foreground">Available Coins</p>
+            </div>
+
+            {/* How to Earn */}
+            <div>
+              <h4 className="font-semibold mb-3 flex items-center gap-2">
+                <Gift className="w-4 h-4 text-accent" />
+                How to Earn Coins
+              </h4>
+              <div className="space-y-2">
+                {[
+                  { action: "Win an auction", coins: "+50" },
+                  { action: "Complete RC transfer on time", coins: "+100" },
+                  { action: "First bid of the day", coins: "+10" },
+                  { action: "Refer a broker", coins: "+500" },
+                  { action: "Perfect month (no strikes)", coins: "+200" },
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
+                    <span className="text-sm">{item.action}</span>
+                    <Badge variant="secondary" className="text-accent">{item.coins}</Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* How to Spend */}
+            <div>
+              <h4 className="font-semibold mb-3 flex items-center gap-2">
+                <Zap className="w-4 h-4 text-primary" />
+                How to Spend Coins
+              </h4>
+              <div className="space-y-2">
+                {[
+                  { action: "Boost bid visibility", coins: "-25" },
+                  { action: "Extend bidding time", coins: "-50" },
+                  { action: "Priority support ticket", coins: "-100" },
+                  { action: "Featured broker badge", coins: "-200" },
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
+                    <span className="text-sm">{item.action}</span>
+                    <Badge variant="outline">{item.coins}</Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Button className="w-full" onClick={() => navigate("/broker/wallet")}>
+              Go to Wallet
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Level Education Sheet */}
+      <Sheet open={levelSheetOpen} onOpenChange={setLevelSheetOpen}>
+        <SheetContent side="bottom" className="rounded-t-3xl max-h-[85vh] overflow-y-auto">
+          <SheetHeader className="text-left pb-4">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-2">
+              <Star className="w-6 h-6 text-primary" />
+            </div>
+            <SheetTitle className="text-xl">Level System</SheetTitle>
+            <SheetDescription>
+              Level up to unlock more benefits and higher limits
+            </SheetDescription>
+          </SheetHeader>
+          
+          <div className="space-y-6 pb-6">
+            {/* Current Level */}
+            <div className={`${levelConfig.bgColor} text-white rounded-2xl p-4`}>
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="text-sm opacity-80">Current Level</p>
+                  <p className="text-2xl font-bold">Level {broker.level} – {levelConfig.name}</p>
+                </div>
+                <Award className="w-10 h-10 opacity-80" />
+              </div>
+              {broker.level < 5 && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm opacity-80">
+                    <span>Progress to Level {broker.level + 1}</span>
+                    <span>{Math.round(progressToNext)}%</span>
+                  </div>
+                  <Progress value={progressToNext} className="h-2 bg-white/20" />
+                </div>
+              )}
+            </div>
+
+            {/* All Levels */}
+            <div>
+              <h4 className="font-semibold mb-3">All Levels</h4>
+              <div className="space-y-2">
+                {LEVELS.map((level) => (
+                  <div 
+                    key={level.level} 
+                    className={`p-3 rounded-xl border ${broker.level === level.level ? 'border-primary bg-primary/5' : 'border-border'}`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-8 h-8 rounded-lg ${level.bgColor} flex items-center justify-center text-white font-bold text-sm`}>
+                          {level.level}
+                        </div>
+                        <div>
+                          <p className="font-medium">{level.name}</p>
+                          <p className="text-xs text-muted-foreground">Score: {level.minScore}-{level.maxScore}</p>
+                        </div>
+                      </div>
+                      {broker.level === level.level && (
+                        <Badge className="bg-primary">Current</Badge>
+                      )}
+                      {broker.level > level.level && (
+                        <Check className="w-5 h-5 text-accent" />
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {level.benefits[0]}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Button className="w-full" onClick={() => navigate("/broker/profile")}>
+              View Full Profile
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Trust Score Education Sheet */}
+      <Sheet open={trustSheetOpen} onOpenChange={setTrustSheetOpen}>
+        <SheetContent side="bottom" className="rounded-t-3xl max-h-[85vh] overflow-y-auto">
+          <SheetHeader className="text-left pb-4">
+            <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center mb-2">
+              <Shield className="w-6 h-6 text-accent" />
+            </div>
+            <SheetTitle className="text-xl">Trust Score</SheetTitle>
+            <SheetDescription>
+              Your trust score determines your level and unlocks benefits
+            </SheetDescription>
+          </SheetHeader>
+          
+          <div className="space-y-6 pb-6">
+            {/* Current Score */}
+            <div className="bg-accent/10 rounded-2xl p-4 text-center">
+              <p className="text-4xl font-bold text-accent">{broker.trust_score}</p>
+              <p className="text-sm text-muted-foreground">out of 100</p>
+              <Badge className={`${levelConfig.bgColor} text-white mt-2`}>
+                {levelConfig.name}
+              </Badge>
+            </div>
+
+            {/* What Affects Score */}
+            <div>
+              <h4 className="font-semibold mb-3 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-accent" />
+                What Affects Your Score
+              </h4>
+              <div className="space-y-2">
+                {[
+                  { factor: "Completion ratio", impact: "High", desc: "Complete deals you win" },
+                  { factor: "RC compliance", impact: "High", desc: "Transfer RC on time" },
+                  { factor: "Dispute rate", impact: "Medium", desc: "Avoid disputes" },
+                  { factor: "Payment timeliness", impact: "Medium", desc: "Pay on time" },
+                  { factor: "Participation", impact: "Low", desc: "Bid regularly" },
+                ].map((item, idx) => (
+                  <div key={idx} className="p-3 bg-muted/50 rounded-xl">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium text-sm">{item.factor}</span>
+                      <Badge variant={item.impact === "High" ? "default" : item.impact === "Medium" ? "secondary" : "outline"} className="text-xs">
+                        {item.impact}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Warnings */}
+            <div className="bg-destructive/10 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="w-4 h-4 text-destructive" />
+                <h4 className="font-semibold text-destructive">Avoid These</h4>
+              </div>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• Late RC transfers (-10 to -20 points)</li>
+                <li>• Dispute losses (-15 points)</li>
+                <li>• Payment delays (-5 points)</li>
+                <li>• Account strikes (-25 points each)</li>
+              </ul>
+            </div>
+
+            <Button className="w-full" onClick={() => navigate("/broker/profile")}>
+              View Detailed Breakdown
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
