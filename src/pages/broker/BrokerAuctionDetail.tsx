@@ -38,6 +38,19 @@ import { useRealtimeBids } from "@/hooks/useRealtimeBids";
 import LiveBidFeed from "@/components/broker/LiveBidFeed";
 import { calculateEffectiveScore } from "@/data/brokerMockData";
 
+interface CapturedImage {
+  id: string;
+  uri: string;
+  angle: string;
+}
+
+interface Defect {
+  id: string;
+  category: string;
+  severity: string;
+  description: string;
+}
+
 interface AuctionData {
   id: string;
   auction_type: string;
@@ -57,6 +70,10 @@ interface AuctionData {
     odometer_reading: number | null;
     vehicle_color: string | null;
     condition_score: number | null;
+    vehicle_registration: string | null;
+    engine_cc: number | null;
+    captured_images: CapturedImage[];
+    defects: Defect[];
   } | null;
 }
 
@@ -101,7 +118,10 @@ const BrokerAuctionDetail = () => {
           minimum_bid_increment, geo_targeting_city,
           inspections (
             id, vehicle_make, vehicle_model, vehicle_year,
-            odometer_reading, vehicle_color, condition_score
+            odometer_reading, vehicle_color, condition_score,
+            vehicle_registration, engine_cc,
+            captured_images (id, uri, angle),
+            defects (id, category, severity, description)
           )
         `)
         .eq("id", id)
@@ -109,7 +129,6 @@ const BrokerAuctionDetail = () => {
 
       if (error) {
         console.error("Error fetching auction:", error);
-        // Fall back to mock for demo if not found
         setLoading(false);
         return;
       }
@@ -280,20 +299,48 @@ const BrokerAuctionDetail = () => {
         </div>
       </div>
 
-      {/* Main Image */}
+      {/* Main Image Gallery */}
       <div className="relative aspect-video bg-muted">
-        <img
-          src="/placeholder.svg"
-          alt={auction.inspections?.vehicle_model || "Vehicle"}
-          className="w-full h-full object-cover"
-        />
+        {auction.inspections?.captured_images && auction.inspections.captured_images.length > 0 ? (
+          <img
+            src={auction.inspections.captured_images[0].uri}
+            alt={auction.inspections?.vehicle_model || "Vehicle"}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <img
+            src="/placeholder.svg"
+            alt={auction.inspections?.vehicle_model || "Vehicle"}
+            className="w-full h-full object-cover"
+          />
+        )}
         <div className="absolute bottom-3 right-3 flex gap-2">
           <Badge className="bg-black/70 text-white gap-1">
             <ImageIcon className="w-3 h-3" />
-            4
+            {auction.inspections?.captured_images?.length || 0}
           </Badge>
         </div>
       </div>
+
+      {/* Thumbnail Gallery */}
+      {auction.inspections?.captured_images && auction.inspections.captured_images.length > 1 && (
+        <div className="p-2 border-b overflow-x-auto">
+          <div className="flex gap-2">
+            {auction.inspections.captured_images.slice(0, 6).map((img) => (
+              <div
+                key={img.id}
+                className="w-16 h-16 rounded-lg overflow-hidden shrink-0 bg-muted"
+              >
+                <img
+                  src={img.uri}
+                  alt={img.angle}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Summary Section */}
       <div className="p-4 border-b">
@@ -374,6 +421,70 @@ const BrokerAuctionDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Vehicle Specifications */}
+      <div className="p-4 border-b">
+        <h3 className="font-semibold mb-3">Vehicle Details</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-muted rounded-lg p-3">
+            <p className="text-xs text-muted-foreground">Registration</p>
+            <p className="font-medium">{auction.inspections?.vehicle_registration || "N/A"}</p>
+          </div>
+          <div className="bg-muted rounded-lg p-3">
+            <p className="text-xs text-muted-foreground">Engine</p>
+            <p className="font-medium">{auction.inspections?.engine_cc ? `${auction.inspections.engine_cc}cc` : "N/A"}</p>
+          </div>
+          <div className="bg-muted rounded-lg p-3">
+            <p className="text-xs text-muted-foreground">Color</p>
+            <p className="font-medium">{auction.inspections?.vehicle_color || "N/A"}</p>
+          </div>
+          <div className="bg-muted rounded-lg p-3">
+            <p className="text-xs text-muted-foreground">Condition Score</p>
+            <p className="font-medium">{auction.inspections?.condition_score ? `${auction.inspections.condition_score}/100` : "N/A"}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Defects Section */}
+      {auction.inspections?.defects && auction.inspections.defects.length > 0 && (
+        <div className="p-4 border-b">
+          <h3 className="font-semibold mb-3 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-500" />
+            Reported Issues ({auction.inspections.defects.length})
+          </h3>
+          <div className="space-y-2">
+            {auction.inspections.defects.map((defect) => (
+              <div
+                key={defect.id}
+                className={`rounded-lg p-3 ${
+                  defect.severity === "major"
+                    ? "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
+                    : defect.severity === "moderate"
+                    ? "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800"
+                    : "bg-muted"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-medium text-sm">{defect.category}</span>
+                  <Badge
+                    variant="outline"
+                    className={
+                      defect.severity === "major"
+                        ? "border-red-300 text-red-700 dark:text-red-400"
+                        : defect.severity === "moderate"
+                        ? "border-amber-300 text-amber-700 dark:text-amber-400"
+                        : ""
+                    }
+                  >
+                    {defect.severity}
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">{defect.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* RC Transfer Warning */}
       <div className="p-4 border-b bg-amber-50 dark:bg-amber-900/10">
