@@ -107,33 +107,33 @@ const BrokerAuctionCard = ({ auction, onClick }: AuctionCardProps) => {
       onClick={onClick}
     >
       <div className="flex gap-4 p-4">
-        {/* Thumbnail */}
-        <div className="relative w-20 h-20 bg-muted rounded-lg overflow-hidden shrink-0">
+        {/* Thumbnail - taller */}
+        <div className="relative w-24 h-24 bg-muted rounded-lg overflow-hidden shrink-0">
           <img
             src={thumbnail}
             alt={auction.vehicle.model}
             className="w-full h-full object-cover"
           />
           {/* Grade Badge */}
-          <Badge className={`absolute bottom-1 left-1 text-[10px] px-1.5 py-0 h-5 font-semibold ${getGradeColor(auction.vehicle.grade)}`}>
+          <Badge className={`absolute bottom-1.5 left-1.5 text-[10px] px-1.5 py-0.5 h-5 font-semibold ${getGradeColor(auction.vehicle.grade)}`}>
             {auction.vehicle.grade}
           </Badge>
         </div>
 
-        {/* Vehicle Info */}
-        <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-          {/* Title */}
+        {/* Vehicle Info - vertically centered */}
+        <div className="flex-1 min-w-0 flex flex-col justify-center gap-2">
+          {/* Title & Specs */}
           <div>
             <h3 className="font-semibold text-base text-foreground leading-tight">
               {auction.vehicle.make} {auction.vehicle.model}
             </h3>
-            <p className="text-sm text-muted-foreground mt-0.5">
+            <p className="text-sm text-muted-foreground mt-1">
               {auction.vehicle.year} · {(auction.vehicle.kms / 1000).toFixed(0)}k km · {auction.vehicle.city}
             </p>
           </div>
           
-          {/* Bottom row */}
-          <div className="flex items-center justify-between mt-2">
+          {/* Bottom row - price & meta */}
+          <div className="flex items-center justify-between">
             {/* Price or CTA */}
             {auction.auctionType === "one_click" ? (
               <span className="text-sm font-medium text-primary">Place Bid →</span>
