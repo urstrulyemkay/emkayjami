@@ -153,6 +153,17 @@ const NewInspection = () => {
       return;
     }
 
+    // Check authentication before proceeding
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to create an inspection",
+        variant: "destructive",
+      });
+      navigate("/auth");
+      return;
+    }
+
     setIsCreating(true);
 
     const inspectionData = {
@@ -167,17 +178,12 @@ const NewInspection = () => {
       odometerReading: parseInt(odometerReading) || 0,
     };
 
-    // Create inspection in database (or get temp ID for dev)
+    // Create inspection in database
     const inspectionId = await createInspection(inspectionData);
 
     if (!inspectionId) {
-      toast({
-        title: "Failed to start inspection",
-        description: "Please try again",
-        variant: "destructive",
-      });
       setIsCreating(false);
-      return;
+      return; // Toast already shown by createInspection
     }
 
     setIsCreating(false);
