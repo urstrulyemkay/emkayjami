@@ -9,17 +9,23 @@ import {
   Trophy, Star, Award, ShoppingBag, Clock
 } from "lucide-react";
 import BrokerBottomNav from "@/components/broker/BrokerBottomNav";
+import { useBrokerWallet } from "@/hooks/useBrokerWallet";
+import { useBrokerBadges } from "@/hooks/useBrokerBadges";
+import { useToast } from "@/hooks/use-toast";
 import {
-  WALLET_TRANSACTIONS,
   SHOP_ITEMS,
   EARNING_OPPORTUNITIES,
-  BROKER_BADGES,
 } from "@/data/brokerMockData";
 
 const BrokerWallet = () => {
   const navigate = useNavigate();
-  const { broker, isAuthenticated, isLoading } = useBrokerAuth();
+  const { toast } = useToast();
+  const { broker, isAuthenticated, isLoading, refreshBroker } = useBrokerAuth();
   const [activeSection, setActiveSection] = useState<"overview" | "shop" | "badges">("overview");
+
+  // Real-time hooks
+  const { transactions, loading: txLoading, addTransaction } = useBrokerWallet(broker?.id);
+  const { earnedBadges, inProgressBadges, loading: badgesLoading } = useBrokerBadges(broker?.id);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -35,12 +41,36 @@ const BrokerWallet = () => {
     );
   }
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' });
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  const earnedBadges = BROKER_BADGES.filter(b => b.earnedAt);
-  const inProgressBadges = BROKER_BADGES.filter(b => !b.earnedAt);
+  const handlePurchaseItem = async (item: typeof SHOP_ITEMS[0]) => {
+    if (broker.coins_balance < item.cost) {
+      toast({
+        title: "Insufficient coins",
+        description: `You need ${item.cost} coins but only have ${broker.coins_balance}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const success = await addTransaction(
+      "spent",
+      item.cost,
+      `${item.name} (${item.duration || "one-time"})`,
+      "shop",
+      item.id
+    );
+
+    if (success) {
+      toast({
+        title: "Purchase successful!",
+        description: `You purchased ${item.name} for ${item.cost} coins`,
+      });
+      await refreshBroker();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -136,43 +166,55 @@ const BrokerWallet = () => {
 
           {/* Transaction History */}
           <h3 className="font-semibold mb-3">Recent Transactions</h3>
-          <div className="space-y-3">
-            {WALLET_TRANSACTIONS.map((tx) => (
-              <div
-                key={tx.id}
-                className="flex items-center justify-between p-3 bg-card rounded-xl border"
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      tx.type === "earned" || tx.type === "bonus"
-                        ? "bg-green-100 text-green-600"
-                        : tx.type === "spent"
-                        ? "bg-red-100 text-red-600"
-                        : "bg-orange-100 text-orange-600"
+          {txLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+            </div>
+          ) : transactions.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Coins className="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <p>No transactions yet</p>
+              <p className="text-sm">Start bidding to earn coins!</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {transactions.map((tx) => (
+                <div
+                  key={tx.id}
+                  className="flex items-center justify-between p-3 bg-card rounded-xl border"
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        tx.transaction_type === "earned" || tx.transaction_type === "bonus"
+                          ? "bg-green-100 text-green-600"
+                          : tx.transaction_type === "spent"
+                          ? "bg-red-100 text-red-600"
+                          : "bg-orange-100 text-orange-600"
+                      }`}
+                    >
+                      {tx.transaction_type === "earned" || tx.transaction_type === "bonus" ? (
+                        <TrendingUp className="w-5 h-5" />
+                      ) : (
+                        <TrendingDown className="w-5 h-5" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{tx.reason || tx.transaction_type}</p>
+                      <p className="text-xs text-muted-foreground">{formatDate(tx.created_at)}</p>
+                    </div>
+                  </div>
+                  <p
+                    className={`font-semibold ${
+                      tx.transaction_type === "earned" || tx.transaction_type === "bonus" ? "text-green-600" : "text-red-600"
                     }`}
                   >
-                    {tx.type === "earned" || tx.type === "bonus" ? (
-                      <TrendingUp className="w-5 h-5" />
-                    ) : (
-                      <TrendingDown className="w-5 h-5" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">{tx.reason}</p>
-                    <p className="text-xs text-muted-foreground">{formatDate(tx.date)}</p>
-                  </div>
+                    {tx.transaction_type === "earned" || tx.transaction_type === "bonus" ? "+" : "-"}{tx.amount}
+                  </p>
                 </div>
-                <p
-                  className={`font-semibold ${
-                    tx.type === "earned" || tx.type === "bonus" ? "text-green-600" : "text-red-600"
-                  }`}
-                >
-                  {tx.type === "earned" || tx.type === "bonus" ? "+" : "-"}{tx.amount}
-                </p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -196,6 +238,7 @@ const BrokerWallet = () => {
                   variant="outline"
                   className="mt-auto"
                   disabled={broker.coins_balance < item.cost}
+                  onClick={() => handlePurchaseItem(item)}
                 >
                   <Coins className="w-3 h-3 mr-1" />
                   {item.cost}
@@ -208,49 +251,72 @@ const BrokerWallet = () => {
 
       {activeSection === "badges" && (
         <div className="px-4 mt-6">
-          {/* Earned Badges */}
-          <h3 className="font-semibold mb-3">🏆 Earned Badges ({earnedBadges.length})</h3>
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            {earnedBadges.map((badge) => (
-              <div
-                key={badge.id}
-                className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 text-center"
-              >
-                <span className="text-3xl">{badge.icon}</span>
-                <p className="text-xs font-medium mt-1">{badge.name}</p>
-                <p className="text-xs text-green-600">+{badge.coinsReward}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* In Progress Badges */}
-          <h3 className="font-semibold mb-3">🎯 In Progress ({inProgressBadges.length})</h3>
-          <div className="space-y-3">
-            {inProgressBadges.map((badge) => (
-              <div
-                key={badge.id}
-                className="bg-card border rounded-xl p-4"
-              >
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">{badge.icon}</span>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium text-sm">{badge.name}</h4>
-                      <span className="text-xs text-amber-600">+{badge.coinsReward}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-2">{badge.description}</p>
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs">
-                        <span>Progress</span>
-                        <span>{badge.progress} / {badge.target}</span>
-                      </div>
-                      <Progress value={(badge.progress / badge.target) * 100} className="h-2" />
-                    </div>
-                  </div>
+          {badgesLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <>
+              {/* Earned Badges */}
+              <h3 className="font-semibold mb-3">🏆 Earned Badges ({earnedBadges.length})</h3>
+              {earnedBadges.length === 0 ? (
+                <div className="text-center py-4 text-muted-foreground mb-6">
+                  <p className="text-sm">No badges earned yet. Keep participating!</p>
                 </div>
-              </div>
-            ))}
-          </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-3 mb-6">
+                  {earnedBadges.map((badge) => (
+                    <div
+                      key={badge.id}
+                      className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 text-center"
+                    >
+                      <span className="text-3xl">{badge.badge_icon || "🏅"}</span>
+                      <p className="text-xs font-medium mt-1">{badge.badge_name}</p>
+                      <p className="text-xs text-green-600">+{badge.coins_reward || 0}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* In Progress Badges */}
+              <h3 className="font-semibold mb-3">🎯 In Progress ({inProgressBadges.length})</h3>
+              {inProgressBadges.length === 0 ? (
+                <div className="text-center py-4 text-muted-foreground">
+                  <p className="text-sm">All badges completed! New badges coming soon.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {inProgressBadges.map((badge) => (
+                    <div
+                      key={badge.id}
+                      className="bg-card border rounded-xl p-4"
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className="text-2xl">{badge.badge_icon || "🎯"}</span>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-medium text-sm">{badge.badge_name}</h4>
+                            <span className="text-xs text-amber-600">+{badge.coins_reward || 0}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-2">{badge.description}</p>
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-xs">
+                              <span>Progress</span>
+                              <span>{badge.progress || 0} / {badge.target || 100}</span>
+                            </div>
+                            <Progress 
+                              value={((badge.progress || 0) / (badge.target || 100)) * 100} 
+                              className="h-2" 
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
 

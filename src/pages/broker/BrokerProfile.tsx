@@ -9,17 +9,22 @@ import {
   AlertTriangle, LogOut, Settings, ChevronRight, Building
 } from "lucide-react";
 import BrokerBottomNav from "@/components/broker/BrokerBottomNav";
+import { useBrokerBids } from "@/hooks/useBrokerBids";
+import { useBrokerStrikes } from "@/hooks/useBrokerStrikes";
 import {
   TRUST_BREAKDOWN,
   LEVELS,
   getLevelFromScore,
   getProgressToNextLevel,
-  BROKER_STATS,
 } from "@/data/brokerMockData";
 
 const BrokerProfile = () => {
   const navigate = useNavigate();
   const { broker, isAuthenticated, isLoading, logout } = useBrokerAuth();
+
+  // Real-time hooks
+  const { stats, loading: bidsLoading } = useBrokerBids(broker?.id);
+  const { activeStrikes, strikesCount, loading: strikesLoading } = useBrokerStrikes(broker?.id);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -43,6 +48,11 @@ const BrokerProfile = () => {
     await logout();
     navigate("/broker/login");
   };
+
+  // Calculate RC transfer stats from real data
+  const rcTransfersCompleted = stats.totalWins; // Simplified - in real app would track separately
+  const onTimePercentage = rcTransfersCompleted > 0 ? 
+    Math.round((Math.max(0, rcTransfersCompleted - strikesCount) / rcTransfersCompleted) * 100) : 100;
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -119,32 +129,40 @@ const BrokerProfile = () => {
           {/* Status */}
           <div className="mt-4 flex items-center gap-2 text-green-600">
             <div className="w-2 h-2 rounded-full bg-green-500"></div>
-            <span className="text-sm font-medium">In Good Standing</span>
+            <span className="text-sm font-medium">
+              {broker.account_status === "active" ? "In Good Standing" : broker.account_status}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Quick Stats */}
+      {/* Quick Stats - Using real data */}
       <div className="px-4 mt-6">
         <h3 className="font-semibold mb-3">Performance Stats</h3>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-card border rounded-xl p-4 text-center">
-            <p className="text-2xl font-bold">{BROKER_STATS.totalWins}</p>
-            <p className="text-xs text-muted-foreground">Total Wins</p>
+        {bidsLoading ? (
+          <div className="flex items-center justify-center py-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
           </div>
-          <div className="bg-card border rounded-xl p-4 text-center">
-            <p className="text-2xl font-bold">{BROKER_STATS.winRate}%</p>
-            <p className="text-xs text-muted-foreground">Win Rate</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-card border rounded-xl p-4 text-center">
+              <p className="text-2xl font-bold">{stats.totalWins}</p>
+              <p className="text-xs text-muted-foreground">Total Wins</p>
+            </div>
+            <div className="bg-card border rounded-xl p-4 text-center">
+              <p className="text-2xl font-bold">{stats.winRate}%</p>
+              <p className="text-xs text-muted-foreground">Win Rate</p>
+            </div>
+            <div className="bg-card border rounded-xl p-4 text-center">
+              <p className="text-2xl font-bold">{rcTransfersCompleted}</p>
+              <p className="text-xs text-muted-foreground">RC Transfers</p>
+            </div>
+            <div className="bg-card border rounded-xl p-4 text-center">
+              <p className="text-2xl font-bold">{onTimePercentage}%</p>
+              <p className="text-xs text-muted-foreground">On-time RC</p>
+            </div>
           </div>
-          <div className="bg-card border rounded-xl p-4 text-center">
-            <p className="text-2xl font-bold">{BROKER_STATS.rcTransfersCompleted}</p>
-            <p className="text-xs text-muted-foreground">RC Transfers</p>
-          </div>
-          <div className="bg-card border rounded-xl p-4 text-center">
-            <p className="text-2xl font-bold">{Math.round((BROKER_STATS.onTimeRcTransfers / BROKER_STATS.rcTransfersCompleted) * 100)}%</p>
-            <p className="text-xs text-muted-foreground">On-time RC</p>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Score Breakdown */}
@@ -187,25 +205,58 @@ const BrokerProfile = () => {
         </div>
       </div>
 
-      {/* Strikes */}
+      {/* Strikes - Using real data */}
       <div className="px-4 mt-6">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold">Strikes</h3>
           <Badge variant="outline" className="gap-1">
             <AlertTriangle className="w-3 h-3" />
-            {broker.strikes_count} / 3
+            {strikesCount} / 3
           </Badge>
         </div>
-        {broker.strikes_count === 0 ? (
+        {strikesLoading ? (
+          <div className="flex items-center justify-center py-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+          </div>
+        ) : strikesCount === 0 ? (
           <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 text-center">
             <p className="text-sm text-green-700 dark:text-green-300">
               ✓ No active strikes. Keep up the good work!
             </p>
           </div>
         ) : (
-          <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-4">
-            <p className="text-sm text-red-700 dark:text-red-300">
-              ⚠️ You have {broker.strikes_count} active strike(s). 3 strikes = account suspension.
+          <div className="space-y-2">
+            {activeStrikes.map((strike) => (
+              <div 
+                key={strike.id}
+                className="bg-red-50 dark:bg-red-900/20 rounded-xl p-4"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <Badge 
+                    variant="destructive" 
+                    className={
+                      strike.severity === "critical" ? "bg-red-600" :
+                      strike.severity === "major" ? "bg-orange-500" : "bg-yellow-500"
+                    }
+                  >
+                    {strike.severity.toUpperCase()}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    Expires: {new Date(strike.expires_at).toLocaleDateString()}
+                  </span>
+                </div>
+                <p className="text-sm text-red-700 dark:text-red-300">
+                  {strike.reason}
+                </p>
+                {strike.penalty_coins && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Penalty: -{strike.penalty_coins} coins, -{strike.penalty_trust_score || 0} trust score
+                  </p>
+                )}
+              </div>
+            ))}
+            <p className="text-xs text-red-600 dark:text-red-400 text-center mt-2">
+              ⚠️ 3 strikes = account suspension
             </p>
           </div>
         )}
