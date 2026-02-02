@@ -69,6 +69,8 @@ export interface LevelConfig {
   benefits: string[];
   supportSLA: string;
   auctionsPerDay: string;
+  howToReach?: string;
+  requirements?: string[];
 }
 
 export const LEVELS: LevelConfig[] = [
@@ -76,31 +78,41 @@ export const LEVELS: LevelConfig[] = [
     level: 1, name: "New", minScore: 0, maxScore: 20, 
     color: "text-gray-600", bgColor: "bg-gray-500",
     benefits: ["Access to basic auctions", "Standard notifications"],
-    supportSLA: "48 hours", auctionsPerDay: "5"
+    supportSLA: "48 hours", auctionsPerDay: "5",
+    howToReach: "Complete KYC verification and place your first bid",
+    requirements: ["Complete profile setup", "Verify KYC documents", "Place at least 1 bid"]
   },
   { 
     level: 2, name: "Active", minScore: 21, maxScore: 40, 
     color: "text-blue-600", bgColor: "bg-blue-500",
     benefits: ["Extended auction access", "Email support"],
-    supportSLA: "24 hours", auctionsPerDay: "15"
+    supportSLA: "24 hours", auctionsPerDay: "15",
+    howToReach: "Win 3 auctions and maintain good payment record",
+    requirements: ["Win 3+ auctions", "100% on-time payments", "No active strikes"]
   },
   { 
     level: 3, name: "Preferred", minScore: 41, maxScore: 60, 
     color: "text-green-600", bgColor: "bg-green-500",
     benefits: ["All auction types", "Priority support", "Market insights"],
-    supportSLA: "12 hours", auctionsPerDay: "Unlimited"
+    supportSLA: "12 hours", auctionsPerDay: "Unlimited",
+    howToReach: "Build trust with 10+ deals and timely RC transfers",
+    requirements: ["Win 10+ auctions", "90%+ RC transfer compliance", "Maintain 40+ trust score"]
   },
   { 
     level: 4, name: "Trusted", minScore: 61, maxScore: 80, 
     color: "text-amber-600", bgColor: "bg-amber-500",
     benefits: ["Unlimited auctions", "Priority notifications", "Dedicated support"],
-    supportSLA: "6 hours", auctionsPerDay: "Unlimited"
+    supportSLA: "6 hours", auctionsPerDay: "Unlimited",
+    howToReach: "Demonstrate excellence with 25+ deals and zero disputes",
+    requirements: ["Win 25+ auctions", "95%+ RC compliance", "Zero disputes in 6 months"]
   },
   { 
     level: 5, name: "Elite", minScore: 81, maxScore: 100, 
     color: "text-purple-600", bgColor: "bg-purple-500",
     benefits: ["Exclusive auctions", "VIP support", "Premium insights", "Early access"],
-    supportSLA: "2 hours", auctionsPerDay: "Unlimited"
+    supportSLA: "2 hours", auctionsPerDay: "Unlimited",
+    howToReach: "Top performer status with 50+ deals and perfect compliance",
+    requirements: ["Win 50+ auctions", "100% RC compliance", "Top 10% performer", "1+ year on platform"]
   },
 ];
 
