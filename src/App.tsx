@@ -33,6 +33,7 @@ import BrokerAuctionDetail from "./pages/broker/BrokerAuctionDetail";
 import BrokerBids from "./pages/broker/BrokerBids";
 import BrokerWallet from "./pages/broker/BrokerWallet";
 import BrokerProfile from "./pages/broker/BrokerProfile";
+import BrokerHelp from "./pages/broker/BrokerHelp";
 
 const queryClient = new QueryClient();
 
@@ -209,7 +210,7 @@ const AppRoutes = () => {
       <Route path="/broker/bids" element={<BrokerBids />} />
       <Route path="/broker/wallet" element={<BrokerWallet />} />
       <Route path="/broker/profile" element={<BrokerProfile />} />
-      <Route path="/broker/help" element={<BrokerProfile />} />
+      <Route path="/broker/help" element={<BrokerHelp />} />
       
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
