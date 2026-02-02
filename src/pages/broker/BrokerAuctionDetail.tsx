@@ -481,6 +481,8 @@ const BrokerAuctionDetail = () => {
           currentHighestBid={currentHighestBid}
           bidCount={bidCount}
           myBrokerId={broker?.id}
+          endTime={auction.end_time}
+          auctionType={auction.auction_type}
         />
       </div>
 

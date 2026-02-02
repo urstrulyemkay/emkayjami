@@ -3,20 +3,57 @@ import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Clock, Users } from "lucide-react";
 import { RealtimeBid } from "@/hooks/useRealtimeBids";
 import { formatDistanceToNow } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface LiveBidFeedProps {
   bids: RealtimeBid[];
   currentHighestBid: number;
   bidCount: number;
   myBrokerId?: string;
+  endTime?: string;
+  auctionType?: string;
 }
 
-const LiveBidFeed = ({ bids, currentHighestBid, bidCount, myBrokerId }: LiveBidFeedProps) => {
+const LiveBidFeed = ({ bids, currentHighestBid, bidCount, myBrokerId, endTime, auctionType }: LiveBidFeedProps) => {
   const [animatedBids, setAnimatedBids] = useState<string[]>([]);
   const [newBidFlash, setNewBidFlash] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(0);
   const previousBidCountRef = useRef(bidCount);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const latestBidRef = useRef<HTMLDivElement>(null);
+
+  // Update countdown timer
+  useEffect(() => {
+    if (!endTime || auctionType === "one_click") return;
+    
+    const updateTimer = () => {
+      const remaining = new Date(endTime).getTime() - Date.now();
+      setTimeLeft(Math.max(0, remaining));
+    };
+    
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [endTime, auctionType]);
+
+  const formatCountdown = (ms: number) => {
+    if (ms <= 0) return { hours: "00", minutes: "00", seconds: "00" };
+    const hours = Math.floor(ms / (1000 * 60 * 60));
+    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+    return {
+      hours: hours.toString().padStart(2, "0"),
+      minutes: minutes.toString().padStart(2, "0"),
+      seconds: seconds.toString().padStart(2, "0")
+    };
+  };
+
+  const getTimerUrgency = (ms: number) => {
+    if (ms <= 0) return "ended";
+    if (ms < 5 * 60 * 1000) return "critical";
+    if (ms < 30 * 60 * 1000) return "warning";
+    return "normal";
+  };
 
   // Smooth scroll to latest bid when new bid comes in
   useEffect(() => {
@@ -81,6 +118,78 @@ const LiveBidFeed = ({ bids, currentHighestBid, bidCount, myBrokerId }: LiveBidF
           <span>{bidCount}</span>
         </div>
       </div>
+
+      {/* Countdown Timer */}
+      {endTime && auctionType !== "one_click" && (
+        <div className={cn(
+          "rounded-xl p-4 border transition-all duration-300",
+          getTimerUrgency(timeLeft) === "critical" && "bg-destructive/10 border-destructive/30 animate-pulse",
+          getTimerUrgency(timeLeft) === "warning" && "bg-warning/10 border-warning/30",
+          getTimerUrgency(timeLeft) === "normal" && "bg-muted/50 border-border",
+          getTimerUrgency(timeLeft) === "ended" && "bg-muted border-border opacity-60"
+        )}>
+          <div className="flex items-center gap-2 mb-3">
+            <Clock className={cn(
+              "w-4 h-4",
+              getTimerUrgency(timeLeft) === "critical" && "text-destructive animate-pulse",
+              getTimerUrgency(timeLeft) === "warning" && "text-warning",
+              getTimerUrgency(timeLeft) === "normal" && "text-muted-foreground",
+              getTimerUrgency(timeLeft) === "ended" && "text-muted-foreground"
+            )} />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              {timeLeft <= 0 ? "Auction Ended" : "Time Remaining"}
+            </span>
+          </div>
+          
+          <div className="flex items-center justify-center gap-1 text-center">
+            {/* Hours */}
+            <div className="flex flex-col items-center">
+              <span className={cn(
+                "text-3xl font-mono font-bold tabular-nums",
+                getTimerUrgency(timeLeft) === "critical" && "text-destructive",
+                getTimerUrgency(timeLeft) === "warning" && "text-warning",
+                getTimerUrgency(timeLeft) === "normal" && "text-foreground",
+                getTimerUrgency(timeLeft) === "ended" && "text-muted-foreground"
+              )}>
+                {formatCountdown(timeLeft).hours}
+              </span>
+              <span className="text-[10px] text-muted-foreground uppercase">hrs</span>
+            </div>
+            
+            <span className="text-2xl font-bold text-muted-foreground mx-0.5">:</span>
+            
+            {/* Minutes */}
+            <div className="flex flex-col items-center">
+              <span className={cn(
+                "text-3xl font-mono font-bold tabular-nums",
+                getTimerUrgency(timeLeft) === "critical" && "text-destructive",
+                getTimerUrgency(timeLeft) === "warning" && "text-warning",
+                getTimerUrgency(timeLeft) === "normal" && "text-foreground",
+                getTimerUrgency(timeLeft) === "ended" && "text-muted-foreground"
+              )}>
+                {formatCountdown(timeLeft).minutes}
+              </span>
+              <span className="text-[10px] text-muted-foreground uppercase">min</span>
+            </div>
+            
+            <span className="text-2xl font-bold text-muted-foreground mx-0.5">:</span>
+            
+            {/* Seconds */}
+            <div className="flex flex-col items-center">
+              <span className={cn(
+                "text-3xl font-mono font-bold tabular-nums",
+                getTimerUrgency(timeLeft) === "critical" && "text-destructive animate-pulse",
+                getTimerUrgency(timeLeft) === "warning" && "text-warning",
+                getTimerUrgency(timeLeft) === "normal" && "text-foreground",
+                getTimerUrgency(timeLeft) === "ended" && "text-muted-foreground"
+              )}>
+                {formatCountdown(timeLeft).seconds}
+              </span>
+              <span className="text-[10px] text-muted-foreground uppercase">sec</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Current Highest Bid Card */}
       <div className={`rounded-xl p-4 transition-all duration-300 ${
