@@ -5,26 +5,7 @@ import {
   Clock, ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-// Local vehicle images from database
-const BIKE_IMAGES: Record<string, string[]> = {
-  "Honda": ["/vehicles/activa1.jpg", "/vehicles/activa2.jpg", "/vehicles/activa3.jpg", "/vehicles/activa4.jpg", "/vehicles/activa6.jpg", "/vehicles/activa7.jpg"],
-  "TVS": ["/vehicles/pulsar5.jpg", "/vehicles/activa7.jpg"],
-  "Bajaj": ["/vehicles/pulsar2.jpg", "/vehicles/pulsar4.jpg", "/vehicles/pulsar5.jpg"],
-  "Royal Enfield": ["/vehicles/royalenfield1.jpg", "/vehicles/royalenfield2.jpg", "/vehicles/royalenfield3.jpg", "/vehicles/royalenfield4.jpg", "/vehicles/royalenfield5.jpg"],
-  "Yamaha": ["/vehicles/pulsar5.jpg", "/vehicles/duke390.jpg"],
-  "Hero": ["/vehicles/activa2.jpg", "/vehicles/activa7.jpg"],
-  "Suzuki": ["/vehicles/pulsar5.jpg", "/vehicles/activa7.jpg"],
-  "KTM": ["/vehicles/duke390.jpg", "/vehicles/duke390_1.jpg", "/vehicles/duke390_2.jpg", "/vehicles/duke390_3.jpg", "/vehicles/duke390_4.jpg", "/vehicles/duke390_5.jpg"],
-  "default": ["/vehicles/activa1.jpg", "/vehicles/royalenfield1.jpg", "/vehicles/duke390.jpg", "/vehicles/pulsar2.jpg"],
-};
-
-const getRandomImage = (make: string, id: string): string => {
-  const images = BIKE_IMAGES[make] || BIKE_IMAGES["default"];
-  // Use id to deterministically pick an image
-  const index = id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % images.length;
-  return images[index];
-};
+import { getVehicleImage } from "@/data/mockAuctions";
 
 interface AuctionCardProps {
   auction: {
@@ -118,7 +99,7 @@ const BrokerAuctionCard = ({ auction, onClick }: AuctionCardProps) => {
   const isUrgent = timeLeft < 5 * 60 * 1000 && timeLeft > 0;
   const gradeConfig = getGradeConfig(auction.vehicle.grade);
   const auctionConfig = getAuctionConfig(auction.auctionType);
-  const thumbnail = getRandomImage(auction.vehicle.make, auction.id);
+  const thumbnail = auction.vehicle.thumbnail || getVehicleImage(auction.vehicle.make, auction.id);
 
   return (
     <div
