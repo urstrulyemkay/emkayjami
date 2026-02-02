@@ -263,37 +263,40 @@ const BrokerAuctionDetail = () => {
         setLoading(false);
         return;
       }
-
-      // Inject images from our local database if no captured images exist
-      const auctionData = data as unknown as AuctionData;
-
-      // If the current user can't read inspection details (common with broker roles + RLS),
-      // OR if key inspection fields are missing, merge in deterministic mock data so the PDP
-      // never shows N/A.
+      // Get consistent mock data for this auction ID - ensures PDP matches listing
       const mockAuction = getAuctionById(id);
       const mockPdp = convertMockToPDPFormat(mockAuction, id);
+      
+      const auctionData = data as unknown as AuctionData;
 
-      const shouldHydrateInspectionFromMock =
-        !auctionData.inspections ||
-        !auctionData.inspections.vehicle_registration ||
-        !auctionData.inspections.vehicle_make ||
-        !auctionData.inspections.vehicle_model;
+      // Check if DB has complete inspection data that the broker can actually read
+      // RLS often blocks brokers from reading inspection details, so we need to fall back to mock
+      const hasCompleteDbInspection = 
+        auctionData.inspections &&
+        auctionData.inspections.vehicle_make &&
+        auctionData.inspections.vehicle_model &&
+        auctionData.inspections.vehicle_registration;
 
-      if (shouldHydrateInspectionFromMock) {
+      if (!hasCompleteDbInspection) {
+        // Use 100% mock data for inspection to match what listing shows
         auctionData.inspections = mockPdp.inspections;
       } else {
-        // Fill any individual missing fields from mock (defensive)
-        auctionData.inspections = {
-          ...mockPdp.inspections,
-          ...auctionData.inspections,
-        };
+        // DB has complete data - use it but still fill images if missing
+        if (!auctionData.inspections.captured_images || auctionData.inspections.captured_images.length === 0) {
+          auctionData.inspections.captured_images = getVehicleGallery(auctionData.inspections.vehicle_make, id);
+        }
+        // Fill missing optional fields
+        if (!auctionData.inspections.defects || auctionData.inspections.defects.length === 0) {
+          auctionData.inspections.defects = mockPdp.inspections.defects;
+        }
+        if (!auctionData.inspections.voice_recordings || auctionData.inspections.voice_recordings.length === 0) {
+          auctionData.inspections.voice_recordings = mockPdp.inspections.voice_recordings;
+        }
       }
-
-      if (
-        auctionData.inspections &&
-        (!auctionData.inspections.captured_images || auctionData.inspections.captured_images.length === 0)
-      ) {
-        auctionData.inspections.captured_images = getVehicleGallery(auctionData.inspections.vehicle_make, id);
+      
+      // Also use mock auction-level data if DB is missing it
+      if (!auctionData.geo_targeting_city) {
+        auctionData.geo_targeting_city = mockPdp.geo_targeting_city;
       }
 
       setAuction(auctionData);
