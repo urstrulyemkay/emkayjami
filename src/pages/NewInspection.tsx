@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Bike, Search, AlertTriangle, User, Loader2, Zap } from "lucide-react";
+import { ArrowLeft, Bike, Search, AlertTriangle, User, Loader2, Zap, Shield } from "lucide-react";
 import {
   VEHICLE_MAKES,
   VEHICLE_MODELS,
@@ -20,11 +20,14 @@ import {
 } from "@/data/vehicleModels";
 import { useToast } from "@/hooks/use-toast";
 import { useInspectionPersistence } from "@/hooks/useInspectionPersistence";
+import { useVahanLookup, VahanVehicleData } from "@/hooks/useVahanLookup";
+import { VahanVerificationCard } from "@/components/inspection/VahanVerificationCard";
 
 const NewInspection = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { createInspection, isLoading: isPersistenceLoading, isAuthenticated } = useInspectionPersistence();
+  const { lookupVehicle, isLoading: isVahanLoading, vehicleData, clearData: clearVahanData } = useVahanLookup();
 
   // Customer details
   const [customerName, setCustomerName] = useState("");
@@ -70,6 +73,46 @@ const NewInspection = () => {
     return pattern.test(phone.replace(/\s/g, ""));
   };
 
+  // Auto-fill form from Vahan data
+  const autoFillFromVahan = (data: VahanVehicleData) => {
+    // Try to match make from our list
+    const matchedMake = VEHICLE_MAKES.find(
+      (m) => m.toLowerCase() === data.make.toLowerCase()
+    );
+    if (matchedMake) {
+      setSelectedMake(matchedMake);
+      
+      // Try to match model
+      const modelsForMake = getModelsByMake(matchedMake);
+      const matchedModel = modelsForMake.find(
+        (m) => m.model.toLowerCase().includes(data.model.toLowerCase()) ||
+               data.model.toLowerCase().includes(m.model.toLowerCase())
+      );
+      if (matchedModel) {
+        setSelectedModel(matchedModel.model);
+      }
+    }
+    
+    // Set year and color
+    setSelectedYear(data.manufacturingYear.toString());
+    
+    // Try to match color
+    const matchedColor = VEHICLE_COLORS.find(
+      (c) => c.toLowerCase().includes(data.color.toLowerCase()) ||
+             data.color.toLowerCase().includes(c.toLowerCase())
+    );
+    if (matchedColor) {
+      setSelectedColor(matchedColor);
+    }
+    
+    // Auto-fill owner name if customer name is empty
+    if (!customerName.trim()) {
+      setCustomerName(data.ownerName);
+    }
+    
+    setVehicleFound(true);
+  };
+
   const handleSearch = async () => {
     if (!isValidRegistration(registration)) {
       toast({
@@ -81,21 +124,19 @@ const NewInspection = () => {
     }
 
     setIsSearching(true);
-    // Simulate API call to check for existing inspections
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Mock duplicate check (20% chance of duplicate for demo)
-    if (Math.random() < 0.2) {
-      setShowDuplicateWarning(true);
-    } else {
-      // Auto-fill with mock data for demo
-      setSelectedMake("Honda");
-      setSelectedModel("Activa 6G");
-      setSelectedYear("2023");
-      setSelectedColor("Pearl White");
-      setOdometerReading("12450");
-      setVehicleFound(true);
+    
+    // Fetch from Vahan API
+    const vahanData = await lookupVehicle(registration);
+    
+    if (vahanData) {
+      autoFillFromVahan(vahanData);
+      
+      // Check for duplicate (mock 20% chance)
+      if (Math.random() < 0.2) {
+        setShowDuplicateWarning(true);
+      }
     }
+    
     setIsSearching(false);
   };
 
@@ -285,6 +326,7 @@ const NewInspection = () => {
                   setRegistration(e.target.value.toUpperCase());
                   setVehicleFound(false);
                   setShowDuplicateWarning(false);
+                  clearVahanData();
                 }}
                 placeholder="MH-12-AB-1234"
                 className="flex-1 uppercase"
@@ -326,15 +368,27 @@ const NewInspection = () => {
           )}
 
           {/* Searching state */}
-          {isSearching && (
-            <div className="mb-4 p-4 rounded-lg border border-border animate-pulse">
+          {(isSearching || isVahanLoading) && (
+            <div className="mb-4 p-4 rounded-lg border border-border">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-secondary" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-secondary rounded w-1/3" />
-                  <div className="h-3 bg-secondary rounded w-1/2" />
+                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">Fetching from Vahan</p>
+                  <p className="text-xs text-muted-foreground">Verifying vehicle details...</p>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Vahan Verification Card */}
+          {vehicleData && !isSearching && !isVahanLoading && (
+            <div className="mb-4">
+              <VahanVerificationCard 
+                data={vehicleData} 
+                customerName={customerName}
+              />
             </div>
           )}
 
