@@ -6,51 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, TrendingUp, Trophy, XCircle, Clock } from "lucide-react";
 import BrokerBottomNav from "@/components/broker/BrokerBottomNav";
-
-// Mock bid data
-const MOCK_BIDS = {
-  live: [
-    {
-      id: "bid-1",
-      vehicle: { make: "TVS", model: "Apache RTR 160", year: 2023, city: "Bangalore" },
-      bidAmount: 37000,
-      commission: 1000,
-      status: "WINNING",
-      timeRemaining: 15 * 60 * 1000,
-      currentHighest: 37000,
-    },
-    {
-      id: "bid-2",
-      vehicle: { make: "Bajaj", model: "Pulsar NS200", year: 2022, city: "Bangalore" },
-      bidAmount: 50000,
-      commission: 500,
-      status: "OUTBID",
-      timeRemaining: 45 * 60 * 1000,
-      currentHighest: 52000,
-    },
-  ],
-  won: [
-    {
-      id: "bid-3",
-      vehicle: { make: "Hero", model: "Splendor Plus", year: 2021, city: "Bangalore" },
-      bidAmount: 32000,
-      commission: 0,
-      wonAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-      paymentStatus: "completed",
-      deliveryStatus: "in_transit",
-    },
-  ],
-  lost: [
-    {
-      id: "bid-4",
-      vehicle: { make: "Honda", model: "Activa 6G", year: 2022, city: "Mumbai" },
-      bidAmount: 45000,
-      commission: 500,
-      lossReason: "lower_bid",
-      winningBidRange: "₹47,000 - ₹48,000",
-    },
-  ],
-};
+import {
+  LIVE_BIDS,
+  WON_BIDS,
+  LOST_BIDS,
+  BROKER_STATS,
+  formatTimeRemaining,
+  formatCurrency,
+  getLossReasonText,
+  getLossTip,
+  getAuctionTypeConfig,
+} from "@/data/brokerMockData";
 
 const BrokerBids = () => {
   const navigate = useNavigate();
@@ -71,6 +37,12 @@ const BrokerBids = () => {
     );
   }
 
+  // Calculate consistent analytics from BROKER_STATS
+  const totalBids = BROKER_STATS.totalBidsPlaced;
+  const wins = BROKER_STATS.totalWins;
+  const winRate = BROKER_STATS.winRate;
+  const avgBid = formatCurrency(BROKER_STATS.avgBidAmount);
+
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
@@ -83,23 +55,23 @@ const BrokerBids = () => {
         </div>
       </div>
 
-      {/* Analytics Summary */}
+      {/* Analytics Summary - Using consistent data */}
       <div className="px-4 py-4 bg-muted/50 border-b">
         <div className="grid grid-cols-4 gap-4 text-center">
           <div>
-            <p className="text-2xl font-bold">50</p>
+            <p className="text-2xl font-bold">{totalBids}</p>
             <p className="text-xs text-muted-foreground">Total</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-green-600">15</p>
+            <p className="text-2xl font-bold text-green-600">{wins}</p>
             <p className="text-xs text-muted-foreground">Wins</p>
           </div>
           <div>
-            <p className="text-2xl font-bold">30%</p>
+            <p className="text-2xl font-bold">{winRate}%</p>
             <p className="text-xs text-muted-foreground">Win Rate</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-amber-600">₹35k</p>
+            <p className="text-2xl font-bold text-amber-600">{avgBid}</p>
             <p className="text-xs text-muted-foreground">Avg Bid</p>
           </div>
         </div>
@@ -110,24 +82,24 @@ const BrokerBids = () => {
         <TabsList className="grid w-full grid-cols-3 mb-4">
           <TabsTrigger value="live" className="gap-1">
             <Clock className="w-4 h-4" />
-            Live ({MOCK_BIDS.live.length})
+            Live ({LIVE_BIDS.length})
           </TabsTrigger>
           <TabsTrigger value="won" className="gap-1">
             <Trophy className="w-4 h-4" />
-            Won ({MOCK_BIDS.won.length})
+            Won ({WON_BIDS.length})
           </TabsTrigger>
           <TabsTrigger value="lost" className="gap-1">
             <XCircle className="w-4 h-4" />
-            Lost ({MOCK_BIDS.lost.length})
+            Lost ({LOST_BIDS.length})
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="live" className="space-y-3 mt-0">
-          {MOCK_BIDS.live.map((bid) => (
+          {LIVE_BIDS.map((bid) => (
             <div
               key={bid.id}
               className="bg-card border rounded-xl p-4 cursor-pointer hover:border-primary/50"
-              onClick={() => navigate(`/broker/auction/${bid.id}`)}
+              onClick={() => navigate(`/broker/auction/${bid.auctionId}`)}
             >
               <div className="flex justify-between items-start mb-2">
                 <div>
@@ -140,29 +112,46 @@ const BrokerBids = () => {
                 </div>
                 <Badge
                   className={
-                    bid.status === "WINNING"
+                    bid.status === "winning"
                       ? "bg-green-500 text-white"
                       : "bg-red-500 text-white"
                   }
                 >
-                  {bid.status}
+                  {bid.status.toUpperCase()}
                 </Badge>
               </div>
+              
+              {/* Time remaining */}
+              <div className="flex items-center gap-2 mb-2 text-sm text-muted-foreground">
+                <Clock className="w-3 h-3" />
+                <span>{formatTimeRemaining(bid.timeRemaining || 0)} remaining</span>
+                <Badge variant="outline" className="text-xs">
+                  {getAuctionTypeConfig(bid.auctionType).icon} {getAuctionTypeConfig(bid.auctionType).name}
+                </Badge>
+              </div>
+
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-sm text-muted-foreground">Your bid</p>
                   <p className="font-semibold">
                     ₹{bid.bidAmount.toLocaleString()}
                     {bid.commission > 0 && (
-                      <span className="text-amber-600 text-sm"> + ₹{bid.commission}</span>
+                      <span className="text-amber-600 text-sm"> + ₹{bid.commission.toLocaleString()}</span>
                     )}
                   </p>
+                  <p className="text-xs text-muted-foreground">
+                    Effective: {bid.effectiveScore.toFixed(0)}
+                  </p>
                 </div>
-                {bid.status === "OUTBID" && (
-                  <Button size="sm" className="bg-amber-500 hover:bg-amber-600">
-                    <TrendingUp className="w-4 h-4 mr-1" />
-                    Increase Bid
-                  </Button>
+                {bid.status === "outbid" && (
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">Current highest</p>
+                    <p className="text-sm font-medium text-red-600">₹{bid.currentHighestBid?.toLocaleString()}</p>
+                    <Button size="sm" className="mt-1 bg-amber-500 hover:bg-amber-600">
+                      <TrendingUp className="w-4 h-4 mr-1" />
+                      Increase
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
@@ -170,7 +159,7 @@ const BrokerBids = () => {
         </TabsContent>
 
         <TabsContent value="won" className="space-y-3 mt-0">
-          {MOCK_BIDS.won.map((bid) => (
+          {WON_BIDS.map((bid) => (
             <div
               key={bid.id}
               className="bg-card border rounded-xl p-4 cursor-pointer hover:border-primary/50"
@@ -189,17 +178,26 @@ const BrokerBids = () => {
                   WON
                 </Badge>
               </div>
+              
               <div className="flex justify-between items-center mt-3">
                 <div>
                   <p className="text-sm text-muted-foreground">Winning bid</p>
                   <p className="font-semibold text-green-600">
                     ₹{bid.bidAmount.toLocaleString()}
+                    {bid.commission > 0 && (
+                      <span className="text-amber-600 text-sm"> + ₹{bid.commission.toLocaleString()}</span>
+                    )}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="text-right space-y-1">
                   <Badge variant="outline" className="capitalize">
-                    {bid.deliveryStatus.replace("_", " ")}
+                    {bid.deliveryStatus?.replace(/_/g, " ")}
                   </Badge>
+                  {bid.rcTransferStatus && (
+                    <p className="text-xs text-muted-foreground">
+                      RC: {bid.rcTransferStatus.replace(/_/g, " ")}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -207,7 +205,7 @@ const BrokerBids = () => {
         </TabsContent>
 
         <TabsContent value="lost" className="space-y-3 mt-0">
-          {MOCK_BIDS.lost.map((bid) => (
+          {LOST_BIDS.map((bid) => (
             <div
               key={bid.id}
               className="bg-card border rounded-xl p-4"
@@ -223,15 +221,28 @@ const BrokerBids = () => {
                 </div>
                 <Badge variant="secondary">LOST</Badge>
               </div>
-              <div className="bg-muted rounded-lg p-3 mt-3">
+              
+              <div className="mb-3">
+                <p className="text-sm text-muted-foreground">Your bid</p>
+                <p className="font-semibold">
+                  ₹{bid.bidAmount.toLocaleString()}
+                  {bid.commission > 0 && (
+                    <span className="text-amber-600 text-sm"> + ₹{bid.commission.toLocaleString()}</span>
+                  )}
+                </p>
+              </div>
+
+              <div className="bg-muted rounded-lg p-3">
                 <p className="text-sm">
-                  ❌ You lost because your vehicle bid was lower.
+                  ❌ {getLossReasonText(bid.lossReason || "")}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Winning bid range: {bid.winningBidRange}
-                </p>
+                {bid.winningBidRange && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Winning bid range: {bid.winningBidRange}
+                  </p>
+                )}
                 <p className="text-xs text-amber-600 mt-2">
-                  💡 Tip: Increase your bid amount on similar vehicles.
+                  {getLossTip(bid.lossReason || "")}
                 </p>
               </div>
             </div>
