@@ -146,19 +146,24 @@ export interface MockVehicle {
   color: string;
 }
 
-// Reliable bike thumbnail URLs
-const BIKE_IMAGES: Record<string, string> = {
-  "Honda": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80",
-  "TVS": "https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=400&h=400&fit=crop&q=80",
-  "Bajaj": "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400&h=400&fit=crop&q=80",
-  "Royal Enfield": "https://images.unsplash.com/photo-1558980664-769d59546b3d?w=400&h=400&fit=crop&q=80",
-  "Yamaha": "https://images.unsplash.com/photo-1580310614729-ccd69652491d?w=400&h=400&fit=crop&q=80",
-  "Hero": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80",
-  "Suzuki": "https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=400&h=400&fit=crop&q=80",
-  "KTM": "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400&h=400&fit=crop&q=80",
-  "Kawasaki": "https://images.unsplash.com/photo-1580310614729-ccd69652491d?w=400&h=400&fit=crop&q=80",
-  "Aprilia": "https://images.unsplash.com/photo-1558980664-769d59546b3d?w=400&h=400&fit=crop&q=80",
-  "default": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80",
+// Real vehicle inspection images from database
+const BIKE_IMAGES: Record<string, string[]> = {
+  "Honda": ["/vehicles/activa1.jpg", "/vehicles/activa2.jpg", "/vehicles/activa4.jpg"],
+  "TVS": ["/vehicles/pulsar5.jpg"],
+  "Bajaj": ["/vehicles/pulsar2.jpg", "/vehicles/pulsar4.jpg", "/vehicles/pulsar5.jpg"],
+  "Royal Enfield": ["/vehicles/royalenfield3.jpg", "/vehicles/royalenfield4.jpg"],
+  "Yamaha": ["/vehicles/pulsar5.jpg"],
+  "Hero": ["/vehicles/activa2.jpg"],
+  "Suzuki": ["/vehicles/pulsar5.jpg"],
+  "KTM": ["/vehicles/duke390_1.jpg", "/vehicles/duke390_5.jpg"],
+  "Kawasaki": ["/vehicles/duke390_1.jpg"],
+  "default": ["/vehicles/activa1.jpg", "/vehicles/royalenfield3.jpg", "/vehicles/pulsar2.jpg"],
+};
+
+// Helper to get random image for a make
+const getRandomImage = (make: string): string => {
+  const images = BIKE_IMAGES[make] || BIKE_IMAGES["default"];
+  return images[Math.floor(Math.random() * images.length)];
 };
 
 const CITIES = ["Bangalore", "Mumbai", "Delhi", "Chennai", "Hyderabad", "Pune", "Kolkata", "Ahmedabad", "Jaipur", "Lucknow"];
@@ -258,7 +263,7 @@ export const MOCK_VEHICLES: MockVehicle[] = Array.from({ length: 100 }, (_, i) =
     city,
     grade,
     gradeDescription: gradeDescriptions[grade],
-    thumbnail: BIKE_IMAGES[vehicle.make] || BIKE_IMAGES.default,
+    thumbnail: getRandomImage(vehicle.make),
     images: [],
     videoUrl: null,
     engineCC: vehicle.cc,
