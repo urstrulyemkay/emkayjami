@@ -469,13 +469,7 @@ const BrokerAuctionDetail = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => {
-              if (window.history.length > 1) {
-                navigate(-1);
-              } else {
-                navigate("/broker");
-              }
-            }}
+            onClick={() => navigate(-1)}
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>

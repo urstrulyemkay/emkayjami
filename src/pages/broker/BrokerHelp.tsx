@@ -200,7 +200,7 @@ const BrokerHelp = () => {
               variant="ghost"
               size="icon"
               className="text-white/80 hover:text-white hover:bg-white/10 rounded-full"
-              onClick={() => navigate("/broker")}
+              onClick={() => navigate(-1)}
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>

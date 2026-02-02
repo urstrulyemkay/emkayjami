@@ -81,7 +81,7 @@ const BrokerWallet = () => {
             variant="ghost"
             size="icon"
             className="text-white hover:bg-white/20"
-            onClick={() => navigate("/broker")}
+            onClick={() => navigate(-1)}
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>

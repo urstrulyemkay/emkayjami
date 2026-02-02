@@ -70,7 +70,7 @@ const BrokerBids = () => {
       {/* Header */}
       <div className="sticky top-0 bg-background border-b z-10">
         <div className="flex items-center gap-3 px-4 py-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/broker")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="text-lg font-semibold">My Bids</h1>
