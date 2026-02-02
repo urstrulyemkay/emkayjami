@@ -15,6 +15,21 @@ const LiveBidFeed = ({ bids, currentHighestBid, bidCount, myBrokerId }: LiveBidF
   const [animatedBids, setAnimatedBids] = useState<string[]>([]);
   const [newBidFlash, setNewBidFlash] = useState(false);
   const previousBidCountRef = useRef(bidCount);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const latestBidRef = useRef<HTMLDivElement>(null);
+
+  // Smooth scroll to latest bid when new bid comes in
+  useEffect(() => {
+    if (newBidFlash && latestBidRef.current) {
+      setTimeout(() => {
+        latestBidRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "end"
+        });
+      }, 100);
+    }
+  }, [newBidFlash]);
 
   // Animate new bids
   useEffect(() => {
@@ -103,7 +118,7 @@ const LiveBidFeed = ({ bids, currentHighestBid, bidCount, myBrokerId }: LiveBidF
         ) : (
           <div className="relative">
             {/* Timeline container */}
-            <div className="overflow-x-auto pb-4 scrollbar-thin">
+            <div ref={scrollContainerRef} className="overflow-x-auto pb-4 scrollbar-thin">
               <div className="flex items-center gap-0 min-w-max px-2 py-4">
                 {/* Render bids in chronological order (oldest first, so reverse) */}
                 {[...bids].reverse().map((bid, index, arr) => {
@@ -113,7 +128,7 @@ const LiveBidFeed = ({ bids, currentHighestBid, bidCount, myBrokerId }: LiveBidF
                   const isLast = index === arr.length - 1;
                   
                   return (
-                    <div key={bid.id} className="flex items-center">
+                    <div key={bid.id} className="flex items-center" ref={isLast ? latestBidRef : null}>
                       {/* Bid Node */}
                       <div className="relative flex flex-col items-center">
                         {/* Connector line (before node, except first) */}
