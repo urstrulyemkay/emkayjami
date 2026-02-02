@@ -374,6 +374,103 @@ export type Database = {
           },
         ]
       }
+      broker_won_vehicles: {
+        Row: {
+          auction_id: string
+          bid_id: string
+          broker_id: string
+          created_at: string
+          delivered_at: string | null
+          delivery_status: string
+          id: string
+          insurance_status: string
+          name_transfer_status: string
+          name_transferred_at: string | null
+          notes: string | null
+          payment_completed_at: string | null
+          payment_status: string
+          pickup_completed_at: string | null
+          pickup_scheduled_at: string | null
+          pickup_status: string
+          rc_transfer_deadline: string
+          rc_transfer_proof_uri: string | null
+          rc_transfer_status: string
+          rc_transferred_at: string | null
+          updated_at: string
+          won_at: string
+        }
+        Insert: {
+          auction_id: string
+          bid_id: string
+          broker_id: string
+          created_at?: string
+          delivered_at?: string | null
+          delivery_status?: string
+          id?: string
+          insurance_status?: string
+          name_transfer_status?: string
+          name_transferred_at?: string | null
+          notes?: string | null
+          payment_completed_at?: string | null
+          payment_status?: string
+          pickup_completed_at?: string | null
+          pickup_scheduled_at?: string | null
+          pickup_status?: string
+          rc_transfer_deadline: string
+          rc_transfer_proof_uri?: string | null
+          rc_transfer_status?: string
+          rc_transferred_at?: string | null
+          updated_at?: string
+          won_at?: string
+        }
+        Update: {
+          auction_id?: string
+          bid_id?: string
+          broker_id?: string
+          created_at?: string
+          delivered_at?: string | null
+          delivery_status?: string
+          id?: string
+          insurance_status?: string
+          name_transfer_status?: string
+          name_transferred_at?: string | null
+          notes?: string | null
+          payment_completed_at?: string | null
+          payment_status?: string
+          pickup_completed_at?: string | null
+          pickup_scheduled_at?: string | null
+          pickup_status?: string
+          rc_transfer_deadline?: string
+          rc_transfer_proof_uri?: string | null
+          rc_transfer_status?: string
+          rc_transferred_at?: string | null
+          updated_at?: string
+          won_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broker_won_vehicles_auction_id_fkey"
+            columns: ["auction_id"]
+            isOneToOne: false
+            referencedRelation: "auctions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broker_won_vehicles_bid_id_fkey"
+            columns: ["bid_id"]
+            isOneToOne: false
+            referencedRelation: "broker_bids"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broker_won_vehicles_broker_id_fkey"
+            columns: ["broker_id"]
+            isOneToOne: false
+            referencedRelation: "brokers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brokers: {
         Row: {
           account_status: string
@@ -741,6 +838,53 @@ export type Database = {
             columns: ["broker_id"]
             isOneToOne: false
             referencedRelation: "brokers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_documents: {
+        Row: {
+          file_name: string
+          file_type: string | null
+          file_uri: string
+          id: string
+          rejection_reason: string | null
+          service_type: string
+          uploaded_at: string
+          verification_status: string
+          verified_at: string | null
+          won_vehicle_id: string
+        }
+        Insert: {
+          file_name: string
+          file_type?: string | null
+          file_uri: string
+          id?: string
+          rejection_reason?: string | null
+          service_type: string
+          uploaded_at?: string
+          verification_status?: string
+          verified_at?: string | null
+          won_vehicle_id: string
+        }
+        Update: {
+          file_name?: string
+          file_type?: string | null
+          file_uri?: string
+          id?: string
+          rejection_reason?: string | null
+          service_type?: string
+          uploaded_at?: string
+          verification_status?: string
+          verified_at?: string | null
+          won_vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_documents_won_vehicle_id_fkey"
+            columns: ["won_vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "broker_won_vehicles"
             referencedColumns: ["id"]
           },
         ]
