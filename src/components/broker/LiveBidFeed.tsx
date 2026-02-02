@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Clock, Users, Bell } from "lucide-react";
+import { TrendingUp, Clock, Users } from "lucide-react";
 import { RealtimeBid } from "@/hooks/useRealtimeBids";
 import { formatDistanceToNow } from "date-fns";
 
@@ -15,30 +15,26 @@ const LiveBidFeed = ({ bids, currentHighestBid, bidCount, myBrokerId }: LiveBidF
   const [animatedBids, setAnimatedBids] = useState<string[]>([]);
   const [newBidFlash, setNewBidFlash] = useState(false);
   const previousBidCountRef = useRef(bidCount);
-  const previousHighestBidRef = useRef(currentHighestBid);
 
-  // Animate new bids and flash on new activity
+  // Animate new bids
   useEffect(() => {
     if (bids.length > 0) {
       const latestBid = bids[0];
       if (!animatedBids.includes(latestBid.id)) {
         setAnimatedBids(prev => [...prev, latestBid.id]);
         
-        // Flash effect for new bid
         if (previousBidCountRef.current < bidCount) {
           setNewBidFlash(true);
-          setTimeout(() => setNewBidFlash(false), 500);
+          setTimeout(() => setNewBidFlash(false), 600);
         }
         
-        // Remove animation after 2 seconds
         setTimeout(() => {
           setAnimatedBids(prev => prev.filter(id => id !== latestBid.id));
         }, 2000);
       }
     }
     previousBidCountRef.current = bidCount;
-    previousHighestBidRef.current = currentHighestBid;
-  }, [bids, bidCount, currentHighestBid]);
+  }, [bids, bidCount, animatedBids]);
 
   const formatBidTime = (timestamp: string) => {
     try {
@@ -49,56 +45,64 @@ const LiveBidFeed = ({ bids, currentHighestBid, bidCount, myBrokerId }: LiveBidF
   };
 
   const getAnonymizedName = (index: number) => {
-    return `Broker ${String.fromCharCode(65 + index)}`; // Broker A, B, C, etc.
+    return `Broker ${String.fromCharCode(65 + index)}`;
   };
 
   return (
     <div className="space-y-4">
-      {/* Header Stats */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full animate-pulse ${newBidFlash ? "bg-amber-500" : "bg-green-500"}`}></div>
-          <span className="text-sm font-medium">Live Bidding</span>
+          <span className={`w-2 h-2 rounded-full ${newBidFlash ? "bg-accent" : "bg-accent"} animate-pulse`} />
+          <span className="text-sm font-medium text-foreground">Live Bidding</span>
           {newBidFlash && (
-            <Badge variant="secondary" className="animate-pulse text-xs">
-              New bid!
+            <Badge variant="secondary" className="text-xs animate-pulse">
+              New!
             </Badge>
           )}
         </div>
-        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <Users className="w-4 h-4" />
-            <span>{bidCount} bids</span>
-          </div>
+        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Users className="w-3.5 h-3.5" />
+          <span>{bidCount}</span>
         </div>
       </div>
 
-      {/* Current Highest Bid */}
-      <div className={`bg-gradient-to-r from-green-500/10 to-emerald-500/10 border rounded-xl p-4 transition-all ${newBidFlash ? "border-amber-500 ring-2 ring-amber-500/30" : "border-green-500/20"}`}>
+      {/* Current Highest Bid Card */}
+      <div className={`rounded-xl p-4 transition-all duration-300 ${
+        newBidFlash 
+          ? "bg-accent/10 border border-accent/30 ring-2 ring-accent/20" 
+          : "bg-muted/50 border border-border"
+      }`}>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">Current Highest Bid</p>
-            <p className={`text-2xl font-bold transition-all ${newBidFlash ? "text-amber-600 scale-105" : "text-green-600"}`}>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">Highest Bid</p>
+            <p className={`text-2xl font-bold transition-all duration-300 ${
+              newBidFlash ? "text-accent scale-105" : "text-foreground"
+            }`}>
               ₹{currentHighestBid.toLocaleString()}
             </p>
           </div>
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${newBidFlash ? "bg-amber-500/20" : "bg-green-500/20"}`}>
-            <TrendingUp className={`w-6 h-6 ${newBidFlash ? "text-amber-600" : "text-green-600"}`} />
+          <div className={`w-11 h-11 rounded-full flex items-center justify-center transition-colors ${
+            newBidFlash ? "bg-accent/20" : "bg-muted"
+          }`}>
+            <TrendingUp className={`w-5 h-5 ${newBidFlash ? "text-accent" : "text-muted-foreground"}`} />
           </div>
         </div>
       </div>
 
-      {/* Recent Bids */}
+      {/* Recent Bids List */}
       <div className="space-y-2">
-        <h4 className="text-sm font-medium text-muted-foreground">Recent Activity</h4>
+        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Activity</h4>
+        
         {bids.length === 0 ? (
-          <div className="text-center py-6 text-muted-foreground">
-            <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">No bids yet. Be the first!</p>
+          <div className="text-center py-8 border border-dashed border-border rounded-xl">
+            <Clock className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+            <p className="text-sm text-muted-foreground">No bids yet</p>
+            <p className="text-xs text-muted-foreground/70 mt-0.5">Be the first to bid</p>
           </div>
         ) : (
-          <div className="space-y-2 max-h-64 overflow-y-auto">
-            {bids.slice(0, 10).map((bid, index) => {
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {bids.slice(0, 8).map((bid, index) => {
               const isMyBid = bid.broker_id === myBrokerId;
               const isHighest = index === 0;
               const isAnimating = animatedBids.includes(bid.id);
@@ -107,36 +111,51 @@ const LiveBidFeed = ({ bids, currentHighestBid, bidCount, myBrokerId }: LiveBidF
                 <div
                   key={bid.id}
                   className={`
-                    flex items-center justify-between p-3 rounded-lg border transition-all
-                    ${isMyBid ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800" : "bg-card"}
-                    ${isAnimating ? "animate-pulse ring-2 ring-green-500/50" : ""}
+                    flex items-center justify-between p-3 rounded-xl transition-all duration-200
+                    ${isMyBid 
+                      ? "bg-primary/5 border border-primary/10" 
+                      : "bg-card border border-border"
+                    }
+                    ${isAnimating ? "ring-2 ring-accent/30 bg-accent/5" : ""}
                   `}
                 >
                   <div className="flex items-center gap-3">
+                    {/* Rank */}
                     <div className={`
-                      w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold
-                      ${isHighest ? "bg-green-500 text-white" : "bg-muted text-muted-foreground"}
+                      w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold
+                      ${isHighest 
+                        ? "bg-accent text-accent-foreground" 
+                        : "bg-muted text-muted-foreground"
+                      }
                     `}>
                       {index + 1}
                     </div>
+                    
+                    {/* Bidder Info */}
                     <div>
-                      <p className="font-medium text-sm">
-                        {isMyBid ? "You" : getAnonymizedName(index)}
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-foreground">
+                          {isMyBid ? "You" : getAnonymizedName(index)}
+                        </p>
                         {isHighest && (
-                          <Badge className="ml-2 bg-green-500 text-white text-xs">
-                            Highest
+                          <Badge className="bg-accent text-accent-foreground text-[10px] px-1.5 py-0">
+                            Leading
                           </Badge>
                         )}
-                      </p>
+                      </div>
                       <p className="text-xs text-muted-foreground">
                         {formatBidTime(bid.placed_at)}
                       </p>
                     </div>
                   </div>
+                  
+                  {/* Bid Amount */}
                   <div className="text-right">
-                    <p className="font-semibold">₹{bid.bid_amount.toLocaleString()}</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      ₹{bid.bid_amount.toLocaleString()}
+                    </p>
                     {bid.commission_amount > 0 && (
-                      <p className="text-xs text-amber-600">
+                      <p className="text-xs text-muted-foreground">
                         +₹{bid.commission_amount.toLocaleString()}
                       </p>
                     )}

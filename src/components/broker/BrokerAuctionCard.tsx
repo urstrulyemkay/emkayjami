@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { 
   Zap, Scale, Calendar, Target, MapPin, 
-  Check, AlertTriangle, Lock, FileText
+  Check, AlertTriangle, Clock, ChevronRight
 } from "lucide-react";
 
 interface AuctionCardProps {
@@ -67,15 +66,15 @@ const BrokerAuctionCard = ({ auction, onClick }: AuctionCardProps) => {
     return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   };
 
-  const getGradeColor = (grade: string) => {
-    const colors: Record<string, string> = {
-      A: "bg-green-500 text-white",
-      B: "bg-blue-500 text-white",
-      C: "bg-yellow-500 text-black",
-      D: "bg-orange-500 text-white",
-      E: "bg-red-500 text-white",
+  const getGradeConfig = (grade: string) => {
+    const configs: Record<string, { bg: string; text: string }> = {
+      A: { bg: "bg-accent", text: "text-accent-foreground" },
+      B: { bg: "bg-info", text: "text-info-foreground" },
+      C: { bg: "bg-warning", text: "text-warning-foreground" },
+      D: { bg: "bg-muted", text: "text-foreground" },
+      E: { bg: "bg-destructive", text: "text-destructive-foreground" },
     };
-    return colors[grade] || "bg-gray-500 text-white";
+    return configs[grade] || { bg: "bg-muted", text: "text-foreground" };
   };
 
   const getAuctionIcon = () => {
@@ -98,143 +97,125 @@ const BrokerAuctionCard = ({ auction, onClick }: AuctionCardProps) => {
       case "quick":
         return "Quick";
       case "flexible":
-        return "Flexible";
+        return "Flex";
       case "extended":
         return "Extended";
       case "one_click":
-        return "One-Click";
+        return "1-Click";
       default:
         return "Auction";
     }
   };
 
-  const getOemTrustBadge = () => {
-    if (auction.oemTrust === "high") {
-      return (
-        <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 text-xs">
-          High-trust OEM
-        </Badge>
-      );
-    }
-    return null;
-  };
+  const isUrgent = timeLeft < 5 * 60 * 1000 && timeLeft > 0;
+  const gradeConfig = getGradeConfig(auction.vehicle.grade);
 
   return (
     <div
-      className="bg-card rounded-xl border overflow-hidden cursor-pointer hover:border-primary/50 transition-all hover:shadow-md"
+      className="broker-card cursor-pointer group"
       onClick={onClick}
     >
-      {/* Top Section - Thumbnail + Info */}
-      <div className="flex gap-3 p-3">
-        <div className="relative w-28 h-24 bg-muted rounded-lg overflow-hidden shrink-0">
+      {/* Main Content */}
+      <div className="flex gap-4 p-4">
+        {/* Thumbnail */}
+        <div className="relative w-24 h-20 bg-muted rounded-xl overflow-hidden shrink-0">
           <img
             src={auction.vehicle.thumbnail}
             alt={auction.vehicle.model}
             className="w-full h-full object-cover"
           />
-          <div className={`absolute top-1 left-1 px-2 py-0.5 rounded text-xs font-bold ${getGradeColor(auction.vehicle.grade)}`}>
+          {/* Grade Badge */}
+          <div className={`absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md text-xs font-bold ${gradeConfig.bg} ${gradeConfig.text}`}>
             {auction.vehicle.grade}
           </div>
         </div>
 
+        {/* Vehicle Info */}
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-foreground truncate">
-            {auction.vehicle.make} {auction.vehicle.model}
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            {auction.vehicle.variant} • {auction.vehicle.year}
-          </p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {auction.vehicle.kms.toLocaleString()} km
-          </p>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h3 className="font-semibold text-foreground truncate leading-tight">
+                {auction.vehicle.make} {auction.vehicle.model}
+              </h3>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                {auction.vehicle.year} • {auction.vehicle.kms.toLocaleString()} km
+              </p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground/50 shrink-0 group-hover:text-foreground transition-colors" />
+          </div>
           
-          <div className="flex items-center gap-1 mt-1.5">
+          {/* Location */}
+          <div className="flex items-center gap-1 mt-2">
             <MapPin className="w-3 h-3 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">{auction.vehicle.city}</span>
           </div>
-        </div>
-      </div>
 
-      {/* Document Status */}
-      <div className="px-3 pb-2 flex items-center gap-1.5 flex-wrap">
-        {auction.documents.rc && (
-          <Badge variant="outline" className="text-xs gap-1 h-5">
-            <Check className="w-3 h-3 text-green-500" />
-            RC
-          </Badge>
-        )}
-        {auction.documents.insurance && (
-          <Badge variant="outline" className="text-xs gap-1 h-5">
-            <Check className="w-3 h-3 text-green-500" />
-            Ins
-          </Badge>
-        )}
-        {auction.documents.puc && (
-          <Badge variant="outline" className="text-xs gap-1 h-5">
-            <Check className="w-3 h-3 text-green-500" />
-            PUC
-          </Badge>
-        )}
-        {auction.documents.challans > 0 && (
-          <Badge variant="outline" className="text-xs gap-1 h-5 border-orange-300">
-            <AlertTriangle className="w-3 h-3 text-orange-500" />
-            {auction.documents.challans} Challans
-          </Badge>
-        )}
-        {auction.documents.loan && (
-          <Badge variant="outline" className="text-xs gap-1 h-5 border-red-300">
-            <Lock className="w-3 h-3 text-red-500" />
-            Loan
-          </Badge>
-        )}
-        {getOemTrustBadge()}
-      </div>
-
-      {/* Bottom Section - Auction Info */}
-      <div className="px-3 pb-3 pt-1 border-t flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          {/* Auction Type + Time */}
-          <div className="flex items-center gap-1.5">
-            <Badge 
-              variant={auction.auctionType === "one_click" ? "default" : "secondary"}
-              className="gap-1 text-xs"
-            >
-              {getAuctionIcon()}
-              {getAuctionTypeName()}
-            </Badge>
-            {auction.auctionType !== "one_click" && (
-              <span className={`text-sm font-mono font-semibold ${timeLeft < 5 * 60 * 1000 ? "text-red-500" : "text-foreground"}`}>
-                {formatTime(timeLeft)}
+          {/* Document Status - Compact */}
+          <div className="flex items-center gap-1.5 mt-2">
+            {auction.documents.rc && (
+              <span className="inline-flex items-center gap-0.5 text-xs text-accent">
+                <Check className="w-3 h-3" />RC
+              </span>
+            )}
+            {auction.documents.insurance && (
+              <span className="inline-flex items-center gap-0.5 text-xs text-accent">
+                <Check className="w-3 h-3" />Ins
+              </span>
+            )}
+            {auction.documents.challans > 0 && (
+              <span className="inline-flex items-center gap-0.5 text-xs text-warning">
+                <AlertTriangle className="w-3 h-3" />{auction.documents.challans}
               </span>
             )}
           </div>
         </div>
+      </div>
 
+      {/* Footer - Auction Status */}
+      <div className="px-4 py-3 border-t border-border bg-muted/30 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {/* Auction Type */}
+          <Badge 
+            variant="outline"
+            className="gap-1 text-xs font-medium border-border"
+          >
+            {getAuctionIcon()}
+            {getAuctionTypeName()}
+          </Badge>
+          
+          {/* Timer */}
+          {auction.auctionType !== "one_click" && (
+            <div className={`flex items-center gap-1 text-sm font-mono font-semibold ${isUrgent ? "text-destructive" : "text-foreground"}`}>
+              <Clock className={`w-3.5 h-3.5 ${isUrgent ? "animate-pulse" : ""}`} />
+              {formatTime(timeLeft)}
+            </div>
+          )}
+        </div>
+
+        {/* Bid Info */}
         <div className="text-right">
           {auction.auctionType === "one_click" ? (
-            <p className="text-xs text-muted-foreground">Submit best bid</p>
+            <span className="text-sm font-medium text-foreground">Submit Bid →</span>
           ) : (
-            <>
-              <p className="text-sm font-bold text-primary">
+            <div>
+              <p className="text-base font-bold text-foreground">
                 ₹{auction.currentHighestBid.toLocaleString()}
               </p>
               <p className="text-xs text-muted-foreground">
-                {auction.bidCount} bids
+                {auction.bidCount} {auction.bidCount === 1 ? "bid" : "bids"}
               </p>
-            </>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Match Score (optional) */}
+      {/* Match Score Banner */}
       {auction.matchScore && auction.matchScore >= 80 && (
-        <div className="px-3 pb-3">
-          <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-1.5 flex items-center gap-2">
-            <Target className="w-4 h-4 text-amber-600" />
-            <span className="text-xs text-amber-800 dark:text-amber-200 font-medium">
-              {auction.matchScore}% match to your preferences
-            </span>
-          </div>
+        <div className="px-4 py-2 bg-accent/5 border-t border-accent/10 flex items-center gap-2">
+          <Target className="w-3.5 h-3.5 text-accent" />
+          <span className="text-xs text-accent font-medium">
+            {auction.matchScore}% match
+          </span>
         </div>
       )}
     </div>

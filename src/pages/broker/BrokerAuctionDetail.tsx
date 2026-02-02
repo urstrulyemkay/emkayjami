@@ -370,26 +370,26 @@ const BrokerAuctionDetail = () => {
               {(auction.inspections?.odometer_reading || 0).toLocaleString()} km
             </p>
           </div>
-          <div className={`${getGradeColor(grade)} text-white px-4 py-2 rounded-lg text-center`}>
+          <div className="bg-primary text-primary-foreground px-4 py-2 rounded-xl text-center">
             <span className="text-2xl font-bold">{grade}</span>
           </div>
         </div>
 
         {/* My Bid Status */}
         {myBid && (
-          <div className={`rounded-xl p-4 mb-4 ${isWinning ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800" : "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800"}`}>
+          <div className={`rounded-xl p-4 mb-4 border ${isWinning ? "bg-accent/5 border-accent/20" : "bg-warning/5 border-warning/20"}`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">Your Bid</p>
-                <p className="text-xl font-bold">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Your Bid</p>
+                <p className="text-xl font-bold text-foreground">
                   ₹{myBid.bid_amount.toLocaleString()}
                   {myBid.commission_amount > 0 && (
-                    <span className="text-amber-600 text-sm"> + ₹{myBid.commission_amount.toLocaleString()}</span>
+                    <span className="text-muted-foreground text-sm font-normal"> +₹{myBid.commission_amount.toLocaleString()}</span>
                   )}
                 </p>
               </div>
-              <Badge className={isWinning ? "bg-green-500 text-white" : "bg-amber-500 text-white"}>
-                {isWinning ? "WINNING" : "OUTBID"}
+              <Badge className={isWinning ? "bg-accent text-accent-foreground" : "bg-warning text-warning-foreground"}>
+                {isWinning ? "LEADING" : "OUTBID"}
               </Badge>
             </div>
           </div>
@@ -462,32 +462,32 @@ const BrokerAuctionDetail = () => {
       {/* Defects Section */}
       {auction.inspections?.defects && auction.inspections.defects.length > 0 && (
         <div className="p-4 border-b">
-          <h3 className="font-semibold mb-3 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-500" />
+          <h3 className="font-semibold mb-3 flex items-center gap-2 text-foreground">
+            <AlertTriangle className="w-4 h-4 text-warning" />
             Reported Issues ({auction.inspections.defects.length})
           </h3>
           <div className="space-y-2">
             {auction.inspections.defects.map((defect) => (
               <div
                 key={defect.id}
-                className={`rounded-lg p-3 ${
+                className={`rounded-xl p-3 border ${
                   defect.severity === "major"
-                    ? "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
+                    ? "bg-destructive/5 border-destructive/20"
                     : defect.severity === "moderate"
-                    ? "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800"
-                    : "bg-muted"
+                    ? "bg-warning/5 border-warning/20"
+                    : "bg-muted border-border"
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-medium text-sm">{defect.category}</span>
+                  <span className="font-medium text-sm text-foreground">{defect.category}</span>
                   <Badge
                     variant="outline"
                     className={
                       defect.severity === "major"
-                        ? "border-red-300 text-red-700 dark:text-red-400"
+                        ? "border-destructive/30 text-destructive"
                         : defect.severity === "moderate"
-                        ? "border-amber-300 text-amber-700 dark:text-amber-400"
-                        : ""
+                        ? "border-warning/30 text-warning"
+                        : "border-border text-muted-foreground"
                     }
                   >
                     {defect.severity}
@@ -501,14 +501,14 @@ const BrokerAuctionDetail = () => {
       )}
 
       {/* RC Transfer Warning */}
-      <div className="p-4 border-b bg-amber-50 dark:bg-amber-900/10">
+      <div className="p-4 border-b bg-warning/5">
         <div className="flex items-start gap-3">
-          <Info className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+          <Info className="w-5 h-5 text-warning mt-0.5 shrink-0" />
           <div>
-            <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+            <p className="text-sm font-medium text-foreground">
               RC Transfer Obligation
             </p>
-            <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+            <p className="text-sm text-muted-foreground mt-0.5">
               Within 6 months of purchase. Failure: -500 coins, -10 trust score
             </p>
           </div>
@@ -516,9 +516,9 @@ const BrokerAuctionDetail = () => {
       </div>
 
       {/* Sticky Bottom CTA */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 z-20">
+      <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border p-4 z-20">
         <Button
-          className="w-full h-12 bg-amber-500 hover:bg-amber-600 text-white font-semibold"
+          className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl"
           onClick={() => setBidSheetOpen(true)}
         >
           <TrendingUp className="w-5 h-5 mr-2" />
@@ -570,7 +570,7 @@ const BrokerAuctionDetail = () => {
               />
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">₹0</span>
-                <span className="text-lg font-semibold text-amber-600">
+                <span className="text-lg font-semibold text-foreground">
                   ₹{commission.toLocaleString()}
                 </span>
                 <span className="text-muted-foreground">₹2,000</span>
@@ -582,25 +582,25 @@ const BrokerAuctionDetail = () => {
 
             {/* Bid Summary */}
             <div className="bg-muted rounded-xl p-4 space-y-2">
-              <div className="flex justify-between">
-                <span>Vehicle bid</span>
-                <span className="font-semibold">₹{bidAmount.toLocaleString()}</span>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Vehicle bid</span>
+                <span className="font-semibold text-foreground">₹{bidAmount.toLocaleString()}</span>
               </div>
               {commission > 0 && (
-                <div className="flex justify-between text-amber-600">
-                  <span>Commission to exec</span>
-                  <span className="font-semibold">₹{commission.toLocaleString()}</span>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Commission</span>
+                  <span className="font-semibold text-foreground">₹{commission.toLocaleString()}</span>
                 </div>
               )}
-              <div className="border-t pt-2 mt-2 flex justify-between">
-                <span className="font-medium">Total to pay DriveX</span>
-                <span className="font-bold text-lg">₹{(bidAmount + commission).toLocaleString()}</span>
+              <div className="border-t border-border pt-3 mt-3 flex justify-between">
+                <span className="font-medium text-foreground">Total</span>
+                <span className="font-bold text-lg text-foreground">₹{(bidAmount + commission).toLocaleString()}</span>
               </div>
               <div className="flex items-center justify-between pt-2">
-                <span className="text-sm text-muted-foreground">Bid ranking</span>
+                <span className="text-sm text-muted-foreground">Ranking</span>
                 <Badge className={
-                  bidRanking === "HIGH" ? "bg-green-500" :
-                  bidRanking === "MEDIUM" ? "bg-amber-500" : "bg-red-500"
+                  bidRanking === "HIGH" ? "bg-accent text-accent-foreground" :
+                  bidRanking === "MEDIUM" ? "bg-warning text-warning-foreground" : "bg-destructive text-destructive-foreground"
                 }>
                   {bidRanking}
                 </Badge>
@@ -609,7 +609,7 @@ const BrokerAuctionDetail = () => {
 
             {/* Place Bid Button */}
             <Button
-              className="w-full h-12 bg-amber-500 hover:bg-amber-600 text-white font-semibold"
+              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl"
               onClick={handlePlaceBid}
               disabled={isSubmitting}
             >
@@ -628,22 +628,22 @@ const BrokerAuctionDetail = () => {
               Please review your bid details before confirming.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2 py-4">
-            <div className="flex justify-between">
-              <span>Vehicle bid</span>
-              <span className="font-semibold">₹{bidAmount.toLocaleString()}</span>
+          <div className="space-y-3 py-4">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Vehicle bid</span>
+              <span className="font-semibold text-foreground">₹{bidAmount.toLocaleString()}</span>
             </div>
             {commission > 0 && (
-              <div className="flex justify-between text-amber-600">
-                <span>Commission</span>
-                <span className="font-semibold">₹{commission.toLocaleString()}</span>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Commission</span>
+                <span className="font-semibold text-foreground">₹{commission.toLocaleString()}</span>
               </div>
             )}
-            <div className="flex justify-between font-medium pt-2 border-t">
-              <span>Total</span>
-              <span>₹{(bidAmount + commission).toLocaleString()}</span>
+            <div className="flex justify-between font-medium pt-3 border-t border-border">
+              <span className="text-foreground">Total</span>
+              <span className="text-foreground">₹{(bidAmount + commission).toLocaleString()}</span>
             </div>
-            <div className="border-t pt-2 mt-2">
+            <div className="bg-muted rounded-lg p-3 mt-3">
               <p className="text-sm text-muted-foreground">
                 ⚠️ This bid cannot be edited, but you can place higher bids later.
               </p>
@@ -654,7 +654,7 @@ const BrokerAuctionDetail = () => {
               Cancel
             </Button>
             <Button
-              className="bg-amber-500 hover:bg-amber-600"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
               onClick={confirmBid}
               disabled={isSubmitting}
             >
