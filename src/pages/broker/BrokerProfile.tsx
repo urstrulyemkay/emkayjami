@@ -7,8 +7,9 @@ import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import {
   ArrowLeft, Star, Shield, Coins, TrendingUp, Award,
-  AlertTriangle, LogOut, Settings, ChevronRight, Building, Bell
+  AlertTriangle, LogOut, Settings, ChevronRight, Building, Bell, Volume2
 } from "lucide-react";
+import { useSoundNotifications } from "@/hooks/useSoundNotifications";
 import BrokerBottomNav from "@/components/broker/BrokerBottomNav";
 import { useBrokerBids } from "@/hooks/useBrokerBids";
 import { useBrokerStrikes } from "@/hooks/useBrokerStrikes";
@@ -28,6 +29,10 @@ const BrokerProfile = () => {
   // Real-time hooks
   const { stats, loading: bidsLoading } = useBrokerBids(broker?.id);
   const { activeStrikes, strikesCount, loading: strikesLoading } = useBrokerStrikes(broker?.id);
+  
+  // Sound notifications
+  const { playSound, soundEnabled, toggleSound } = useSoundNotifications();
+  const [soundOn, setSoundOn] = useState(soundEnabled);
   const { isSupported, isSubscribed, permission, loading: notifLoading, subscribe, unsubscribe } = usePushNotifications(broker?.id);
 
   const handleNotificationToggle = async () => {
@@ -35,14 +40,23 @@ const BrokerProfile = () => {
       if (isSubscribed) {
         await unsubscribe();
         toast.success("Notifications disabled");
+        playSound('tick');
       } else {
         await subscribe();
         toast.success("Notifications enabled! You'll be notified when outbid.");
+        playSound('success');
       }
     } catch (err) {
       console.error("Notification toggle error:", err);
       toast.error("Failed to update notification settings");
+      playSound('error');
     }
+  };
+
+  const handleSoundToggle = () => {
+    const newValue = toggleSound();
+    setSoundOn(newValue);
+    toast.success(newValue ? "Sound notifications enabled" : "Sound notifications disabled");
   };
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -311,6 +325,27 @@ const BrokerProfile = () => {
               Notifications blocked. Enable them in your browser settings.
             </p>
           )}
+        </div>
+
+        {/* Sound Notifications Toggle */}
+        <div className="bg-card border rounded-xl p-4 mt-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                <Volume2 className="w-5 h-5 text-accent" />
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Sound Notifications</p>
+                <p className="text-xs text-muted-foreground">
+                  Subtle audio feedback for actions
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={soundOn}
+              onCheckedChange={handleSoundToggle}
+            />
+          </div>
         </div>
       </div>
 

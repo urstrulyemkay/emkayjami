@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { WonVehicle } from "./useBrokerWonVehicles";
-
+import { playSoundIfEnabled } from "@/hooks/useSoundNotifications";
 export interface ServiceDocument {
   id: string;
   won_vehicle_id: string;
@@ -155,6 +155,14 @@ export function useServiceTracking(wonVehicleId: string | undefined): UseService
         if (updateError) throw updateError;
 
         await fetchData();
+        
+        // Play success sound for status updates
+        if (status === "completed") {
+          playSoundIfEnabled('success');
+        } else {
+          playSoundIfEnabled('tick');
+        }
+        
         return true;
       } catch (err) {
         console.error("Error updating service status:", err);
@@ -217,10 +225,15 @@ export function useServiceTracking(wonVehicleId: string | undefined): UseService
         }
 
         await fetchData();
+        
+        // Play tick sound for successful upload
+        playSoundIfEnabled('tick');
+        
         return docData;
       } catch (err) {
         console.error("Error uploading proof:", err);
         setError(err instanceof Error ? err.message : "Failed to upload proof");
+        playSoundIfEnabled('error');
         return null;
       } finally {
         setSaving(false);

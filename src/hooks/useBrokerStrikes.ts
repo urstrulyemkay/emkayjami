@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-
+import { playSoundIfEnabled } from "@/hooks/useSoundNotifications";
 export interface BrokerStrike {
   id: string;
   broker_id: string;
@@ -27,6 +27,7 @@ export const useBrokerStrikes = (brokerId: string | undefined): UseBrokerStrikes
   const [activeStrikes, setActiveStrikes] = useState<BrokerStrike[]>([]);
   const [expiredStrikes, setExpiredStrikes] = useState<BrokerStrike[]>([]);
   const [loading, setLoading] = useState(true);
+  const prevStrikesCountRef = useRef<number>(0);
 
   const fetchStrikes = useCallback(async () => {
     if (!brokerId) return;
@@ -49,6 +50,12 @@ export const useBrokerStrikes = (brokerId: string | undefined): UseBrokerStrikes
       // Separate active vs expired strikes
       const active = strikes.filter(s => new Date(s.expires_at) > now);
       const expired = strikes.filter(s => new Date(s.expires_at) <= now);
+
+      // Play error sound if new strike received
+      if (active.length > prevStrikesCountRef.current && prevStrikesCountRef.current > 0) {
+        playSoundIfEnabled('error');
+      }
+      prevStrikesCountRef.current = active.length;
 
       setActiveStrikes(active);
       setExpiredStrikes(expired);

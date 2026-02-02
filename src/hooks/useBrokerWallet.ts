@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
+import { playSoundIfEnabled } from "@/hooks/useSoundNotifications";
 export interface WalletTransaction {
   id: string;
   broker_id: string;
@@ -89,6 +89,7 @@ export const useBrokerWallet = (brokerId: string | undefined): UseBrokerWalletRe
           description: `You need ${amount} coins but only have ${broker.coins_balance}`,
           variant: "destructive",
         });
+        playSoundIfEnabled('error');
         return false;
       }
 
@@ -125,8 +126,16 @@ export const useBrokerWallet = (brokerId: string | undefined): UseBrokerWalletRe
 
       if (updateError) throw updateError;
 
-      // Refetch transactions
+      // Refetch transactions and play sound
       await fetchTransactions();
+      
+      // Play appropriate sound
+      if (isCredit) {
+        playSoundIfEnabled('coin-earn');
+      } else {
+        playSoundIfEnabled('coin-spend');
+      }
+      
       return true;
     } catch (err) {
       console.error("Error adding wallet transaction:", err);
@@ -135,6 +144,7 @@ export const useBrokerWallet = (brokerId: string | undefined): UseBrokerWalletRe
         description: "Failed to process transaction",
         variant: "destructive",
       });
+      playSoundIfEnabled('error');
       return false;
     }
   };

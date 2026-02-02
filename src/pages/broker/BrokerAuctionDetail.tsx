@@ -37,6 +37,7 @@ import {
 import { useRealtimeBids } from "@/hooks/useRealtimeBids";
 import LiveBidFeed from "@/components/broker/LiveBidFeed";
 import { calculateEffectiveScore } from "@/data/brokerMockData";
+import { useSoundNotifications } from "@/hooks/useSoundNotifications";
 
 interface CapturedImage {
   id: string;
@@ -116,7 +117,9 @@ const BrokerAuctionDetail = () => {
   const [commission, setCommission] = useState(0);
   const [isWatchlisted, setIsWatchlisted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  
+  // Sound notifications
+  const { playSound } = useSoundNotifications();
   // Real-time bids hook
   const {
     currentHighestBid,
@@ -274,12 +277,14 @@ const BrokerAuctionDetail = () => {
       await placeBid(bidAmount, commission);
       setConfirmDialogOpen(false);
       setBidSheetOpen(false);
+      playSound('success');
       toast({
         title: "✓ Bid placed successfully!",
         description: `₹${bidAmount.toLocaleString()} + ₹${commission.toLocaleString()} commission`,
       });
     } catch (error) {
       console.error("Error placing bid:", error);
+      playSound('error');
       toast({
         title: "Failed to place bid",
         description: "Please try again",
