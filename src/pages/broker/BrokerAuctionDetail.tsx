@@ -32,7 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, MapPin, Clock, Zap, Check, AlertTriangle,
   Play, Image as ImageIcon, Info, Heart, Shield, Car, Mic,
-  Share2, TrendingUp, Scale, Calendar, Target
+  Share2, TrendingUp, Scale, Calendar, Target, ChevronLeft, ChevronRight, X
 } from "lucide-react";
 import { useRealtimeBids } from "@/hooks/useRealtimeBids";
 import LiveBidFeed from "@/components/broker/LiveBidFeed";
@@ -117,6 +117,10 @@ const BrokerAuctionDetail = () => {
   const [commission, setCommission] = useState(0);
   const [isWatchlisted, setIsWatchlisted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Image viewer state
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   
   // Sound notifications
   const { playSound } = useSoundNotifications();
@@ -204,6 +208,33 @@ const BrokerAuctionDetail = () => {
       setBidAmount(currentHighestBid + 500);
     }
   }, [currentHighestBid, myBid]);
+
+  // Image viewer functions
+  const openImageViewer = (index: number) => {
+    setSelectedImageIndex(index);
+    setImageViewerOpen(true);
+  };
+
+  const navigateImage = (direction: "prev" | "next") => {
+    const images = auction?.inspections?.captured_images || [];
+    if (direction === "next") {
+      setSelectedImageIndex((prev) => (prev + 1) % images.length);
+    } else {
+      setSelectedImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    }
+  };
+
+  // Keyboard navigation for image viewer
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!imageViewerOpen) return;
+      if (e.key === "ArrowRight") navigateImage("next");
+      if (e.key === "ArrowLeft") navigateImage("prev");
+      if (e.key === "Escape") setImageViewerOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [imageViewerOpen]);
 
   const formatTime = (ms: number) => {
     if (ms <= 0) return "00:00:00";
@@ -361,7 +392,8 @@ const BrokerAuctionDetail = () => {
           <img
             src={auction.inspections.captured_images[0].uri}
             alt={auction.inspections?.vehicle_model || "Vehicle"}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover cursor-pointer"
+            onClick={() => openImageViewer(0)}
           />
         ) : (
           <img
@@ -390,7 +422,11 @@ const BrokerAuctionDetail = () => {
                 <img
                   src={img.uri}
                   alt={img.angle}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover cursor-pointer"
+                  onClick={() => {
+                    const index = auction.inspections!.captured_images.findIndex(i => i.id === img.id);
+                    openImageViewer(index);
+                  }}
                 />
               </div>
             ))}
@@ -584,7 +620,14 @@ const BrokerAuctionDetail = () => {
               <AccordionContent className="pb-4">
                 <div className="grid grid-cols-3 gap-2">
                   {auction.inspections.captured_images.map((image) => (
-                    <div key={image.id} className="relative aspect-square rounded-lg overflow-hidden bg-muted">
+                    <div 
+                      key={image.id} 
+                      className="relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer"
+                      onClick={() => {
+                        const index = auction.inspections!.captured_images.findIndex(i => i.id === image.id);
+                        openImageViewer(index);
+                      }}
+                    >
                       <img
                         src={image.uri}
                         alt={image.angle}
@@ -912,6 +955,64 @@ const BrokerAuctionDetail = () => {
               {isSubmitting ? "Confirming..." : "Confirm Bid"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Fullscreen Image Viewer */}
+      <Dialog open={imageViewerOpen} onOpenChange={setImageViewerOpen}>
+        <DialogContent className="max-w-none w-screen h-screen p-0 bg-black/95 border-none">
+          {auction?.inspections?.captured_images && auction.inspections.captured_images.length > 0 && (
+            <div className="relative w-full h-full flex items-center justify-center">
+              {/* Close Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-4 right-4 z-50 text-white hover:bg-white/20"
+                onClick={() => setImageViewerOpen(false)}
+              >
+                <X className="w-6 h-6" />
+              </Button>
+
+              {/* Image Counter */}
+              <div className="absolute top-4 left-4 z-50 text-white text-sm bg-black/50 px-3 py-1.5 rounded-full">
+                {selectedImageIndex + 1} of {auction.inspections.captured_images.length}
+              </div>
+
+              {/* Previous Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-50 text-white hover:bg-white/20 w-12 h-12"
+                onClick={() => navigateImage("prev")}
+              >
+                <ChevronLeft className="w-8 h-8" />
+              </Button>
+
+              {/* Main Image */}
+              <img
+                src={auction.inspections.captured_images[selectedImageIndex]?.uri}
+                alt={auction.inspections.captured_images[selectedImageIndex]?.angle}
+                className="max-w-full max-h-full object-contain"
+              />
+
+              {/* Next Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-50 text-white hover:bg-white/20 w-12 h-12"
+                onClick={() => navigateImage("next")}
+              >
+                <ChevronRight className="w-8 h-8" />
+              </Button>
+
+              {/* Caption */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 text-white text-center">
+                <p className="text-lg font-medium capitalize">
+                  {auction.inspections.captured_images[selectedImageIndex]?.angle.replace(/_/g, " ")}
+                </p>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
