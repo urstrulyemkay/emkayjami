@@ -709,10 +709,6 @@ const BrokerAuctionDetail = () => {
                   <p className="text-xs text-muted-foreground">Odometer</p>
                   <p className="font-medium text-foreground">{auction.inspections?.odometer_reading ? `${auction.inspections.odometer_reading.toLocaleString()} km` : "N/A"}</p>
                 </div>
-                <div className="bg-muted rounded-lg p-3">
-                  <p className="text-xs text-muted-foreground">VIN/Chassis</p>
-                  <p className="font-medium text-foreground text-xs">{auction.inspections?.vehicle_vin || "N/A"}</p>
-                </div>
               </div>
               {auction.inspections?.consented_at && (
                 <div className="mt-3 flex items-center gap-2 text-xs text-accent">
