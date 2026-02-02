@@ -172,6 +172,55 @@ const BrokerAuctionCard = ({ auction, onClick }: AuctionCardProps) => {
           </div>
         </div>
       </div>
+
+      {/* Document Status Row */}
+      <div className="flex items-center gap-2 px-3 pb-3 pt-0">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <Badge 
+            variant={auction.documents.rc ? "default" : "outline"} 
+            className={cn(
+              "text-[9px] px-1.5 py-0 h-4",
+              auction.documents.rc 
+                ? "bg-accent/80 text-accent-foreground" 
+                : "text-muted-foreground border-dashed"
+            )}
+          >
+            RC {auction.documents.rc ? "✓" : "✗"}
+          </Badge>
+          <Badge 
+            variant={auction.documents.insurance ? "default" : "outline"} 
+            className={cn(
+              "text-[9px] px-1.5 py-0 h-4",
+              auction.documents.insurance 
+                ? "bg-accent/80 text-accent-foreground" 
+                : "text-muted-foreground border-dashed"
+            )}
+          >
+            INS {auction.documents.insurance ? "✓" : "✗"}
+          </Badge>
+          <Badge 
+            variant={auction.documents.puc ? "default" : "outline"} 
+            className={cn(
+              "text-[9px] px-1.5 py-0 h-4",
+              auction.documents.puc 
+                ? "bg-accent/80 text-accent-foreground" 
+                : "text-muted-foreground border-dashed"
+            )}
+          >
+            PUC {auction.documents.puc ? "✓" : "✗"}
+          </Badge>
+          {auction.documents.loan && (
+            <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 text-warning border-warning/50">
+              Loan
+            </Badge>
+          )}
+          {auction.documents.challans > 0 && (
+            <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 text-destructive border-destructive/50">
+              {auction.documents.challans} Challan{auction.documents.challans > 1 ? "s" : ""}
+            </Badge>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
