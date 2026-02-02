@@ -9,28 +9,17 @@ import {
   Trophy, Star, Award, ShoppingBag, Clock
 } from "lucide-react";
 import BrokerBottomNav from "@/components/broker/BrokerBottomNav";
-
-// Mock transaction data
-const MOCK_TRANSACTIONS = [
-  { id: 1, type: "earned", amount: 100, reason: "Deal completed (TVS Apache)", date: "Feb 5, 2026" },
-  { id: 2, type: "earned", amount: 200, reason: "RC transferred on-time (Bajaj Pulsar)", date: "Feb 3, 2026" },
-  { id: 3, type: "spent", amount: 250, reason: "Priority Support (7 days)", date: "Feb 1, 2026" },
-  { id: 4, type: "earned", amount: 300, reason: "Zero disputes streak (10 deals)", date: "Jan 30, 2026" },
-  { id: 5, type: "earned", amount: 500, reason: "KYC completion bonus", date: "Jan 15, 2026" },
-];
-
-// Mock shop items
-const SHOP_ITEMS = [
-  { id: 1, name: "Priority Support", description: "7 days faster support", cost: 100, icon: "⚡" },
-  { id: 2, name: "Boosted Visibility", description: "Stand out to OEMs", cost: 150, icon: "🔥" },
-  { id: 3, name: "Premium Insights", description: "Market analytics", cost: 250, icon: "📊" },
-  { id: 4, name: "Early Access", description: "Rare vehicles first", cost: 750, icon: "🌟" },
-];
+import {
+  WALLET_TRANSACTIONS,
+  SHOP_ITEMS,
+  EARNING_OPPORTUNITIES,
+  BROKER_BADGES,
+} from "@/data/brokerMockData";
 
 const BrokerWallet = () => {
   const navigate = useNavigate();
   const { broker, isAuthenticated, isLoading } = useBrokerAuth();
-  const [activeSection, setActiveSection] = useState<"overview" | "shop">("overview");
+  const [activeSection, setActiveSection] = useState<"overview" | "shop" | "badges">("overview");
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -45,6 +34,13 @@ const BrokerWallet = () => {
       </div>
     );
   }
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const earnedBadges = BROKER_BADGES.filter(b => b.earnedAt);
+  const inProgressBadges = BROKER_BADGES.filter(b => !b.earnedAt);
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -91,7 +87,7 @@ const BrokerWallet = () => {
         <div className="bg-card rounded-xl border shadow-sm flex p-1">
           <button
             onClick={() => setActiveSection("overview")}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
               activeSection === "overview"
                 ? "bg-amber-500 text-white"
                 : "text-muted-foreground"
@@ -101,19 +97,30 @@ const BrokerWallet = () => {
           </button>
           <button
             onClick={() => setActiveSection("shop")}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
               activeSection === "shop"
                 ? "bg-amber-500 text-white"
                 : "text-muted-foreground"
             }`}
           >
             <ShoppingBag className="w-4 h-4" />
-            Coin Shop
+            Shop
+          </button>
+          <button
+            onClick={() => setActiveSection("badges")}
+            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+              activeSection === "badges"
+                ? "bg-amber-500 text-white"
+                : "text-muted-foreground"
+            }`}
+          >
+            <Award className="w-4 h-4" />
+            Badges
           </button>
         </div>
       </div>
 
-      {activeSection === "overview" ? (
+      {activeSection === "overview" && (
         <div className="px-4 mt-6">
           {/* Earning Tips */}
           <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 mb-6">
@@ -121,17 +128,16 @@ const BrokerWallet = () => {
               💰 Ways to Earn Coins
             </h3>
             <div className="space-y-2 text-sm text-green-700 dark:text-green-300">
-              <p>• Complete deals: +100 coins each</p>
-              <p>• RC transfer on-time: +200 coins</p>
-              <p>• Zero disputes streak: +300-500 coins</p>
-              <p>• 7-day login streak: +100 coins</p>
+              {EARNING_OPPORTUNITIES.map((opp, idx) => (
+                <p key={idx}>• {opp.action}: <span className="font-semibold">+{opp.coins}</span> coins</p>
+              ))}
             </div>
           </div>
 
           {/* Transaction History */}
           <h3 className="font-semibold mb-3">Recent Transactions</h3>
           <div className="space-y-3">
-            {MOCK_TRANSACTIONS.map((tx) => (
+            {WALLET_TRANSACTIONS.map((tx) => (
               <div
                 key={tx.id}
                 className="flex items-center justify-between p-3 bg-card rounded-xl border"
@@ -139,12 +145,14 @@ const BrokerWallet = () => {
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      tx.type === "earned"
+                      tx.type === "earned" || tx.type === "bonus"
                         ? "bg-green-100 text-green-600"
-                        : "bg-red-100 text-red-600"
+                        : tx.type === "spent"
+                        ? "bg-red-100 text-red-600"
+                        : "bg-orange-100 text-orange-600"
                     }`}
                   >
-                    {tx.type === "earned" ? (
+                    {tx.type === "earned" || tx.type === "bonus" ? (
                       <TrendingUp className="w-5 h-5" />
                     ) : (
                       <TrendingDown className="w-5 h-5" />
@@ -152,21 +160,23 @@ const BrokerWallet = () => {
                   </div>
                   <div>
                     <p className="text-sm font-medium">{tx.reason}</p>
-                    <p className="text-xs text-muted-foreground">{tx.date}</p>
+                    <p className="text-xs text-muted-foreground">{formatDate(tx.date)}</p>
                   </div>
                 </div>
                 <p
                   className={`font-semibold ${
-                    tx.type === "earned" ? "text-green-600" : "text-red-600"
+                    tx.type === "earned" || tx.type === "bonus" ? "text-green-600" : "text-red-600"
                   }`}
                 >
-                  {tx.type === "earned" ? "+" : "-"}{tx.amount}
+                  {tx.type === "earned" || tx.type === "bonus" ? "+" : "-"}{tx.amount}
                 </p>
               </div>
             ))}
           </div>
         </div>
-      ) : (
+      )}
+
+      {activeSection === "shop" && (
         <div className="px-4 mt-6">
           <h3 className="font-semibold mb-4">💰 Coin Shop – Unlock Perks</h3>
           <div className="grid grid-cols-2 gap-3">
@@ -177,7 +187,10 @@ const BrokerWallet = () => {
               >
                 <span className="text-3xl mb-2">{item.icon}</span>
                 <h4 className="font-semibold text-sm">{item.name}</h4>
-                <p className="text-xs text-muted-foreground mb-3">{item.description}</p>
+                <p className="text-xs text-muted-foreground mb-1">{item.description}</p>
+                {item.duration && (
+                  <p className="text-xs text-amber-600 mb-3">{item.duration}</p>
+                )}
                 <Button
                   size="sm"
                   variant="outline"
@@ -187,6 +200,54 @@ const BrokerWallet = () => {
                   <Coins className="w-3 h-3 mr-1" />
                   {item.cost}
                 </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeSection === "badges" && (
+        <div className="px-4 mt-6">
+          {/* Earned Badges */}
+          <h3 className="font-semibold mb-3">🏆 Earned Badges ({earnedBadges.length})</h3>
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            {earnedBadges.map((badge) => (
+              <div
+                key={badge.id}
+                className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 text-center"
+              >
+                <span className="text-3xl">{badge.icon}</span>
+                <p className="text-xs font-medium mt-1">{badge.name}</p>
+                <p className="text-xs text-green-600">+{badge.coinsReward}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* In Progress Badges */}
+          <h3 className="font-semibold mb-3">🎯 In Progress ({inProgressBadges.length})</h3>
+          <div className="space-y-3">
+            {inProgressBadges.map((badge) => (
+              <div
+                key={badge.id}
+                className="bg-card border rounded-xl p-4"
+              >
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">{badge.icon}</span>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium text-sm">{badge.name}</h4>
+                      <span className="text-xs text-amber-600">+{badge.coinsReward}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-2">{badge.description}</p>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span>Progress</span>
+                        <span>{badge.progress} / {badge.target}</span>
+                      </div>
+                      <Progress value={(badge.progress / badge.target) * 100} className="h-2" />
+                    </div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>

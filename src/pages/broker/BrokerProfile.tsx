@@ -9,6 +9,13 @@ import {
   AlertTriangle, LogOut, Settings, ChevronRight, Building
 } from "lucide-react";
 import BrokerBottomNav from "@/components/broker/BrokerBottomNav";
+import {
+  TRUST_BREAKDOWN,
+  LEVELS,
+  getLevelFromScore,
+  getProgressToNextLevel,
+  BROKER_STATS,
+} from "@/data/brokerMockData";
 
 const BrokerProfile = () => {
   const navigate = useNavigate();
@@ -28,38 +35,14 @@ const BrokerProfile = () => {
     );
   }
 
-  const getLevelName = (level: number) => {
-    const levels = ["New", "Active", "Preferred", "Trusted", "Elite"];
-    return levels[Math.min(level - 1, 4)];
-  };
-
-  const getLevelColor = (level: number) => {
-    const colors = ["gray", "blue", "green", "amber", "purple"];
-    return colors[Math.min(level - 1, 4)];
-  };
-
-  const getNextLevelProgress = () => {
-    const thresholds = [0, 21, 41, 61, 81, 100];
-    const currentThreshold = thresholds[broker.level - 1];
-    const nextThreshold = thresholds[broker.level];
-    const progress = ((broker.trust_score - currentThreshold) / (nextThreshold - currentThreshold)) * 100;
-    return Math.min(100, Math.max(0, progress));
-  };
+  const levelConfig = getLevelFromScore(broker.trust_score);
+  const nextLevel = LEVELS[broker.level] || LEVELS[LEVELS.length - 1];
+  const progressToNext = getProgressToNextLevel(broker.trust_score, broker.level);
 
   const handleLogout = async () => {
     await logout();
     navigate("/broker/login");
   };
-
-  // Trust score breakdown (mock data)
-  const trustBreakdown = [
-    { label: "Completion ratio", value: 85, weight: "25%" },
-    { label: "RC compliance", value: 90, weight: "25%" },
-    { label: "Dispute rate", value: 95, weight: "20%" },
-    { label: "Payment timeliness", value: 100, weight: "15%" },
-    { label: "Participation", value: 70, weight: "10%" },
-    { label: "Tenure", value: 60, weight: "5%" },
-  ];
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -108,8 +91,8 @@ const BrokerProfile = () => {
               <Shield className="w-5 h-5 text-amber-500" />
               <h3 className="font-semibold">Trust Score</h3>
             </div>
-            <Badge className={`bg-${getLevelColor(broker.level)}-500 text-white`}>
-              Level {broker.level} – {getLevelName(broker.level)}
+            <Badge className={`${levelConfig.bgColor} text-white`}>
+              Level {broker.level} – {levelConfig.name}
             </Badge>
           </div>
 
@@ -120,13 +103,18 @@ const BrokerProfile = () => {
           </div>
 
           {/* Progress to Next Level */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Progress to Level {broker.level + 1}</span>
-              <span className="font-medium">{Math.round(getNextLevelProgress())}%</span>
+          {broker.level < 5 && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Progress to Level {broker.level + 1} ({nextLevel.name})</span>
+                <span className="font-medium">{Math.round(progressToNext)}%</span>
+              </div>
+              <Progress value={progressToNext} className="h-2" />
+              <p className="text-xs text-muted-foreground">
+                Need {nextLevel.minScore - broker.trust_score} more points
+              </p>
             </div>
-            <Progress value={getNextLevelProgress()} className="h-2" />
-          </div>
+          )}
 
           {/* Status */}
           <div className="mt-4 flex items-center gap-2 text-green-600">
@@ -136,15 +124,38 @@ const BrokerProfile = () => {
         </div>
       </div>
 
+      {/* Quick Stats */}
+      <div className="px-4 mt-6">
+        <h3 className="font-semibold mb-3">Performance Stats</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-card border rounded-xl p-4 text-center">
+            <p className="text-2xl font-bold">{BROKER_STATS.totalWins}</p>
+            <p className="text-xs text-muted-foreground">Total Wins</p>
+          </div>
+          <div className="bg-card border rounded-xl p-4 text-center">
+            <p className="text-2xl font-bold">{BROKER_STATS.winRate}%</p>
+            <p className="text-xs text-muted-foreground">Win Rate</p>
+          </div>
+          <div className="bg-card border rounded-xl p-4 text-center">
+            <p className="text-2xl font-bold">{BROKER_STATS.rcTransfersCompleted}</p>
+            <p className="text-xs text-muted-foreground">RC Transfers</p>
+          </div>
+          <div className="bg-card border rounded-xl p-4 text-center">
+            <p className="text-2xl font-bold">{Math.round((BROKER_STATS.onTimeRcTransfers / BROKER_STATS.rcTransfersCompleted) * 100)}%</p>
+            <p className="text-xs text-muted-foreground">On-time RC</p>
+          </div>
+        </div>
+      </div>
+
       {/* Score Breakdown */}
       <div className="px-4 mt-6">
         <h3 className="font-semibold mb-3">Score Breakdown</h3>
         <div className="space-y-3">
-          {trustBreakdown.map((item) => (
+          {TRUST_BREAKDOWN.map((item) => (
             <div key={item.label} className="bg-card border rounded-xl p-3">
               <div className="flex justify-between text-sm mb-2">
                 <span>{item.label}</span>
-                <span className="text-muted-foreground">{item.weight}</span>
+                <span className="text-muted-foreground">{item.weight}%</span>
               </div>
               <div className="flex items-center gap-3">
                 <Progress value={item.value} className="flex-1 h-2" />
@@ -159,17 +170,19 @@ const BrokerProfile = () => {
       <div className="px-4 mt-6">
         <h3 className="font-semibold mb-3">Current Level Benefits</h3>
         <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 space-y-2">
-          <div className="flex items-center gap-2 text-sm">
+          {levelConfig.benefits.map((benefit, idx) => (
+            <div key={idx} className="flex items-center gap-2 text-sm">
+              <Star className="w-4 h-4 text-amber-500" />
+              <span>{benefit}</span>
+            </div>
+          ))}
+          <div className="flex items-center gap-2 text-sm pt-2 border-t border-amber-200 dark:border-amber-700 mt-2">
             <Star className="w-4 h-4 text-amber-500" />
-            <span>Unlimited auctions per day</span>
+            <span>Support SLA: {levelConfig.supportSLA}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Star className="w-4 h-4 text-amber-500" />
-            <span>Support SLA: 6 hours</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Star className="w-4 h-4 text-amber-500" />
-            <span>Priority notifications</span>
+            <span>Auctions/day: {levelConfig.auctionsPerDay}</span>
           </div>
         </div>
       </div>
@@ -192,7 +205,7 @@ const BrokerProfile = () => {
         ) : (
           <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-4">
             <p className="text-sm text-red-700 dark:text-red-300">
-              ⚠️ You have {broker.strikes_count} active strike(s).
+              ⚠️ You have {broker.strikes_count} active strike(s). 3 strikes = account suspension.
             </p>
           </div>
         )}

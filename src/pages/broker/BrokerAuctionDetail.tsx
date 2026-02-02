@@ -33,6 +33,13 @@ import {
   ChevronRight, Play, Image as ImageIcon, Info, Heart,
   Bell, Share2, TrendingUp, Scale
 } from "lucide-react";
+import {
+  LIVE_AUCTIONS,
+  calculateEffectiveScore,
+  formatTimeRemaining,
+  getAuctionTypeConfig,
+  getGradeColor,
+} from "@/data/brokerMockData";
 
 // Mock auction detail data
 const MOCK_AUCTION_DETAIL = {
@@ -54,6 +61,7 @@ const MOCK_AUCTION_DETAIL = {
   timeRemaining: 18 * 60 * 1000,
   endTime: new Date(Date.now() + 18 * 60 * 1000),
   currentHighestBid: 36500,
+  currentHighestCommission: 800, // Added for accurate effective score calculation
   bidCount: 4,
   minimumBidIncrement: 500,
   documents: { rc: true, insurance: true, puc: true, challans: 0, loan: false },
@@ -169,8 +177,12 @@ const BrokerAuctionDetail = () => {
     return <AlertTriangle className="w-4 h-4 text-red-500" />;
   };
 
-  const effectiveScore = (bidAmount * 0.85) + (commission * 0.15);
-  const currentHighestEffective = MOCK_AUCTION_DETAIL.currentHighestBid * 0.85;
+  // Use consistent effective score calculation from centralized data
+  const effectiveScore = calculateEffectiveScore(bidAmount, commission);
+  const currentHighestEffective = calculateEffectiveScore(
+    MOCK_AUCTION_DETAIL.currentHighestBid, 
+    MOCK_AUCTION_DETAIL.currentHighestCommission || 0
+  );
   const bidRanking = effectiveScore > currentHighestEffective ? "HIGH" : effectiveScore > currentHighestEffective * 0.95 ? "MEDIUM" : "LOW";
 
   const handlePlaceBid = () => {

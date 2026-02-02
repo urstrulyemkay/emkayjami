@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBrokerAuth } from "@/contexts/BrokerAuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,115 +10,14 @@ import {
 } from "lucide-react";
 import BrokerAuctionCard from "@/components/broker/BrokerAuctionCard";
 import BrokerBottomNav from "@/components/broker/BrokerBottomNav";
-
-// Mock auction data for demo
-const MOCK_AUCTIONS = [
-  {
-    id: "auction-1",
-    vehicle: {
-      make: "TVS",
-      model: "Apache RTR 160",
-      variant: "4V BS6",
-      year: 2023,
-      kms: 12450,
-      city: "Bangalore",
-      grade: "B",
-      thumbnail: "/placeholder.svg",
-    },
-    auctionType: "quick",
-    timeRemaining: 18 * 60 * 1000, // 18 minutes
-    endTime: new Date(Date.now() + 18 * 60 * 1000),
-    currentHighestBid: 36500,
-    bidCount: 4,
-    matchScore: 85,
-    documents: { rc: true, insurance: true, puc: true, challans: 0, loan: false },
-    oemTrust: "high",
-  },
-  {
-    id: "auction-2",
-    vehicle: {
-      make: "Bajaj",
-      model: "Pulsar NS200",
-      variant: "ABS",
-      year: 2022,
-      kms: 18200,
-      city: "Bangalore",
-      grade: "A",
-      thumbnail: "/placeholder.svg",
-    },
-    auctionType: "flexible",
-    timeRemaining: 2.25 * 60 * 60 * 1000, // 2h 15m
-    endTime: new Date(Date.now() + 2.25 * 60 * 60 * 1000),
-    currentHighestBid: 52000,
-    bidCount: 6,
-    matchScore: 92,
-    documents: { rc: true, insurance: true, puc: true, challans: 0, loan: false },
-    oemTrust: "high",
-  },
-  {
-    id: "auction-3",
-    vehicle: {
-      make: "Hero",
-      model: "Splendor Plus",
-      variant: "i3S",
-      year: 2021,
-      kms: 28500,
-      city: "Bangalore",
-      grade: "C",
-      thumbnail: "/placeholder.svg",
-    },
-    auctionType: "extended",
-    timeRemaining: 2 * 24 * 60 * 60 * 1000, // 2 days
-    endTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-    currentHighestBid: 28000,
-    bidCount: 8,
-    matchScore: 70,
-    documents: { rc: true, insurance: false, puc: true, challans: 2, loan: false },
-    oemTrust: "medium",
-  },
-  {
-    id: "auction-4",
-    vehicle: {
-      make: "Yamaha",
-      model: "FZ-S V3",
-      variant: "FI",
-      year: 2023,
-      kms: 8500,
-      city: "Bangalore",
-      grade: "A",
-      thumbnail: "/placeholder.svg",
-    },
-    auctionType: "one_click",
-    timeRemaining: 0,
-    endTime: new Date(Date.now() + 24 * 60 * 60 * 1000),
-    currentHighestBid: 0,
-    bidCount: 0,
-    matchScore: 95,
-    documents: { rc: true, insurance: true, puc: true, challans: 0, loan: false },
-    oemTrust: "high",
-  },
-];
-
-const UPCOMING_AUCTIONS = [
-  {
-    id: "upcoming-1",
-    vehicle: {
-      make: "Royal Enfield",
-      model: "Classic 350",
-      variant: "Signals",
-      year: 2022,
-      kms: 15000,
-      city: "Bangalore",
-      grade: "B",
-      thumbnail: "/placeholder.svg",
-    },
-    startTime: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours
-    auctionType: "flexible",
-    estimatedPrice: 125000,
-    documents: { rc: true, insurance: true, puc: true, challans: 0, loan: false },
-    oemTrust: "high",
-  },
-];
+import {
+  LIVE_AUCTIONS,
+  UPCOMING_AUCTIONS,
+  BROKER_STATS,
+  LEVELS,
+  getLevelFromScore,
+  formatTimeRemaining,
+} from "@/data/brokerMockData";
 
 const BrokerDashboard = () => {
   const navigate = useNavigate();
@@ -144,15 +42,30 @@ const BrokerDashboard = () => {
     return null;
   }
 
-  const getLevelName = (level: number) => {
-    const levels = ["New", "Active", "Preferred", "Trusted", "Elite"];
-    return levels[Math.min(level - 1, 4)];
-  };
+  const levelConfig = getLevelFromScore(broker.trust_score);
 
-  const getLevelColor = (level: number) => {
-    const colors = ["bg-gray-500", "bg-blue-500", "bg-green-500", "bg-amber-500", "bg-purple-500"];
-    return colors[Math.min(level - 1, 4)];
-  };
+  // Transform auctions for the card component
+  const liveAuctionsForCard = LIVE_AUCTIONS.map(auction => ({
+    id: auction.id,
+    vehicle: {
+      make: auction.vehicle.make,
+      model: auction.vehicle.model,
+      variant: auction.vehicle.variant,
+      year: auction.vehicle.year,
+      kms: auction.vehicle.kms,
+      city: auction.vehicle.city,
+      grade: auction.vehicle.grade,
+      thumbnail: auction.vehicle.thumbnail,
+    },
+    auctionType: auction.auctionType,
+    timeRemaining: auction.timeRemaining,
+    endTime: auction.endTime,
+    currentHighestBid: auction.currentHighestBid,
+    bidCount: auction.bidCount,
+    matchScore: auction.matchScore,
+    documents: auction.documents,
+    oemTrust: auction.oemTrust,
+  }));
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -188,25 +101,25 @@ const BrokerDashboard = () => {
             <Star className="w-4 h-4" />
             <span className="font-semibold">Level {broker.level}</span>
           </div>
-          <Badge className={`${getLevelColor(broker.level)} text-white`}>
-            {getLevelName(broker.level)}
+          <Badge className={`${levelConfig.bgColor} text-white`}>
+            {levelConfig.name}
           </Badge>
         </div>
       </div>
 
-      {/* Quick Stats */}
+      {/* Quick Stats - Using consistent data */}
       <div className="px-4 py-3 bg-muted/50 border-b">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <p className="text-2xl font-bold text-foreground">8</p>
+            <p className="text-2xl font-bold text-foreground">{BROKER_STATS.dealsThisMonth}</p>
             <p className="text-xs text-muted-foreground">Auctions Today</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-green-600">3</p>
+            <p className="text-2xl font-bold text-green-600">{BROKER_STATS.winsThisMonth}</p>
             <p className="text-xs text-muted-foreground">Wins</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-foreground">0</p>
+            <p className="text-2xl font-bold text-foreground">{BROKER_STATS.disputesThisMonth}</p>
             <p className="text-xs text-muted-foreground">Disputes</p>
           </div>
         </div>
@@ -217,7 +130,7 @@ const BrokerDashboard = () => {
         <TabsList className="grid w-full grid-cols-2 mb-4">
           <TabsTrigger value="live" className="gap-2">
             <Zap className="w-4 h-4" />
-            Live ({MOCK_AUCTIONS.length})
+            Live ({LIVE_AUCTIONS.length})
           </TabsTrigger>
           <TabsTrigger value="upcoming" className="gap-2">
             <Clock className="w-4 h-4" />
@@ -243,7 +156,7 @@ const BrokerDashboard = () => {
         </div>
 
         <TabsContent value="live" className="space-y-4 mt-0">
-          {MOCK_AUCTIONS.map((auction) => (
+          {liveAuctionsForCard.map((auction) => (
             <BrokerAuctionCard
               key={auction.id}
               auction={auction}
@@ -277,7 +190,7 @@ const BrokerDashboard = () => {
                   <div className="flex items-center gap-2 mt-2">
                     <Badge variant="outline" className="gap-1">
                       <Clock className="w-3 h-3" />
-                      Starts in 2h
+                      Starts in {formatTimeRemaining(auction.startTime.getTime() - Date.now())}
                     </Badge>
                     <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
                       Est. ₹{(auction.estimatedPrice / 1000).toFixed(0)}k
