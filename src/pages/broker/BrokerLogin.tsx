@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBrokerAuth } from "@/contexts/BrokerAuthContext";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { useSoundNotifications } from "@/hooks/useSoundNotifications";
 
 const BrokerLogin = () => {
   const navigate = useNavigate();
-  const { login, signup, isAuthenticated } = useBrokerAuth();
+  const { login, signup, isAuthenticated, isLoading } = useBrokerAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,11 +26,13 @@ const BrokerLogin = () => {
   
   // Sound notifications
   const { playSound } = useSoundNotifications();
-  // Redirect if already authenticated
-  if (isAuthenticated) {
-    navigate("/broker");
-    return null;
-  }
+  
+  // Redirect if already authenticated - must be in useEffect
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate("/broker");
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
