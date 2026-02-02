@@ -585,6 +585,60 @@ const BrokerAuctionDetail = () => {
             </div>
           </div>
         )}
+
+        {/* Documentation Status */}
+        {(() => {
+          const mockAuction = getAuctionById(id || "");
+          const docs = mockAuction?.documents;
+          if (!docs) return null;
+          return (
+            <div className="mt-4 pt-4 border-t">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Documentation</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge 
+                  variant={docs.rc ? "default" : "outline"} 
+                  className={
+                    docs.rc 
+                      ? "bg-accent/80 text-accent-foreground text-xs" 
+                      : "text-muted-foreground border-dashed text-xs"
+                  }
+                >
+                  RC {docs.rc ? "✓" : "✗"}
+                </Badge>
+                <Badge 
+                  variant={docs.insurance ? "default" : "outline"} 
+                  className={
+                    docs.insurance 
+                      ? "bg-accent/80 text-accent-foreground text-xs" 
+                      : "text-muted-foreground border-dashed text-xs"
+                  }
+                >
+                  Insurance {docs.insurance ? "✓" : "✗"}
+                </Badge>
+                <Badge 
+                  variant={docs.puc ? "default" : "outline"} 
+                  className={
+                    docs.puc 
+                      ? "bg-accent/80 text-accent-foreground text-xs" 
+                      : "text-muted-foreground border-dashed text-xs"
+                  }
+                >
+                  PUC {docs.puc ? "✓" : "✗"}
+                </Badge>
+                {docs.loan && (
+                  <Badge variant="outline" className="text-xs text-warning border-warning/50">
+                    Loan Active
+                  </Badge>
+                )}
+                {docs.challans > 0 && (
+                  <Badge variant="outline" className="text-xs text-destructive border-destructive/50">
+                    {docs.challans} Challan{docs.challans > 1 ? "s" : ""}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Live Bid Feed */}
