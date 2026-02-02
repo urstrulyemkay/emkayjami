@@ -1,159 +1,114 @@
 
-# Sound Notifications Implementation Plan ✅ COMPLETED
+# Fix: Highest Bid Mismatch Between Display and Activity
 
-## Overview
+## Problem Identified
 
-Sound notifications have been implemented with subtle, professional audio feedback aligned with the app's "Truth Terminal" aesthetic - forensic and banking-like rather than playful consumer sounds.
+The "HIGHEST BID" card shows ₹36,500 but the Activity shows a leading bid of ₹38,000. This is a data synchronization issue.
 
----
+**Root Cause**: The `auctions.current_highest_bid` field in the database is out of sync with the actual highest bid in `broker_bids`. 
 
-## Implementation Summary
+Looking at the data:
+| Bid Amount | Commission | Effective Score | Status |
+|------------|------------|-----------------|--------|
+| ₹38,000 | ₹1,000 | 32,450 | active |
+| ₹36,500 | ₹800 | 31,145 | active |
+| ₹35,000 | ₹500 | 29,825 | active |
 
-Based on the app's personality guidelines from memory:
-- **Subtle and professional** - soft ticks, gentle chimes, understated alerts
-- **Forensic/banking app feel** - no playful sounds like confetti or game-like effects
-- **Contextual feedback** - different tones for positive, negative, and neutral actions
-
----
-
-## Sound Categories & Triggers
-
-| Category | Sound Type | Events |
-|----------|------------|--------|
-| **Positive** | Soft ascending chime | Bid placed, auction won, payment confirmed, document verified, login success |
-| **Negative** | Low subtle tone | Outbid, strike received, bid failed, insufficient coins, deadline warning |
-| **Neutral** | Soft tick/click | Navigation, toggle, file selected, status update |
-| **Alert** | Gentle pulse | New bid on watched auction, deadline reminder, important notification |
-| **Coin** | Soft coin tick | Coins earned, coins spent |
+The `auctions` table shows `current_highest_bid: 36500`, but the actual highest by effective score is ₹38,000.
 
 ---
 
-## Technical Implementation
+## Solution
 
-### Phase 1: Sound System Hook
+### Two-Part Fix:
 
-Create a centralized `useSoundNotifications` hook:
+**1. Fix the Display Logic (Immediate)**
+Instead of trusting the `auctions.current_highest_bid` field, derive the highest bid directly from the actual bids data which is already fetched and sorted by effective score.
 
+**Changes in `useRealtimeBids.ts`:**
 ```text
-src/hooks/useSoundNotifications.ts
-
-Features:
-- Preloads audio files for instant playback
-- Provides playSound(type) function
-- Respects user's sound preference (stored in localStorage)
-- Handles browser autoplay restrictions gracefully
-- Volume control (subtle default, adjustable)
+In fetchBids():
+- After fetching bids (already sorted by effective_score DESC)
+- Set currentHighestBid from the first bid's bid_amount (bids[0].bid_amount)
+- Set currentHighestCommission from first bid's commission_amount
+- This ensures the displayed value always matches the activity feed
 ```
 
-### Phase 2: Sound Assets
+**2. Fix the Update Logic (Prevent Future Issues)**
+When placing a new bid, don't blindly update `current_highest_bid` based on comparison. Instead, after inserting the bid, re-query the actual highest bid and update the auctions table correctly.
 
-Create audio files in `public/sounds/`:
-
-| File | Duration | Use Case |
-|------|----------|----------|
-| `success.mp3` | ~200ms | Bid placed, win, verification success |
-| `coin-earn.mp3` | ~150ms | Coins earned |
-| `coin-spend.mp3` | ~150ms | Coins spent |
-| `outbid.mp3` | ~300ms | Outbid notification |
-| `alert.mp3` | ~250ms | Important alerts, deadline warnings |
-| `error.mp3` | ~200ms | Errors, failures |
-| `tick.mp3` | ~100ms | UI interactions, toggles |
-| `notification.mp3` | ~200ms | New activity, incoming bids |
-
-Note: Will use base64-encoded minimal audio or generate via Web Audio API to avoid file dependencies initially.
-
-### Phase 3: Integration Points
-
-**Auction & Bidding (useRealtimeBids.ts, BrokerAuctionDetail.tsx):**
-- Play "success" when bid is placed
-- Play "outbid" when user is outbid
-- Play "notification" when new bid arrives (if watching)
-
-**Wallet (useBrokerWallet.ts):**
-- Play "coin-earn" for earned/bonus transactions
-- Play "coin-spend" for spent/penalty transactions
-
-**Service Tracking (useServiceTracking.ts, BrokerWonVehicleDetail.tsx):**
-- Play "success" when service status updated to completed
-- Play "tick" when document uploaded
-
-**Authentication (BrokerLogin.tsx):**
-- Play "success" on successful login
-
-**Strikes (useBrokerStrikes.ts):**
-- Play "error" when new strike is detected
-
-**Help & Support (BrokerHelp.tsx):**
-- Play "success" when ticket submitted
-
-**General UI:**
-- Play "tick" on bottom nav tab changes (optional, may skip for subtlety)
+**Changes in `placeBid()` function:**
+```text
+After inserting the new bid:
+- Query broker_bids for this auction, sorted by effective_score DESC, limit 1
+- Update auctions.current_highest_bid with that bid's amount
+- Update auctions.current_highest_commission with that bid's commission
+```
 
 ---
 
-## User Preference Control
+## File Changes
 
-Add sound toggle in BrokerProfile.tsx:
-- "Sound Notifications" switch (on/off)
-- Persisted to localStorage
-- Default: ON
+### `src/hooks/useRealtimeBids.ts`
 
----
+**Fix 1 - fetchBids (lines ~109-137):**
+- Derive currentHighestBid from actual bids data instead of trusting auction table
+- Use `typedBids[0]?.bid_amount` instead of `auction?.current_highest_bid`
 
-## File Changes Summary
-
-### New Files:
-1. `src/hooks/useSoundNotifications.ts` - Central sound management hook
-2. `src/lib/sounds.ts` - Sound definitions and base64 audio data (or Web Audio synthesis)
-
-### Modified Files:
-1. `src/hooks/useRealtimeBids.ts` - Add outbid and new bid sounds
-2. `src/hooks/useBrokerWallet.ts` - Add coin transaction sounds
-3. `src/hooks/useServiceTracking.ts` - Add service completion sounds
-4. `src/pages/broker/BrokerAuctionDetail.tsx` - Add bid placement sound
-5. `src/pages/broker/BrokerLogin.tsx` - Add login success sound
-6. `src/pages/broker/BrokerProfile.tsx` - Add sound preference toggle
-7. `src/pages/broker/BrokerHelp.tsx` - Add ticket submission sound
-8. `src/pages/broker/BrokerWonVehicleDetail.tsx` - Add service update sounds
+**Fix 2 - placeBid (lines ~181-211):**
+- After inserting bid, query for actual highest bid by effective_score
+- Update auctions table with the correct highest bid values
 
 ---
 
 ## Technical Details
 
-### Sound Hook API:
+The fix prioritizes the bids data as the source of truth since:
+1. Bids are sorted by `effective_score DESC` when fetched
+2. The first bid in the array is always the actual leader
+3. This matches what's shown in the Activity feed
 
 ```typescript
-const { playSound, soundEnabled, toggleSound } = useSoundNotifications();
+// In fetchBids - use actual bid data for highest bid
+const highestBid = typedBids[0];
+const actualHighestBid = highestBid?.bid_amount || 0;
+const actualHighestCommission = highestBid?.commission_amount || 0;
 
-// Usage
-playSound('success');  // Bid placed
-playSound('outbid');   // Got outbid
-playSound('coin-earn'); // Earned coins
-playSound('tick');     // UI interaction
+setAuctionState({
+  currentHighestBid: actualHighestBid,  // Changed from auction table value
+  currentHighestCommission: actualHighestCommission,
+  // ...rest
+});
 ```
 
-### Web Audio API Approach (No External Files):
+```typescript
+// In placeBid - query actual highest after insert
+const { data: actualHighest } = await supabase
+  .from("broker_bids")
+  .select("bid_amount, commission_amount")
+  .eq("auction_id", auctionId)
+  .eq("status", "active")
+  .order("effective_score", { ascending: false })
+  .limit(1)
+  .single();
 
-To avoid file dependencies, generate sounds programmatically:
-- Success: Short ascending two-tone (C5 -> E5)
-- Error: Short descending tone (E4 -> C4)
-- Coin: Quick metallic tick
-- Alert: Gentle pulse wave
-- Tick: Brief click
-
-### Browser Considerations:
-- Sounds only play after user interaction (browser autoplay policy)
-- Graceful degradation if Audio API unavailable
-- No sounds during initial page load
+// Update with actual highest
+await supabase
+  .from("auctions")
+  .update({
+    current_highest_bid: actualHighest?.bid_amount || bidAmount,
+    current_highest_commission: actualHighest?.commission_amount || commission,
+    bid_count: (currentAuction?.bid_count || 0) + 1,
+  })
+  .eq("id", auctionId);
+```
 
 ---
 
-## Implementation Order
+## Result
 
-1. Create `useSoundNotifications` hook with Web Audio API synthesis
-2. Add sound preference toggle to BrokerProfile
-3. Integrate into bidding flow (highest impact)
-4. Add wallet transaction sounds
-5. Add service tracking sounds
-6. Add authentication sounds
-7. Add remaining interaction sounds
+After this fix:
+- The "HIGHEST BID" card will always show the bid with the highest effective score
+- This will match the "Leading" badge in the Activity feed
+- Future bids will correctly update the auction table
+- The realtime subscription will also work correctly since it now derives from actual bid data
