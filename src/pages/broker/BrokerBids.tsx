@@ -2,31 +2,13 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBrokerAuth } from "@/contexts/BrokerAuthContext";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, TrendingUp, Trophy, XCircle, Clock, Gavel, ChevronRight, AlertTriangle, MapPin } from "lucide-react";
+import { ArrowLeft, Trophy, XCircle, Clock, Gavel, AlertTriangle } from "lucide-react";
 import BrokerBottomNav from "@/components/broker/BrokerBottomNav";
+import VehicleCard from "@/components/broker/VehicleCard";
 import { useBrokerBids } from "@/hooks/useBrokerBids";
 import { useBrokerWonVehicles } from "@/hooks/useBrokerWonVehicles";
-import {
-  formatTimeRemaining,
-  formatCurrency,
-  getAuctionTypeConfig,
-  calculateEffectiveScore,
-} from "@/data/brokerMockData";
-
-// Vehicle thumbnails by make
-const BIKE_THUMBNAILS: Record<string, string> = {
-  "Honda": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop",
-  "TVS": "https://images.unsplash.com/photo-1449426468159-d96dbf08f19f?w=400&h=300&fit=crop",
-  "Bajaj": "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400&h=300&fit=crop",
-  "Royal Enfield": "https://images.unsplash.com/photo-1558980664-769d59546b3d?w=400&h=300&fit=crop",
-  "Yamaha": "https://images.unsplash.com/photo-1580310614729-ccd69652491d?w=400&h=300&fit=crop",
-  "Hero": "https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=400&h=300&fit=crop",
-  "Suzuki": "https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=400&h=300&fit=crop",
-  "default": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop",
-};
+import { formatCurrency } from "@/data/brokerMockData";
 
 const BrokerBids = () => {
   const navigate = useNavigate();
@@ -95,7 +77,7 @@ const BrokerBids = () => {
         </div>
       </div>
 
-      {/* Analytics Summary - Using real data */}
+      {/* Analytics Summary */}
       <div className="px-4 py-4 bg-muted/50 border-b">
         <div className="grid grid-cols-4 gap-4 text-center">
           <div>
@@ -103,7 +85,7 @@ const BrokerBids = () => {
             <p className="text-xs text-muted-foreground">Total</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-green-600">{stats.totalWins}</p>
+            <p className="text-2xl font-bold text-accent">{stats.totalWins}</p>
             <p className="text-xs text-muted-foreground">Wins</p>
           </div>
           <div>
@@ -111,7 +93,7 @@ const BrokerBids = () => {
             <p className="text-xs text-muted-foreground">Win Rate</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-amber-600">{formatCurrency(stats.avgBidAmount)}</p>
+            <p className="text-2xl font-bold text-warning">{formatCurrency(stats.avgBidAmount)}</p>
             <p className="text-xs text-muted-foreground">Avg Bid</p>
           </div>
         </div>
@@ -134,6 +116,7 @@ const BrokerBids = () => {
           </TabsTrigger>
         </TabsList>
 
+        {/* Live Bids Tab */}
         <TabsContent value="live" className="space-y-3 mt-0">
           {loading ? (
             <div className="flex items-center justify-center py-8">
@@ -151,84 +134,36 @@ const BrokerBids = () => {
           ) : (
             liveBids.map((bid) => {
               const timeRemaining = bid.auction ? getTimeRemaining(bid.auction.end_time) : 0;
-              const auctionType = bid.auction?.auction_type || "flexible";
-              const config = getAuctionTypeConfig(auctionType as any);
-              const effectiveScore = calculateEffectiveScore(bid.bid_amount, bid.commission_amount);
-              const make = bid.auction?.inspections?.vehicle_make || "Honda";
-              const thumbnail = BIKE_THUMBNAILS[make] || BIKE_THUMBNAILS["default"];
-
+              const highestBid = bid.auction?.current_highest_bid || 0;
+              const bidDifference = bid.bid_amount - highestBid;
+              
               return (
-                <div
+                <VehicleCard
                   key={bid.id}
-                  className="bg-card border rounded-lg overflow-hidden cursor-pointer hover:border-primary/50 transition-colors"
+                  vehicle={{
+                    make: bid.auction?.inspections?.vehicle_make || "Honda",
+                    model: bid.auction?.inspections?.vehicle_model || "Activa 6G",
+                    year: bid.auction?.inspections?.vehicle_year || 2023,
+                    kms: bid.auction?.inspections?.odometer_reading || 12000,
+                    color: bid.auction?.inspections?.vehicle_color,
+                    city: "Bangalore",
+                  }}
+                  status={{
+                    type: "live",
+                    bidAmount: bid.bid_amount,
+                    commission: bid.commission_amount,
+                    timeRemaining,
+                    auctionType: bid.auction?.auction_type || "flexible",
+                    bidDifference,
+                  }}
                   onClick={() => navigate(`/broker/auction/${bid.auction_id}`)}
-                >
-                  <div className="flex gap-3 p-3">
-                    {/* Vehicle Image */}
-                    <div className="relative w-20 h-16 bg-muted rounded-lg overflow-hidden shrink-0">
-                      <img
-                        src={thumbnail}
-                        alt={bid.auction?.inspections?.vehicle_model || "Vehicle"}
-                        className="w-full h-full object-cover"
-                      />
-                      <Badge
-                        className={`absolute top-0.5 right-0.5 text-[10px] px-1.5 py-0 h-4 ${
-                          bid.status === "winning"
-                            ? "bg-accent text-accent-foreground"
-                            : "bg-destructive text-destructive-foreground"
-                        }`}
-                      >
-                        {bid.status === "winning" ? "WIN" : "OUT"}
-                      </Badge>
-                    </div>
-
-                    {/* Vehicle Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-semibold text-sm text-foreground truncate">
-                          {bid.auction?.inspections?.vehicle_make} {bid.auction?.inspections?.vehicle_model}
-                        </h3>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <Clock className="w-3 h-3 text-muted-foreground" />
-                          <span className={`text-xs font-medium ${timeRemaining < 5 * 60 * 1000 ? "text-destructive" : "text-muted-foreground"}`}>
-                            {formatTimeRemaining(timeRemaining)}
-                          </span>
-                        </div>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {bid.auction?.inspections?.vehicle_year} • {(bid.auction?.inspections?.odometer_reading || 0).toLocaleString()} km
-                      </p>
-                      
-                      {/* Bid info row */}
-                      <div className="flex items-center justify-between mt-1.5">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm">
-                            ₹{bid.bid_amount.toLocaleString()}
-                          </span>
-                          {bid.commission_amount > 0 && (
-                            <span className="text-warning text-xs">+₹{bid.commission_amount.toLocaleString()}</span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
-                            {config.icon} {config.name}
-                          </Badge>
-                          {bid.status === "outbid" && (
-                            <Button size="sm" className="h-6 px-2 text-xs bg-warning text-warning-foreground hover:bg-warning/90">
-                              <TrendingUp className="w-3 h-3 mr-0.5" />
-                              Raise
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                />
               );
             })
           )}
         </TabsContent>
 
+        {/* Won Bids Tab */}
         <TabsContent value="won" className="space-y-3 mt-0">
           {/* Urgent banner */}
           {urgentCount > 0 && (
@@ -259,74 +194,33 @@ const BrokerBids = () => {
               const serviceProgress = wonVehicle ? getServiceProgress(wonVehicle) : 0;
               const remainingDays = wonVehicle ? getRemainingDays(wonVehicle.rc_transfer_deadline) : 180;
               const isUrgent = remainingDays <= 30 && wonVehicle?.rc_transfer_status !== "completed";
-              const make = bid.auction?.inspections?.vehicle_make || "Honda";
-              const thumbnail = BIKE_THUMBNAILS[make] || BIKE_THUMBNAILS["default"];
               
               return (
-                <div
+                <VehicleCard
                   key={bid.id}
-                  className="bg-card border rounded-lg overflow-hidden cursor-pointer hover:border-primary/50 transition-colors"
+                  vehicle={{
+                    make: bid.auction?.inspections?.vehicle_make || "Honda",
+                    model: bid.auction?.inspections?.vehicle_model || "Activa 6G",
+                    year: bid.auction?.inspections?.vehicle_year || 2023,
+                    kms: bid.auction?.inspections?.odometer_reading || 12000,
+                    color: bid.auction?.inspections?.vehicle_color,
+                  }}
+                  status={{
+                    type: "won",
+                    bidAmount: bid.bid_amount,
+                    commission: bid.commission_amount,
+                    serviceProgress,
+                    remainingDays,
+                    isUrgent,
+                  }}
                   onClick={() => wonVehicle && navigate(`/broker/won/${wonVehicle.id}`)}
-                >
-                  <div className="flex gap-3 p-3">
-                    {/* Vehicle Image */}
-                    <div className="relative w-20 h-16 bg-muted rounded-lg overflow-hidden shrink-0">
-                      <img
-                        src={thumbnail}
-                        alt={bid.auction?.inspections?.vehicle_model || "Vehicle"}
-                        className="w-full h-full object-cover"
-                      />
-                      <Badge className="absolute top-0.5 right-0.5 text-[10px] px-1.5 py-0 h-4 bg-accent text-accent-foreground">
-                        <Trophy className="w-3 h-3 mr-0.5" />
-                        WON
-                      </Badge>
-                    </div>
-
-                    {/* Vehicle Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-semibold text-sm text-foreground truncate">
-                          {bid.auction?.inspections?.vehicle_make} {bid.auction?.inspections?.vehicle_model}
-                        </h3>
-                        {isUrgent && (
-                          <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4 shrink-0">
-                            <AlertTriangle className="w-3 h-3 mr-0.5" />
-                            {remainingDays}d
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {bid.auction?.inspections?.vehicle_year} • {(bid.auction?.inspections?.odometer_reading || 0).toLocaleString()} km
-                      </p>
-                      
-                      {/* Bid + Progress row */}
-                      <div className="flex items-center justify-between mt-1.5 gap-2">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-semibold text-sm text-accent">
-                            ₹{bid.bid_amount.toLocaleString()}
-                          </span>
-                          {bid.commission_amount > 0 && (
-                            <span className="text-warning text-xs">+₹{bid.commission_amount.toLocaleString()}</span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-12">
-                            <Progress value={serviceProgress} className="h-1" />
-                          </div>
-                          <span className={`text-[10px] ${serviceProgress === 100 ? "text-accent font-medium" : "text-muted-foreground"}`}>
-                            {serviceProgress}%
-                          </span>
-                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                />
               );
             })
           )}
         </TabsContent>
 
+        {/* Lost Bids Tab */}
         <TabsContent value="lost" className="space-y-3 mt-0">
           {loading ? (
             <div className="flex items-center justify-center py-8">
@@ -340,49 +234,26 @@ const BrokerBids = () => {
             </div>
           ) : (
             lostBids.map((bid) => {
-              const make = bid.auction?.inspections?.vehicle_make || "Honda";
-              const thumbnail = BIKE_THUMBNAILS[make] || BIKE_THUMBNAILS["default"];
               const winningBid = bid.auction?.current_highest_bid || 0;
               const difference = winningBid - bid.bid_amount;
               
               return (
-                <div
+                <VehicleCard
                   key={bid.id}
-                  className="bg-card border rounded-lg overflow-hidden opacity-75"
-                >
-                  <div className="flex gap-3 p-3">
-                    {/* Vehicle Image */}
-                    <div className="relative w-20 h-16 bg-muted rounded-lg overflow-hidden shrink-0 grayscale">
-                      <img
-                        src={thumbnail}
-                        alt={bid.auction?.inspections?.vehicle_model || "Vehicle"}
-                        className="w-full h-full object-cover"
-                      />
-                      <Badge variant="secondary" className="absolute top-0.5 right-0.5 text-[10px] px-1.5 py-0 h-4">
-                        LOST
-                      </Badge>
-                    </div>
-
-                    {/* Vehicle Info */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-sm text-foreground truncate">
-                        {bid.auction?.inspections?.vehicle_make} {bid.auction?.inspections?.vehicle_model}
-                      </h3>
-                      <p className="text-xs text-muted-foreground">
-                        {bid.auction?.inspections?.vehicle_year} • {(bid.auction?.inspections?.odometer_reading || 0).toLocaleString()} km
-                      </p>
-                      
-                      {/* Bid comparison row */}
-                      <div className="flex items-center justify-between mt-1.5">
-                        <div className="flex items-center gap-2 text-xs">
-                          <span className="text-muted-foreground">You: <span className="font-medium text-foreground">₹{bid.bid_amount.toLocaleString()}</span></span>
-                          <span className="text-muted-foreground">Won: <span className="font-medium text-accent">₹{winningBid.toLocaleString()}</span></span>
-                        </div>
-                        <span className="text-[10px] text-destructive">-₹{difference.toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  vehicle={{
+                    make: bid.auction?.inspections?.vehicle_make || "Honda",
+                    model: bid.auction?.inspections?.vehicle_model || "Activa 6G",
+                    year: bid.auction?.inspections?.vehicle_year || 2023,
+                    kms: bid.auction?.inspections?.odometer_reading || 12000,
+                    color: bid.auction?.inspections?.vehicle_color,
+                  }}
+                  status={{
+                    type: "lost",
+                    bidAmount: bid.bid_amount,
+                    winningBid,
+                    bidDifference: difference,
+                  }}
+                />
               );
             })
           )}
