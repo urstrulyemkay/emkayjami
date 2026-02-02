@@ -27,35 +27,13 @@ export interface AuctionState {
   wasOutbid: boolean;
 }
 
+// Import centralized mock bids generator
+import { generateMockBids as generateCentralizedMockBids } from "@/data/mockAuctions";
+
 // Generate mock bids based on auction ID for consistent demo data
 const generateMockBids = (auctionId: string): RealtimeBid[] => {
-  const hash = auctionId.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const bidCount = 4 + (hash % 8); // 4-11 bids
-  const baseBid = 30000 + (hash % 50) * 1000; // Base bid varies by auction
-  
-  const mockBids: RealtimeBid[] = [];
-  
-  for (let i = 0; i < bidCount; i++) {
-    const bidIncrement = (bidCount - i) * (500 + (hash % 500));
-    const bidAmount = baseBid + bidIncrement;
-    const commission = 500 + Math.floor(bidAmount * 0.02) + (i * 200);
-    const effectiveScore = bidAmount * 0.85 + commission * 0.15;
-    
-    mockBids.push({
-      id: `mock-bid-${auctionId}-${i}`,
-      auction_id: auctionId,
-      broker_id: `broker-${String.fromCharCode(65 + i).toLowerCase()}`,
-      bid_amount: bidAmount,
-      commission_amount: commission,
-      effective_score: effectiveScore,
-      placed_at: new Date(Date.now() - (bidCount - i) * 2 * 60 * 1000).toISOString(),
-      status: "active",
-      bid_type: i === 0 ? "competitive" : "initial",
-    });
-  }
-  
-  // Sort by effective score descending
-  return mockBids.sort((a, b) => (b.effective_score || 0) - (a.effective_score || 0));
+  const centralizedBids = generateCentralizedMockBids(auctionId);
+  return centralizedBids as RealtimeBid[];
 };
 
 // Trigger outbid notification - shows toast, plays sound, and sends push notification

@@ -27,76 +27,7 @@ import {
   LEVELS,
   getProgressToNextLevel,
 } from "@/data/brokerMockData";
-
-// Reliable bike thumbnail URLs
-const BIKE_THUMBNAILS: Record<string, string> = {
-  "Honda": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80",
-  "TVS": "https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=400&h=400&fit=crop&q=80",
-  "Bajaj": "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400&h=400&fit=crop&q=80",
-  "Royal Enfield": "https://images.unsplash.com/photo-1558980664-769d59546b3d?w=400&h=400&fit=crop&q=80",
-  "Yamaha": "https://images.unsplash.com/photo-1580310614729-ccd69652491d?w=400&h=400&fit=crop&q=80",
-  "Hero": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80",
-  "Suzuki": "https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=400&h=400&fit=crop&q=80",
-  "KTM": "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400&h=400&fit=crop&q=80",
-  "default": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80",
-};
-
-// Model variants for common bikes
-const BIKE_VARIANTS: Record<string, string> = {
-  "Apache RTR 160": "4V BS6",
-  "Pulsar NS200": "ABS",
-  "Splendor Plus": "i3S",
-  "FZ-S V3": "FI",
-  "Classic 350": "Signals",
-  "Activa 6G": "DLX",
-  "Access 125": "SE",
-  "Jupiter": "ZX",
-  "Shine": "125 CBS",
-};
-
-// Extensive mock auctions - 40 live auctions
-const MOCK_LIVE_AUCTIONS = [
-  { id: "m1", make: "Honda", model: "Activa 6G", year: 2023, kms: 12450, city: "Bangalore", grade: "A", auctionType: "quick", bid: 42500, bidCount: 6, endMins: 8 },
-  { id: "m2", make: "TVS", model: "Apache RTR 160", year: 2022, kms: 18200, city: "Mumbai", grade: "B", auctionType: "flexible", bid: 56000, bidCount: 8, endMins: 95 },
-  { id: "m3", make: "Royal Enfield", model: "Classic 350", year: 2021, kms: 24500, city: "Delhi", grade: "B", auctionType: "extended", bid: 128000, bidCount: 12, endMins: 2880 },
-  { id: "m4", make: "Bajaj", model: "Pulsar NS200", year: 2023, kms: 8500, city: "Chennai", grade: "A", auctionType: "one_click", bid: 0, bidCount: 0, endMins: 1440 },
-  { id: "m5", make: "Yamaha", model: "FZ-S V3", year: 2022, kms: 15800, city: "Hyderabad", grade: "B", auctionType: "quick", bid: 48000, bidCount: 4, endMins: 12 },
-  { id: "m6", make: "Hero", model: "Splendor Plus", year: 2021, kms: 32000, city: "Pune", grade: "C", auctionType: "flexible", bid: 28500, bidCount: 5, endMins: 180 },
-  { id: "m7", make: "Honda", model: "Shine", year: 2023, kms: 9800, city: "Kolkata", grade: "A", auctionType: "quick", bid: 38000, bidCount: 7, endMins: 15 },
-  { id: "m8", make: "Suzuki", model: "Access 125", year: 2022, kms: 14500, city: "Ahmedabad", grade: "B", auctionType: "flexible", bid: 42000, bidCount: 6, endMins: 120 },
-  { id: "m9", make: "TVS", model: "Jupiter", year: 2021, kms: 28000, city: "Jaipur", grade: "C", auctionType: "extended", bid: 32000, bidCount: 9, endMins: 4320 },
-  { id: "m10", make: "Bajaj", model: "Pulsar 150", year: 2022, kms: 22000, city: "Lucknow", grade: "B", auctionType: "one_click", bid: 0, bidCount: 0, endMins: 1440 },
-  { id: "m11", make: "Yamaha", model: "R15 V4", year: 2023, kms: 5200, city: "Bangalore", grade: "A", auctionType: "quick", bid: 145000, bidCount: 11, endMins: 6 },
-  { id: "m12", make: "KTM", model: "Duke 200", year: 2022, kms: 12800, city: "Mumbai", grade: "A", auctionType: "flexible", bid: 125000, bidCount: 8, endMins: 90 },
-  { id: "m13", make: "Royal Enfield", model: "Hunter 350", year: 2023, kms: 8500, city: "Delhi", grade: "A", auctionType: "extended", bid: 142000, bidCount: 15, endMins: 1440 },
-  { id: "m14", make: "Honda", model: "CB350", year: 2022, kms: 15000, city: "Chennai", grade: "B", auctionType: "flexible", bid: 165000, bidCount: 10, endMins: 150 },
-  { id: "m15", make: "TVS", model: "Ntorq 125", year: 2023, kms: 7500, city: "Hyderabad", grade: "A", auctionType: "quick", bid: 68000, bidCount: 5, endMins: 22 },
-  { id: "m16", make: "Hero", model: "Xpulse 200", year: 2022, kms: 18000, city: "Pune", grade: "B", auctionType: "extended", bid: 98000, bidCount: 7, endMins: 2160 },
-  { id: "m17", make: "Suzuki", model: "Gixxer 150", year: 2021, kms: 25000, city: "Kolkata", grade: "C", auctionType: "flexible", bid: 72000, bidCount: 6, endMins: 240 },
-  { id: "m18", make: "Bajaj", model: "Dominar 400", year: 2022, kms: 12000, city: "Ahmedabad", grade: "A", auctionType: "one_click", bid: 0, bidCount: 0, endMins: 1440 },
-  { id: "m19", make: "Yamaha", model: "MT-15", year: 2023, kms: 6500, city: "Jaipur", grade: "A", auctionType: "quick", bid: 138000, bidCount: 9, endMins: 18 },
-  { id: "m20", make: "Honda", model: "Unicorn", year: 2022, kms: 19000, city: "Lucknow", grade: "B", auctionType: "flexible", bid: 75000, bidCount: 5, endMins: 105 },
-  { id: "m21", make: "TVS", model: "Raider 125", year: 2023, kms: 4500, city: "Bangalore", grade: "A", auctionType: "quick", bid: 82000, bidCount: 4, endMins: 9 },
-  { id: "m22", make: "Royal Enfield", model: "Meteor 350", year: 2022, kms: 16000, city: "Mumbai", grade: "B", auctionType: "extended", bid: 168000, bidCount: 14, endMins: 3600 },
-  { id: "m23", make: "Bajaj", model: "CT 125X", year: 2021, kms: 35000, city: "Delhi", grade: "C", auctionType: "flexible", bid: 45000, bidCount: 6, endMins: 200 },
-  { id: "m24", make: "Hero", model: "Glamour", year: 2022, kms: 21000, city: "Chennai", grade: "B", auctionType: "one_click", bid: 0, bidCount: 0, endMins: 1440 },
-  { id: "m25", make: "Suzuki", model: "Burgman Street", year: 2023, kms: 8000, city: "Hyderabad", grade: "A", auctionType: "quick", bid: 95000, bidCount: 7, endMins: 14 },
-  { id: "m26", make: "KTM", model: "Duke 390", year: 2022, kms: 11000, city: "Pune", grade: "A", auctionType: "flexible", bid: 245000, bidCount: 12, endMins: 130 },
-  { id: "m27", make: "Yamaha", model: "Fascino 125", year: 2023, kms: 6000, city: "Kolkata", grade: "A", auctionType: "extended", bid: 72000, bidCount: 8, endMins: 1800 },
-  { id: "m28", make: "Honda", model: "SP 125", year: 2022, kms: 17000, city: "Ahmedabad", grade: "B", auctionType: "quick", bid: 65000, bidCount: 5, endMins: 25 },
-  { id: "m29", make: "TVS", model: "Star City+", year: 2021, kms: 42000, city: "Jaipur", grade: "C", auctionType: "flexible", bid: 38000, bidCount: 4, endMins: 160 },
-  { id: "m30", make: "Royal Enfield", model: "Bullet 350", year: 2020, kms: 32000, city: "Lucknow", grade: "C", auctionType: "one_click", bid: 0, bidCount: 0, endMins: 1440 },
-  { id: "m31", make: "Hero", model: "Passion Pro", year: 2022, kms: 24000, city: "Bangalore", grade: "B", auctionType: "quick", bid: 52000, bidCount: 6, endMins: 11 },
-  { id: "m32", make: "Bajaj", model: "Pulsar RS200", year: 2021, kms: 19000, city: "Mumbai", grade: "B", auctionType: "extended", bid: 115000, bidCount: 9, endMins: 2520 },
-  { id: "m33", make: "Suzuki", model: "Avenis", year: 2023, kms: 5500, city: "Delhi", grade: "A", auctionType: "flexible", bid: 88000, bidCount: 7, endMins: 85 },
-  { id: "m34", make: "KTM", model: "RC 200", year: 2022, kms: 14000, city: "Chennai", grade: "B", auctionType: "quick", bid: 142000, bidCount: 8, endMins: 19 },
-  { id: "m35", make: "Honda", model: "Hornet 2.0", year: 2023, kms: 7800, city: "Hyderabad", grade: "A", auctionType: "one_click", bid: 0, bidCount: 0, endMins: 1440 },
-  { id: "m36", make: "TVS", model: "Apache RTR 200", year: 2022, kms: 16500, city: "Pune", grade: "B", auctionType: "extended", bid: 108000, bidCount: 10, endMins: 1920 },
-  { id: "m37", make: "Yamaha", model: "Ray ZR 125", year: 2023, kms: 4200, city: "Kolkata", grade: "A", auctionType: "flexible", bid: 78000, bidCount: 5, endMins: 140 },
-  { id: "m38", make: "Hero", model: "Destini 125", year: 2022, kms: 20000, city: "Ahmedabad", grade: "B", auctionType: "quick", bid: 58000, bidCount: 4, endMins: 7 },
-  { id: "m39", make: "Royal Enfield", model: "Continental GT", year: 2021, kms: 12500, city: "Jaipur", grade: "A", auctionType: "flexible", bid: 265000, bidCount: 11, endMins: 110 },
-  { id: "m40", make: "Bajaj", model: "Platina 110", year: 2020, kms: 48000, city: "Lucknow", grade: "D", auctionType: "extended", bid: 28000, bidCount: 3, endMins: 4800 },
-];
+import { MOCK_AUCTIONS, getVehicleImage } from "@/data/mockAuctions";
 
 // 20 upcoming auctions
 const MOCK_UPCOMING_AUCTIONS = [
@@ -294,30 +225,27 @@ const BrokerDashboard = () => {
     return "E";
   };
 
-  // Transform mock auctions for the card component
-  const transformMockAuctionForCard = (mock: typeof MOCK_LIVE_AUCTIONS[0]) => {
-    const endTime = new Date(Date.now() + mock.endMins * 60 * 1000);
-    const timeRemaining = mock.endMins * 60 * 1000;
-
+  // Transform centralized mock auctions for the card component
+  const transformMockAuction = (mock: typeof MOCK_AUCTIONS[0]) => {
     return {
       id: mock.id,
       vehicle: {
-        make: mock.make,
-        model: mock.model,
-        variant: BIKE_VARIANTS[mock.model] || "",
-        year: mock.year,
-        kms: mock.kms,
-        city: mock.city,
-        grade: mock.grade,
-        thumbnail: BIKE_THUMBNAILS[mock.make] || BIKE_THUMBNAILS["default"],
+        make: mock.vehicle.make,
+        model: mock.vehicle.model,
+        variant: mock.vehicle.variant,
+        year: mock.vehicle.year,
+        kms: mock.vehicle.kms,
+        city: mock.vehicle.city,
+        grade: mock.vehicle.grade,
+        thumbnail: mock.thumbnail,
       },
       auctionType: mock.auctionType,
-      timeRemaining: timeRemaining,
-      endTime: endTime,
-      currentHighestBid: mock.bid,
+      timeRemaining: mock.timeRemaining,
+      endTime: mock.endTime,
+      currentHighestBid: mock.currentHighestBid,
       bidCount: mock.bidCount,
-      matchScore: Math.floor(Math.random() * 20) + 75,
-      documents: { rc: true, insurance: true, puc: true, challans: 0, loan: false },
+      matchScore: mock.matchScore,
+      documents: mock.documents,
       oemTrust: "high" as const,
     };
   };
@@ -335,28 +263,27 @@ const BrokerDashboard = () => {
       vehicle: {
         make: make,
         model: model,
-        variant: BIKE_VARIANTS[model] || "",
+        variant: "",
         year: auction.inspections?.vehicle_year || 2023,
         kms: auction.inspections?.odometer_reading || 12500,
         city: auction.geo_targeting_city || "Bangalore",
         grade: grade,
-        thumbnail: BIKE_THUMBNAILS[make] || BIKE_THUMBNAILS["default"],
+        thumbnail: getVehicleImage(make, auction.id),
       },
       auctionType: auction.auction_type,
       timeRemaining: timeRemaining,
       endTime: endTime,
       currentHighestBid: auction.current_highest_bid || 35000,
       bidCount: auction.bid_count || 4,
-      matchScore: Math.floor(Math.random() * 20) + 75,
+      matchScore: 80,
       documents: { rc: true, insurance: true, puc: true, challans: 0, loan: false },
       oemTrust: "high" as const,
     };
   };
 
-  // Use mock data when database is empty
-  const displayLiveAuctions = liveAuctions.length > 0 ? liveAuctions : [];
-  const displayUpcomingAuctions = upcomingAuctions.length > 0 ? upcomingAuctions : [];
-  const useMockData = liveAuctions.length === 0 && upcomingAuctions.length === 0 && !loadingAuctions;
+  // Use 100 mock auctions when database is empty
+  const useMockData = liveAuctions.length === 0 && !loadingAuctions;
+  const mockAuctionsForDisplay = useMockData ? MOCK_AUCTIONS : [];
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -420,7 +347,7 @@ const BrokerDashboard = () => {
           <div className="grid grid-cols-3 divide-x divide-border">
             <div className="p-4 text-center">
               <p className="text-2xl font-bold text-foreground">
-                {useMockData ? MOCK_LIVE_AUCTIONS.length + MOCK_UPCOMING_AUCTIONS.length : liveAuctions.length + upcomingAuctions.length}
+                {useMockData ? mockAuctionsForDisplay.length : liveAuctions.length + upcomingAuctions.length}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">Today</p>
             </div>
@@ -441,11 +368,11 @@ const BrokerDashboard = () => {
         <TabsList className="grid w-full grid-cols-2 mb-5 h-12 p-1 bg-muted rounded-xl">
           <TabsTrigger value="live" className="gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-            Live ({useMockData ? MOCK_LIVE_AUCTIONS.length : liveAuctions.length})
+            Live ({useMockData ? mockAuctionsForDisplay.filter(a => a.auctionType !== "one_click").length : liveAuctions.length})
           </TabsTrigger>
           <TabsTrigger value="upcoming" className="gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <Clock className="w-4 h-4" />
-            Upcoming ({useMockData ? MOCK_UPCOMING_AUCTIONS.length : upcomingAuctions.length})
+            Upcoming ({useMockData ? mockAuctionsForDisplay.filter(a => a.auctionType === "one_click").length : upcomingAuctions.length})
           </TabsTrigger>
         </TabsList>
 
@@ -491,17 +418,20 @@ const BrokerDashboard = () => {
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
             </div>
           ) : useMockData ? (
-            // Show mock data when database is empty
+            // Show 100 mock vehicles when database is empty
             <div className="space-y-3">
-              {MOCK_LIVE_AUCTIONS.filter(m => !activeTypeFilter || m.auctionType === activeTypeFilter).map((mock) => (
-                <BrokerAuctionCard
-                  key={mock.id}
-                  auction={transformMockAuctionForCard(mock)}
-                  onClick={() => navigate(`/broker/auction/${mock.id}`)}
-                />
-              ))}
+              {mockAuctionsForDisplay
+                .filter(m => m.auctionType !== "one_click")
+                .filter(m => !activeTypeFilter || m.auctionType === activeTypeFilter)
+                .map((mock) => (
+                  <BrokerAuctionCard
+                    key={mock.id}
+                    auction={transformMockAuction(mock)}
+                    onClick={() => navigate(`/broker/auction/${mock.id}`)}
+                  />
+                ))}
             </div>
-          ) : getFilteredAuctions(displayLiveAuctions).length === 0 ? (
+          ) : getFilteredAuctions(liveAuctions).length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Gavel className="w-12 h-12 mx-auto mb-2 opacity-50" />
               <p>No {activeTypeFilter ? auctionTypes.find(t => t.id === activeTypeFilter)?.label : ""} auctions live</p>
@@ -510,7 +440,7 @@ const BrokerDashboard = () => {
           ) : activeTypeFilter ? (
             // Filtered view - flat list
             <div className="space-y-3">
-              {getFilteredAuctions(displayLiveAuctions).map((auction) => (
+              {getFilteredAuctions(liveAuctions).map((auction) => (
                 <BrokerAuctionCard
                   key={auction.id}
                   auction={transformAuctionForCard(auction)}
@@ -520,7 +450,7 @@ const BrokerDashboard = () => {
             </div>
           ) : (
             // Grouped view by auction type
-            groupAuctionsByType(displayLiveAuctions).map((group) => {
+            groupAuctionsByType(liveAuctions).map((group) => {
               const Icon = group.icon;
               return (
                 <div key={group.id} className="space-y-3">
@@ -552,54 +482,53 @@ const BrokerDashboard = () => {
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
             </div>
           ) : useMockData ? (
-            // Show mock upcoming data
+            // Show mock upcoming data (one_click auctions as upcoming)
             <div className="space-y-3">
-              {MOCK_UPCOMING_AUCTIONS.filter(m => !activeTypeFilter || m.auctionType === activeTypeFilter).map((mock) => {
-                const startTime = new Date(Date.now() + mock.startMins * 60 * 1000);
-                const timeUntilStart = mock.startMins * 60 * 1000;
-                const typeConfig = auctionTypes.find(t => t.id === mock.auctionType);
-                const TypeIcon = typeConfig?.icon || Clock;
-                
-                return (
-                  <div
-                    key={mock.id}
-                    className="broker-card p-4"
-                  >
-                    <div className="flex gap-4">
-                      <div className="w-24 h-20 bg-muted rounded-xl overflow-hidden">
-                        <img
-                          src={BIKE_THUMBNAILS[mock.make] || BIKE_THUMBNAILS["default"]}
-                          alt={mock.model}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-foreground">
-                          {mock.make} {mock.model}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {mock.year} • {mock.kms.toLocaleString()} km
-                        </p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="outline" className="gap-1">
-                            <Clock className="w-3 h-3" />
-                            {formatTimeRemaining(timeUntilStart)}
-                          </Badge>
-                          <Badge variant="secondary" className="text-xs">
-                            {mock.city}
-                          </Badge>
+              {mockAuctionsForDisplay
+                .filter(m => m.auctionType === "one_click")
+                .filter(m => !activeTypeFilter || m.auctionType === activeTypeFilter)
+                .map((mock) => {
+                  return (
+                    <div
+                      key={mock.id}
+                      className="broker-card p-4"
+                      onClick={() => navigate(`/broker/auction/${mock.id}`)}
+                    >
+                      <div className="flex gap-4">
+                        <div className="w-24 h-20 bg-muted rounded-xl overflow-hidden">
+                          <img
+                            src={mock.thumbnail}
+                            alt={mock.vehicle.model}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-foreground">
+                            {mock.vehicle.make} {mock.vehicle.model}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {mock.vehicle.year} • {mock.vehicle.kms.toLocaleString()} km
+                          </p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge variant="outline" className="gap-1">
+                              <Clock className="w-3 h-3" />
+                              {formatTimeRemaining(mock.timeRemaining)}
+                            </Badge>
+                            <Badge variant="secondary" className="text-xs">
+                              {mock.vehicle.city}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
+                      <Button variant="outline" className="w-full mt-3 rounded-xl">
+                        <Bell className="w-4 h-4 mr-2" />
+                        Remind Me
+                      </Button>
                     </div>
-                    <Button variant="outline" className="w-full mt-3 rounded-xl">
-                      <Bell className="w-4 h-4 mr-2" />
-                      Remind Me
-                    </Button>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
-          ) : getFilteredAuctions(displayUpcomingAuctions).length === 0 ? (
+          ) : getFilteredAuctions(upcomingAuctions).length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Clock className="w-12 h-12 mx-auto mb-2 opacity-50" />
               <p>No {activeTypeFilter ? auctionTypes.find(t => t.id === activeTypeFilter)?.label : ""} upcoming auctions</p>
@@ -607,11 +536,9 @@ const BrokerDashboard = () => {
           ) : activeTypeFilter ? (
             // Filtered view
             <div className="space-y-3">
-              {getFilteredAuctions(displayUpcomingAuctions).map((auction) => {
+              {getFilteredAuctions(upcomingAuctions).map((auction) => {
                 const startTime = new Date(auction.start_time);
                 const timeUntilStart = startTime.getTime() - Date.now();
-                const typeConfig = auctionTypes.find(t => t.id === auction.auction_type);
-                const TypeIcon = typeConfig?.icon || Clock;
                 const make = auction.inspections?.vehicle_make || "Honda";
                 const model = auction.inspections?.vehicle_model || "Activa 6G";
                 
@@ -619,12 +546,12 @@ const BrokerDashboard = () => {
                   <div
                     key={auction.id}
                     className="broker-card p-4"
-                    onClick={() => {}}
+                    onClick={() => navigate(`/broker/auction/${auction.id}`)}
                   >
                     <div className="flex gap-4">
                       <div className="w-24 h-20 bg-muted rounded-xl overflow-hidden">
                         <img
-                          src={BIKE_THUMBNAILS[make] || BIKE_THUMBNAILS["default"]}
+                          src={getVehicleImage(make, auction.id)}
                           alt={model}
                           className="w-full h-full object-cover"
                         />

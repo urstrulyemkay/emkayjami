@@ -6,28 +6,10 @@ import {
   TrendingUp, Zap, Scale, Calendar, Target
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getVehicleImage, VEHICLE_IMAGES } from "@/data/mockAuctions";
 
-// Local vehicle images from database
-export const BIKE_THUMBNAILS: Record<string, string[]> = {
-  "Honda": ["/vehicles/activa1.jpg", "/vehicles/activa2.jpg", "/vehicles/activa3.jpg", "/vehicles/activa4.jpg", "/vehicles/activa6.jpg", "/vehicles/activa7.jpg"],
-  "TVS": ["/vehicles/pulsar5.jpg", "/vehicles/activa7.jpg"],
-  "Bajaj": ["/vehicles/pulsar2.jpg", "/vehicles/pulsar4.jpg", "/vehicles/pulsar5.jpg"],
-  "Royal Enfield": ["/vehicles/royalenfield1.jpg", "/vehicles/royalenfield2.jpg", "/vehicles/royalenfield3.jpg", "/vehicles/royalenfield4.jpg", "/vehicles/royalenfield5.jpg"],
-  "Yamaha": ["/vehicles/pulsar5.jpg", "/vehicles/duke390.jpg"],
-  "Hero": ["/vehicles/activa2.jpg", "/vehicles/activa7.jpg"],
-  "Suzuki": ["/vehicles/pulsar5.jpg", "/vehicles/activa7.jpg"],
-  "KTM": ["/vehicles/duke390.jpg", "/vehicles/duke390_1.jpg", "/vehicles/duke390_2.jpg", "/vehicles/duke390_3.jpg", "/vehicles/duke390_4.jpg", "/vehicles/duke390_5.jpg"],
-  "default": ["/vehicles/activa1.jpg", "/vehicles/royalenfield1.jpg", "/vehicles/duke390.jpg", "/vehicles/pulsar2.jpg"],
-};
-
-const getRandomImage = (make: string, id?: string): string => {
-  const images = BIKE_THUMBNAILS[make] || BIKE_THUMBNAILS["default"];
-  if (id) {
-    const index = id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % images.length;
-    return images[index];
-  }
-  return images[0];
-};
+// Export for backwards compatibility
+export const BIKE_THUMBNAILS = VEHICLE_IMAGES;
 
 export interface VehicleInfo {
   make: string;
@@ -87,7 +69,7 @@ const getGradeConfig = (grade?: string) => {
 };
 
 const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) => {
-  const thumbnail = getRandomImage(vehicle.make, vehicle.model);
+  const thumbnail = getVehicleImage(vehicle.make, vehicle.model);
   const [timeLeft, setTimeLeft] = useState(status.timeRemaining || 0);
   
   useEffect(() => {

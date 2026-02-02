@@ -38,6 +38,7 @@ import { useRealtimeBids } from "@/hooks/useRealtimeBids";
 import LiveBidFeed from "@/components/broker/LiveBidFeed";
 import { calculateEffectiveScore } from "@/data/brokerMockData";
 import { useSoundNotifications } from "@/hooks/useSoundNotifications";
+import { getAuctionById, getVehicleGallery, generateMockDefects } from "@/data/mockAuctions";
 
 interface CapturedImage {
   id: string;
@@ -102,136 +103,81 @@ interface AuctionData {
   } | null;
 }
 
-// Image mapping by vehicle make
-const VEHICLE_IMAGES: Record<string, string[]> = {
-  "Honda": ["/vehicles/activa1.jpg", "/vehicles/activa2.jpg", "/vehicles/activa3.jpg", "/vehicles/activa4.jpg", "/vehicles/activa6.jpg", "/vehicles/activa7.jpg"],
-  "TVS": ["/vehicles/pulsar5.jpg", "/vehicles/activa7.jpg"],
-  "Bajaj": ["/vehicles/pulsar2.jpg", "/vehicles/pulsar4.jpg", "/vehicles/pulsar5.jpg"],
-  "Royal Enfield": ["/vehicles/royalenfield1.jpg", "/vehicles/royalenfield2.jpg", "/vehicles/royalenfield3.jpg", "/vehicles/royalenfield4.jpg", "/vehicles/royalenfield5.jpg"],
-  "Yamaha": ["/vehicles/pulsar5.jpg", "/vehicles/duke390.jpg"],
-  "Hero": ["/vehicles/activa2.jpg", "/vehicles/activa7.jpg"],
-  "Suzuki": ["/vehicles/pulsar5.jpg", "/vehicles/activa7.jpg"],
-  "KTM": ["/vehicles/duke390.jpg", "/vehicles/duke390_1.jpg", "/vehicles/duke390_2.jpg", "/vehicles/duke390_3.jpg", "/vehicles/duke390_4.jpg", "/vehicles/duke390_5.jpg"],
-};
+// Convert centralized mock auction to PDP format
+const convertMockToPDPFormat = (mock: ReturnType<typeof getAuctionById>, id: string): AuctionData => {
+  if (!mock) {
+    // Fallback for undefined
+    return {
+      id,
+      auction_type: "quick",
+      status: "live",
+      start_time: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+      end_time: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+      current_highest_bid: 50000,
+      current_highest_commission: 2000,
+      bid_count: 5,
+      minimum_bid_increment: 500,
+      geo_targeting_city: "Bangalore",
+      inspections: {
+        id: `insp-${id}`,
+        vehicle_make: "Honda",
+        vehicle_model: "Activa 6G",
+        vehicle_year: 2023,
+        odometer_reading: 12000,
+        vehicle_color: "White",
+        condition_score: 80,
+        vehicle_registration: "KA-01-AB-1234",
+        engine_cc: 110,
+        vehicle_vin: "VIN123456789",
+        ai_confidence: 90,
+        created_at: new Date().toISOString(),
+        consented_at: new Date().toISOString(),
+        captured_images: getVehicleGallery("Honda", id),
+        captured_videos: [],
+        defects: generateMockDefects(id),
+        voice_recordings: [],
+      },
+    };
+  }
 
-const getImagesForMake = (make: string): CapturedImage[] => {
-  const images = VEHICLE_IMAGES[make] || VEHICLE_IMAGES["Honda"];
-  return images.map((uri, index) => ({
-    id: `img-${index}`,
-    uri,
-    angle: ["front_right", "rear_left", "dashboard", "engine", "side_profile", "exhaust"][index % 6],
-    captured_at: new Date().toISOString(),
-  }));
-};
-
-// Mock auctions with complete data for demo mode
-const MOCK_AUCTIONS: Record<string, AuctionData> = {
-  "mock-auction-1": {
-    id: "mock-auction-1", auction_type: "quick", status: "live",
-    start_time: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-    end_time: new Date(Date.now() + 18 * 60 * 1000).toISOString(),
-    current_highest_bid: 48000, current_highest_commission: 2000, bid_count: 8, minimum_bid_increment: 500,
-    geo_targeting_city: "Bangalore",
+  return {
+    id,
+    auction_type: mock.auctionType,
+    status: "live",
+    start_time: mock.startTime.toISOString(),
+    end_time: mock.endTime.toISOString(),
+    current_highest_bid: mock.currentHighestBid,
+    current_highest_commission: mock.currentHighestCommission,
+    bid_count: mock.bidCount,
+    minimum_bid_increment: mock.minimumBidIncrement,
+    geo_targeting_city: mock.vehicle.city,
     inspections: {
-      id: "insp-1", vehicle_make: "Honda", vehicle_model: "Activa 6G", vehicle_year: 2023, odometer_reading: 12450,
-      vehicle_color: "Pearl White", condition_score: 85, vehicle_registration: "KA-01-AB-1234", engine_cc: 110,
-      vehicle_vin: "ME4JF502LNM123456", ai_confidence: 92, created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      id: `insp-${id}`,
+      vehicle_make: mock.vehicle.make,
+      vehicle_model: mock.vehicle.model,
+      vehicle_year: mock.vehicle.year,
+      odometer_reading: mock.vehicle.kms,
+      vehicle_color: mock.vehicle.color,
+      condition_score: mock.conditionScore,
+      vehicle_registration: mock.vehicle.registration,
+      engine_cc: mock.vehicle.engineCC,
+      vehicle_vin: mock.vehicle.vin,
+      ai_confidence: 88 + (id.charCodeAt(0) % 10),
+      created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
       consented_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      captured_images: [
-        { id: "img-1", uri: "/vehicles/activa1.jpg", angle: "front_right", captured_at: new Date().toISOString() },
-        { id: "img-2", uri: "/vehicles/activa2.jpg", angle: "rear_left", captured_at: new Date().toISOString() },
-        { id: "img-3", uri: "/vehicles/activa3.jpg", angle: "dashboard", captured_at: new Date().toISOString() },
-        { id: "img-4", uri: "/vehicles/activa4.jpg", angle: "engine", captured_at: new Date().toISOString() },
+      captured_images: getVehicleGallery(mock.vehicle.make, id),
+      captured_videos: [],
+      defects: generateMockDefects(id),
+      voice_recordings: [
+        {
+          id: `vr-${id}`,
+          category: "overall",
+          transcript: `Vehicle is in ${mock.conditionScore >= 80 ? "excellent" : mock.conditionScore >= 60 ? "good" : "fair"} condition. ${mock.vehicle.make} ${mock.vehicle.model} with ${mock.vehicle.kms.toLocaleString()} km on the odometer.`,
+          duration: 12,
+        },
       ],
-      captured_videos: [{ id: "vid-1", uri: "/mock/walkaround.mp4", video_type: "walkaround", duration: 45, captured_at: new Date().toISOString() }],
-      defects: [{ id: "def-1", category: "Body", severity: "minor", description: "Small scratch on front panel", extracted_from: "visual", confidence: 85 }],
-      voice_recordings: [{ id: "vr-1", category: "overall", transcript: "Vehicle in good condition, minor wear on front panel", duration: 15 }]
-    }
-  },
-  "mock-auction-2": {
-    id: "mock-auction-2", auction_type: "flexible", status: "live",
-    start_time: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-    end_time: new Date(Date.now() + 95 * 60 * 1000).toISOString(),
-    current_highest_bid: 55000, current_highest_commission: 2500, bid_count: 12, minimum_bid_increment: 500,
-    geo_targeting_city: "Mumbai",
-    inspections: {
-      id: "insp-2", vehicle_make: "TVS", vehicle_model: "Apache RTR 160", vehicle_year: 2022, odometer_reading: 18200,
-      vehicle_color: "Racing Red", condition_score: 78, vehicle_registration: "MH-02-CD-5678", engine_cc: 160,
-      vehicle_vin: "MD2A19ED8NWC45678", ai_confidence: 88, created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      consented_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      captured_images: [
-        { id: "img-5", uri: "/vehicles/pulsar2.jpg", angle: "front_right", captured_at: new Date().toISOString() },
-        { id: "img-6", uri: "/vehicles/pulsar4.jpg", angle: "rear_left", captured_at: new Date().toISOString() },
-        { id: "img-7", uri: "/vehicles/pulsar5.jpg", angle: "side_profile", captured_at: new Date().toISOString() },
-      ],
-      captured_videos: [], defects: [], voice_recordings: []
-    }
-  },
-  "mock-auction-3": {
-    id: "mock-auction-3", auction_type: "extended", status: "live",
-    start_time: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    end_time: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-    current_highest_bid: 125000, current_highest_commission: 5000, bid_count: 24, minimum_bid_increment: 1000,
-    geo_targeting_city: "Delhi",
-    inspections: {
-      id: "insp-3", vehicle_make: "Royal Enfield", vehicle_model: "Classic 350", vehicle_year: 2021, odometer_reading: 24500,
-      vehicle_color: "Gunmetal Grey", condition_score: 72, vehicle_registration: "DL-03-EF-9012", engine_cc: 350,
-      vehicle_vin: "ME3RC4CA6LC789012", ai_confidence: 85, created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      consented_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-      captured_images: [
-        { id: "img-8", uri: "/vehicles/royalenfield1.jpg", angle: "front_right", captured_at: new Date().toISOString() },
-        { id: "img-9", uri: "/vehicles/royalenfield2.jpg", angle: "rear_left", captured_at: new Date().toISOString() },
-        { id: "img-10", uri: "/vehicles/royalenfield3.jpg", angle: "engine", captured_at: new Date().toISOString() },
-        { id: "img-11", uri: "/vehicles/royalenfield4.jpg", angle: "dashboard", captured_at: new Date().toISOString() },
-        { id: "img-12", uri: "/vehicles/royalenfield5.jpg", angle: "side_profile", captured_at: new Date().toISOString() },
-      ],
-      captured_videos: [], defects: [
-        { id: "def-2", category: "Engine", severity: "minor", description: "Slight oil seepage near gasket", extracted_from: "visual", confidence: 78 },
-        { id: "def-3", category: "Electrical", severity: "info", description: "Battery replaced 6 months ago", extracted_from: "voice", confidence: 95 }
-      ], voice_recordings: []
-    }
-  },
-  "mock-auction-4": {
-    id: "mock-auction-4", auction_type: "quick", status: "live",
-    start_time: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
-    end_time: new Date(Date.now() + 25 * 60 * 1000).toISOString(),
-    current_highest_bid: 185000, current_highest_commission: 7500, bid_count: 15, minimum_bid_increment: 1000,
-    geo_targeting_city: "Pune",
-    inspections: {
-      id: "insp-4", vehicle_make: "KTM", vehicle_model: "Duke 390", vehicle_year: 2023, odometer_reading: 8500,
-      vehicle_color: "Orange", condition_score: 92, vehicle_registration: "MH-12-GH-3456", engine_cc: 390,
-      vehicle_vin: "VBKJFD4078M345678", ai_confidence: 95, created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      consented_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-      captured_images: [
-        { id: "img-13", uri: "/vehicles/duke390.jpg", angle: "front_right", captured_at: new Date().toISOString() },
-        { id: "img-14", uri: "/vehicles/duke390_1.jpg", angle: "rear_left", captured_at: new Date().toISOString() },
-        { id: "img-15", uri: "/vehicles/duke390_2.jpg", angle: "engine", captured_at: new Date().toISOString() },
-        { id: "img-16", uri: "/vehicles/duke390_3.jpg", angle: "dashboard", captured_at: new Date().toISOString() },
-        { id: "img-17", uri: "/vehicles/duke390_4.jpg", angle: "side_profile", captured_at: new Date().toISOString() },
-        { id: "img-18", uri: "/vehicles/duke390_5.jpg", angle: "exhaust", captured_at: new Date().toISOString() },
-      ],
-      captured_videos: [], defects: [], voice_recordings: []
-    }
-  },
-  "mock-auction-5": {
-    id: "mock-auction-5", auction_type: "flexible", status: "live",
-    start_time: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-    end_time: new Date(Date.now() + 120 * 60 * 1000).toISOString(),
-    current_highest_bid: 42000, current_highest_commission: 1800, bid_count: 6, minimum_bid_increment: 500,
-    geo_targeting_city: "Chennai",
-    inspections: {
-      id: "insp-5", vehicle_make: "Bajaj", vehicle_model: "Pulsar NS200", vehicle_year: 2022, odometer_reading: 22000,
-      vehicle_color: "Neon Green", condition_score: 75, vehicle_registration: "TN-04-IJ-7890", engine_cc: 200,
-      vehicle_vin: "MD2A27EYDNWB56789", ai_confidence: 82, created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-      consented_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      captured_images: [
-        { id: "img-19", uri: "/vehicles/pulsar2.jpg", angle: "front_right", captured_at: new Date().toISOString() },
-        { id: "img-20", uri: "/vehicles/pulsar4.jpg", angle: "rear_left", captured_at: new Date().toISOString() },
-        { id: "img-21", uri: "/vehicles/pulsar5.jpg", angle: "side_profile", captured_at: new Date().toISOString() },
-      ],
-      captured_videos: [], defects: [], voice_recordings: []
-    }
-  },
+    },
+  };
 };
 
 const BrokerAuctionDetail = () => {
@@ -309,13 +255,11 @@ const BrokerAuctionDetail = () => {
         .single();
 
       if (error || !data) {
-        // Always fallback to mock data for demo - pick based on ID hash
-        const mockKeys = Object.keys(MOCK_AUCTIONS);
-        const hash = id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-        const mockKey = mockKeys[hash % mockKeys.length];
-        const mockAuction = MOCK_AUCTIONS[mockKey];
-        setAuction({ ...mockAuction, id });
-        setBidAmount((mockAuction.current_highest_bid || 0) + (mockAuction.minimum_bid_increment || 500));
+        // Always fallback to mock data for demo using centralized mock data
+        const mockAuction = getAuctionById(id);
+        const auctionData = convertMockToPDPFormat(mockAuction, id);
+        setAuction(auctionData);
+        setBidAmount((auctionData.current_highest_bid || 0) + (auctionData.minimum_bid_increment || 500));
         setLoading(false);
         return;
       }
@@ -323,7 +267,7 @@ const BrokerAuctionDetail = () => {
       // Inject images from our local database if no captured images exist
       const auctionData = data as unknown as AuctionData;
       if (auctionData.inspections && (!auctionData.inspections.captured_images || auctionData.inspections.captured_images.length === 0)) {
-        auctionData.inspections.captured_images = getImagesForMake(auctionData.inspections.vehicle_make);
+        auctionData.inspections.captured_images = getVehicleGallery(auctionData.inspections.vehicle_make, id);
       }
 
       setAuction(auctionData);
