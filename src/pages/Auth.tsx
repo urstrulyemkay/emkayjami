@@ -12,8 +12,8 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("drivex@gmail.com");
+  const [password, setPassword] = useState("drivex");
   const [name, setName] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
