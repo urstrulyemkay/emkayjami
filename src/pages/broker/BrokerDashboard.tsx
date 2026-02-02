@@ -111,17 +111,23 @@ const BrokerDashboard = () => {
     { id: "one_click", label: "1-Click", icon: Target, color: "text-accent", bgColor: "bg-accent/10" },
   ];
 
-  // Filter auctions by type
+  // Filter auctions by type and exclude expired ones
   const getFilteredAuctions = (auctions: AuctionWithInspection[]) => {
-    if (!activeTypeFilter) return auctions;
-    return auctions.filter(a => a.auction_type === activeTypeFilter);
+    const now = Date.now();
+    let filtered = auctions.filter(a => new Date(a.end_time).getTime() > now);
+    if (activeTypeFilter) {
+      filtered = filtered.filter(a => a.auction_type === activeTypeFilter);
+    }
+    return filtered;
   };
 
-  // Group auctions by type for display
+  // Group auctions by type for display (excluding expired)
   const groupAuctionsByType = (auctions: AuctionWithInspection[]) => {
+    const now = Date.now();
+    const activeAuctions = auctions.filter(a => new Date(a.end_time).getTime() > now);
     return auctionTypes.map(type => ({
       ...type,
-      auctions: auctions.filter(a => a.auction_type === type.id)
+      auctions: activeAuctions.filter(a => a.auction_type === type.id)
     })).filter(group => group.auctions.length > 0);
   };
 
