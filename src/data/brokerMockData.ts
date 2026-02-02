@@ -7,7 +7,7 @@ export interface BrokerStats {
   totalWins: number;
   totalLosses: number;
   activeBids: number;
-  winRate: number; // percentage
+  winRate: number;
   avgBidAmount: number;
   avgCommission: number;
   dealsThisMonth: number;
@@ -19,26 +19,26 @@ export interface BrokerStats {
 }
 
 export const BROKER_STATS: BrokerStats = {
-  totalBidsPlaced: 50,
-  totalWins: 15,
-  totalLosses: 32,
-  activeBids: 3,
-  winRate: 30, // 15/50 = 30%
+  totalBidsPlaced: 156,
+  totalWins: 47,
+  totalLosses: 98,
+  activeBids: 11,
+  winRate: 30,
   avgBidAmount: 42000,
   avgCommission: 750,
-  dealsThisMonth: 8,
-  winsThisMonth: 3,
+  dealsThisMonth: 12,
+  winsThisMonth: 5,
   disputesThisMonth: 0,
-  rcTransfersCompleted: 12,
-  rcTransfersPending: 3,
-  onTimeRcTransfers: 11, // 92% on-time
+  rcTransfersCompleted: 42,
+  rcTransfersPending: 5,
+  onTimeRcTransfers: 40,
 };
 
 // ==================== TRUST SCORE BREAKDOWN ====================
 export interface TrustScoreComponent {
   label: string;
   value: number;
-  weight: number; // percentage
+  weight: number;
   weightedScore: number;
 }
 
@@ -49,14 +49,13 @@ export const calculateTrustScore = (components: Omit<TrustScoreComponent, 'weigh
 };
 
 export const TRUST_BREAKDOWN: TrustScoreComponent[] = [
-  { label: "Completion ratio", value: 92, weight: 25, weightedScore: 23 }, // 12/13 deals completed
-  { label: "RC compliance", value: 92, weight: 25, weightedScore: 23 }, // 11/12 on-time
-  { label: "Dispute rate", value: 100, weight: 20, weightedScore: 20 }, // 0 disputes
-  { label: "Payment timeliness", value: 100, weight: 15, weightedScore: 15 }, // always on time
-  { label: "Participation", value: 70, weight: 10, weightedScore: 7 }, // 50 bids
-  { label: "Tenure", value: 50, weight: 5, weightedScore: 2.5 }, // 1 month
+  { label: "Completion ratio", value: 92, weight: 25, weightedScore: 23 },
+  { label: "RC compliance", value: 92, weight: 25, weightedScore: 23 },
+  { label: "Dispute rate", value: 100, weight: 20, weightedScore: 20 },
+  { label: "Payment timeliness", value: 100, weight: 15, weightedScore: 15 },
+  { label: "Participation", value: 70, weight: 10, weightedScore: 7 },
+  { label: "Tenure", value: 50, weight: 5, weightedScore: 2.5 },
 ];
-// Total: 23 + 23 + 20 + 15 + 7 + 2.5 = 90.5 ≈ 85 (with some rounding in display)
 
 // ==================== LEVEL SYSTEM ====================
 export interface LevelConfig {
@@ -147,56 +146,125 @@ export interface MockVehicle {
   color: string;
 }
 
-export const MOCK_VEHICLES: MockVehicle[] = [
-  {
-    id: "v1", make: "TVS", model: "Apache RTR 160", variant: "4V BS6", year: 2023,
-    kms: 12450, city: "Bangalore", grade: "B", gradeDescription: "Good condition, minor wear",
-    thumbnail: "https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=400&h=400&fit=crop&q=80",
-    images: [], videoUrl: null, engineCC: 160, color: "Red"
-  },
-  {
-    id: "v2", make: "Bajaj", model: "Pulsar NS200", variant: "ABS", year: 2022,
-    kms: 18200, city: "Mumbai", grade: "A", gradeDescription: "Excellent condition",
-    thumbnail: "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400&h=400&fit=crop&q=80",
-    images: [], videoUrl: null, engineCC: 200, color: "Black"
-  },
-  {
-    id: "v3", make: "Hero", model: "Splendor Plus", variant: "i3S", year: 2021,
-    kms: 28500, city: "Delhi", grade: "C", gradeDescription: "Fair condition, some wear",
-    thumbnail: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80",
-    images: [], videoUrl: null, engineCC: 100, color: "Blue"
-  },
-  {
-    id: "v4", make: "Yamaha", model: "FZ-S V3", variant: "FI", year: 2023,
-    kms: 8500, city: "Chennai", grade: "A", gradeDescription: "Excellent condition",
-    thumbnail: "https://images.unsplash.com/photo-1580310614729-ccd69652491d?w=400&h=400&fit=crop&q=80",
-    images: [], videoUrl: null, engineCC: 150, color: "Yellow"
-  },
-  {
-    id: "v5", make: "Royal Enfield", model: "Classic 350", variant: "Signals", year: 2022,
-    kms: 15000, city: "Hyderabad", grade: "B", gradeDescription: "Good condition",
-    thumbnail: "https://images.unsplash.com/photo-1558980664-769d59546b3d?w=400&h=400&fit=crop&q=80",
-    images: [], videoUrl: null, engineCC: 350, color: "Green"
-  },
-  {
-    id: "v6", make: "Honda", model: "Activa 6G", variant: "DLX", year: 2022,
-    kms: 22000, city: "Pune", grade: "B", gradeDescription: "Good condition",
-    thumbnail: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80",
-    images: [], videoUrl: null, engineCC: 110, color: "White"
-  },
-  {
-    id: "v7", make: "TVS", model: "Jupiter", variant: "ZX", year: 2021,
-    kms: 35000, city: "Bangalore", grade: "C", gradeDescription: "Fair condition",
-    thumbnail: "https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=400&h=400&fit=crop&q=80",
-    images: [], videoUrl: null, engineCC: 110, color: "Grey"
-  },
-  {
-    id: "v8", make: "Suzuki", model: "Access 125", variant: "SE", year: 2023,
-    kms: 5000, city: "Kolkata", grade: "A", gradeDescription: "Excellent, almost new",
-    thumbnail: "https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=400&h=400&fit=crop&q=80",
-    images: [], videoUrl: null, engineCC: 125, color: "Blue"
-  },
+// Reliable bike thumbnail URLs
+const BIKE_IMAGES: Record<string, string> = {
+  "Honda": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80",
+  "TVS": "https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=400&h=400&fit=crop&q=80",
+  "Bajaj": "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400&h=400&fit=crop&q=80",
+  "Royal Enfield": "https://images.unsplash.com/photo-1558980664-769d59546b3d?w=400&h=400&fit=crop&q=80",
+  "Yamaha": "https://images.unsplash.com/photo-1580310614729-ccd69652491d?w=400&h=400&fit=crop&q=80",
+  "Hero": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80",
+  "Suzuki": "https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=400&h=400&fit=crop&q=80",
+  "KTM": "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400&h=400&fit=crop&q=80",
+  "Kawasaki": "https://images.unsplash.com/photo-1580310614729-ccd69652491d?w=400&h=400&fit=crop&q=80",
+  "Aprilia": "https://images.unsplash.com/photo-1558980664-769d59546b3d?w=400&h=400&fit=crop&q=80",
+  "default": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80",
+};
+
+const CITIES = ["Bangalore", "Mumbai", "Delhi", "Chennai", "Hyderabad", "Pune", "Kolkata", "Ahmedabad", "Jaipur", "Lucknow"];
+const GRADES: ("A" | "B" | "C" | "D" | "E")[] = ["A", "B", "C", "D", "E"];
+const GRADE_WEIGHTS = [20, 35, 30, 10, 5]; // Distribution percentages
+const COLORS = ["Red", "Black", "White", "Blue", "Grey", "Yellow", "Green", "Orange", "Silver", "Brown"];
+
+// Vehicle models with variants
+const VEHICLE_MODELS = [
+  { make: "Honda", model: "Activa 6G", variant: "DLX", cc: 110 },
+  { make: "Honda", model: "Activa 125", variant: "BS6", cc: 125 },
+  { make: "Honda", model: "Shine", variant: "CBS", cc: 125 },
+  { make: "Honda", model: "Unicorn", variant: "BS6", cc: 160 },
+  { make: "Honda", model: "SP 125", variant: "ABS", cc: 125 },
+  { make: "Honda", model: "Hornet 2.0", variant: "ABS", cc: 184 },
+  { make: "Honda", model: "CB350", variant: "DLX Pro", cc: 350 },
+  { make: "TVS", model: "Apache RTR 160", variant: "4V", cc: 160 },
+  { make: "TVS", model: "Apache RTR 200", variant: "4V", cc: 200 },
+  { make: "TVS", model: "Jupiter", variant: "ZX", cc: 110 },
+  { make: "TVS", model: "Ntorq 125", variant: "Race XP", cc: 125 },
+  { make: "TVS", model: "Raider 125", variant: "Disc", cc: 125 },
+  { make: "TVS", model: "Star City+", variant: "ES", cc: 110 },
+  { make: "TVS", model: "XL100", variant: "Heavy Duty", cc: 100 },
+  { make: "Bajaj", model: "Pulsar NS200", variant: "ABS", cc: 200 },
+  { make: "Bajaj", model: "Pulsar 150", variant: "Twin Disc", cc: 150 },
+  { make: "Bajaj", model: "Pulsar RS200", variant: "ABS", cc: 200 },
+  { make: "Bajaj", model: "Dominar 400", variant: "UG", cc: 400 },
+  { make: "Bajaj", model: "Platina 110", variant: "H-Gear", cc: 110 },
+  { make: "Bajaj", model: "CT 125X", variant: "Disc", cc: 125 },
+  { make: "Bajaj", model: "Chetak", variant: "Premium", cc: 0 },
+  { make: "Yamaha", model: "FZ-S V3", variant: "FI", cc: 149 },
+  { make: "Yamaha", model: "FZS-FI", variant: "V4", cc: 149 },
+  { make: "Yamaha", model: "MT-15", variant: "V2", cc: 155 },
+  { make: "Yamaha", model: "R15 V4", variant: "M", cc: 155 },
+  { make: "Yamaha", model: "Fascino 125", variant: "Hybrid", cc: 125 },
+  { make: "Yamaha", model: "Ray ZR 125", variant: "Fi", cc: 125 },
+  { make: "Royal Enfield", model: "Classic 350", variant: "Signals", cc: 350 },
+  { make: "Royal Enfield", model: "Meteor 350", variant: "Stellar", cc: 350 },
+  { make: "Royal Enfield", model: "Hunter 350", variant: "Metro", cc: 350 },
+  { make: "Royal Enfield", model: "Bullet 350", variant: "ES", cc: 350 },
+  { make: "Royal Enfield", model: "Continental GT", variant: "650", cc: 650 },
+  { make: "Royal Enfield", model: "Interceptor", variant: "650", cc: 650 },
+  { make: "Hero", model: "Splendor Plus", variant: "i3S", cc: 100 },
+  { make: "Hero", model: "HF Deluxe", variant: "i3S", cc: 100 },
+  { make: "Hero", model: "Passion Pro", variant: "i3S", cc: 110 },
+  { make: "Hero", model: "Glamour", variant: "Xtec", cc: 125 },
+  { make: "Hero", model: "Xpulse 200", variant: "4V", cc: 200 },
+  { make: "Hero", model: "Xtreme 160R", variant: "4V", cc: 160 },
+  { make: "Hero", model: "Destini 125", variant: "Xtec", cc: 125 },
+  { make: "Suzuki", model: "Access 125", variant: "SE", cc: 125 },
+  { make: "Suzuki", model: "Burgman Street", variant: "EX", cc: 125 },
+  { make: "Suzuki", model: "Gixxer 150", variant: "ABS", cc: 150 },
+  { make: "Suzuki", model: "Gixxer SF", variant: "250", cc: 250 },
+  { make: "Suzuki", model: "Avenis", variant: "Race Edition", cc: 125 },
+  { make: "KTM", model: "Duke 200", variant: "ABS", cc: 200 },
+  { make: "KTM", model: "Duke 250", variant: "ABS", cc: 250 },
+  { make: "KTM", model: "Duke 390", variant: "ABS", cc: 390 },
+  { make: "KTM", model: "RC 200", variant: "ABS", cc: 200 },
+  { make: "KTM", model: "RC 390", variant: "GP", cc: 390 },
 ];
+
+// Generate weighted random grade
+const getRandomGrade = (): "A" | "B" | "C" | "D" | "E" => {
+  const rand = Math.random() * 100;
+  let cumulative = 0;
+  for (let i = 0; i < GRADES.length; i++) {
+    cumulative += GRADE_WEIGHTS[i];
+    if (rand < cumulative) return GRADES[i];
+  }
+  return "B";
+};
+
+// Generate 100 vehicles
+export const MOCK_VEHICLES: MockVehicle[] = Array.from({ length: 100 }, (_, i) => {
+  const vehicle = VEHICLE_MODELS[i % VEHICLE_MODELS.length];
+  const year = 2020 + Math.floor(Math.random() * 5); // 2020-2024
+  const kms = Math.floor(5000 + Math.random() * 60000); // 5k-65k km
+  const city = CITIES[Math.floor(Math.random() * CITIES.length)];
+  const grade = getRandomGrade();
+  const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+  
+  const gradeDescriptions: Record<string, string> = {
+    A: "Excellent condition, minimal wear",
+    B: "Good condition, minor wear",
+    C: "Fair condition, some wear",
+    D: "Below average, visible wear",
+    E: "Poor condition, significant issues",
+  };
+
+  return {
+    id: `v${i + 1}`,
+    make: vehicle.make,
+    model: vehicle.model,
+    variant: vehicle.variant,
+    year,
+    kms,
+    city,
+    grade,
+    gradeDescription: gradeDescriptions[grade],
+    thumbnail: BIKE_IMAGES[vehicle.make] || BIKE_IMAGES.default,
+    images: [],
+    videoUrl: null,
+    engineCC: vehicle.cc,
+    color,
+  };
+});
 
 // ==================== DOCUMENT STATUS ====================
 export interface DocumentStatus {
@@ -235,116 +303,91 @@ export const calculateEffectiveScore = (bidAmount: number, commission: number): 
   return (bidAmount * 0.85) + (commission * 0.15);
 };
 
-// Current time reference for consistent timing
 const NOW = new Date();
+const AUCTION_TYPES: AuctionType[] = ["quick", "flexible", "extended", "one_click"];
 
-// Live auctions - covers all 4 auction types
-export const LIVE_AUCTIONS: MockAuction[] = [
-  {
-    id: "auction-1",
-    vehicleId: "v1",
-    vehicle: MOCK_VEHICLES[0],
-    auctionType: "quick",
-    status: "live",
-    startTime: new Date(NOW.getTime() - 12 * 60 * 1000), // started 12 mins ago
-    endTime: new Date(NOW.getTime() + 18 * 60 * 1000), // 18 mins left
-    timeRemaining: 18 * 60 * 1000,
-    currentHighestBid: 36500,
-    currentHighestCommission: 800,
-    bidCount: 4,
-    minimumBidIncrement: 500,
-    matchScore: 85,
-    documents: { rc: true, insurance: true, puc: true, challans: 0, loan: false },
-    oemTrust: "high",
-  },
-  {
-    id: "auction-2",
-    vehicleId: "v2",
-    vehicle: MOCK_VEHICLES[1],
-    auctionType: "flexible",
-    status: "live",
-    startTime: new Date(NOW.getTime() - 45 * 60 * 1000), // started 45 mins ago
-    endTime: new Date(NOW.getTime() + 2.25 * 60 * 60 * 1000), // 2h 15m left
-    timeRemaining: 2.25 * 60 * 60 * 1000,
-    currentHighestBid: 52000,
-    currentHighestCommission: 1200,
-    bidCount: 6,
-    minimumBidIncrement: 500,
-    matchScore: 92,
-    documents: { rc: true, insurance: true, puc: true, challans: 0, loan: false },
-    oemTrust: "high",
-  },
-  {
-    id: "auction-3",
-    vehicleId: "v3",
-    vehicle: MOCK_VEHICLES[2],
-    auctionType: "extended",
-    status: "live",
-    startTime: new Date(NOW.getTime() - 12 * 60 * 60 * 1000), // started 12 hours ago
-    endTime: new Date(NOW.getTime() + 2 * 24 * 60 * 60 * 1000), // 2 days left
-    timeRemaining: 2 * 24 * 60 * 60 * 1000,
-    currentHighestBid: 28000,
-    currentHighestCommission: 500,
-    bidCount: 8,
-    minimumBidIncrement: 500,
-    matchScore: 70,
-    documents: { rc: true, insurance: false, puc: true, challans: 2, loan: false },
-    oemTrust: "medium",
-  },
-  {
-    id: "auction-4",
-    vehicleId: "v4",
-    vehicle: MOCK_VEHICLES[3],
-    auctionType: "one_click",
-    status: "live",
-    startTime: new Date(NOW.getTime() - 2 * 60 * 60 * 1000), // started 2 hours ago
-    endTime: new Date(NOW.getTime() + 24 * 60 * 60 * 1000), // 24h to submit best bid
-    timeRemaining: 0, // one_click has no timer
-    currentHighestBid: 0, // hidden in one_click
-    currentHighestCommission: 0,
-    bidCount: 0, // hidden in one_click
-    minimumBidIncrement: 500,
-    matchScore: 95,
-    documents: { rc: true, insurance: true, puc: true, challans: 0, loan: false },
-    oemTrust: "high",
-  },
-];
+// Generate time configurations for different auction types
+const getAuctionTimeConfig = (type: AuctionType, index: number) => {
+  switch (type) {
+    case "quick":
+      return { endMins: 5 + (index * 3) + Math.floor(Math.random() * 20) }; // 5-45 mins
+    case "flexible":
+      return { endMins: 60 + (index * 15) + Math.floor(Math.random() * 120) }; // 1-4 hours
+    case "extended":
+      return { endMins: 1440 + (index * 720) + Math.floor(Math.random() * 2880) }; // 1-5 days
+    case "one_click":
+      return { endMins: 1440 }; // 24 hours (not displayed)
+    default:
+      return { endMins: 60 };
+  }
+};
 
-// Upcoming auctions
+// Generate 40 live auctions (10 per type)
+export const LIVE_AUCTIONS: MockAuction[] = Array.from({ length: 40 }, (_, i) => {
+  const auctionType = AUCTION_TYPES[i % 4];
+  const vehicle = MOCK_VEHICLES[i];
+  const timeConfig = getAuctionTimeConfig(auctionType, Math.floor(i / 4));
+  const endTime = new Date(NOW.getTime() + timeConfig.endMins * 60 * 1000);
+  
+  // Calculate realistic bid based on vehicle age and grade
+  const basePrice = vehicle.engineCC * 150 + (2024 - vehicle.year) * -5000;
+  const gradeMultiplier = { A: 1.2, B: 1.0, C: 0.85, D: 0.7, E: 0.5 }[vehicle.grade];
+  const currentBid = Math.max(15000, Math.round((basePrice * gradeMultiplier + Math.random() * 20000) / 500) * 500);
+  
+  return {
+    id: `auction-${i + 1}`,
+    vehicleId: vehicle.id,
+    vehicle,
+    auctionType,
+    status: "live",
+    startTime: new Date(NOW.getTime() - Math.random() * 60 * 60 * 1000),
+    endTime,
+    timeRemaining: timeConfig.endMins * 60 * 1000,
+    currentHighestBid: auctionType === "one_click" ? 0 : currentBid,
+    currentHighestCommission: Math.round(currentBid * 0.02),
+    bidCount: auctionType === "one_click" ? 0 : Math.floor(3 + Math.random() * 15),
+    minimumBidIncrement: 500,
+    matchScore: 70 + Math.floor(Math.random() * 25),
+    documents: { 
+      rc: Math.random() > 0.1, 
+      insurance: Math.random() > 0.2, 
+      puc: Math.random() > 0.15, 
+      challans: Math.floor(Math.random() * 3), 
+      loan: Math.random() > 0.8 
+    },
+    oemTrust: ["high", "medium", "low"][Math.floor(Math.random() * 3)] as "high" | "medium" | "low",
+  };
+});
+
+// Generate 20 upcoming auctions
 export interface UpcomingAuction extends Omit<MockAuction, 'currentHighestBid' | 'currentHighestCommission' | 'bidCount' | 'timeRemaining'> {
   estimatedPrice: number;
 }
 
-export const UPCOMING_AUCTIONS: UpcomingAuction[] = [
-  {
-    id: "upcoming-1",
-    vehicleId: "v5",
-    vehicle: MOCK_VEHICLES[4],
-    auctionType: "flexible",
+export const UPCOMING_AUCTIONS: UpcomingAuction[] = Array.from({ length: 20 }, (_, i) => {
+  const auctionType = AUCTION_TYPES[i % 4];
+  const vehicle = MOCK_VEHICLES[40 + i];
+  const startMins = 30 + i * 45 + Math.floor(Math.random() * 120); // 30 mins to many hours
+  
+  const basePrice = vehicle.engineCC * 150 + (2024 - vehicle.year) * -5000;
+  const gradeMultiplier = { A: 1.2, B: 1.0, C: 0.85, D: 0.7, E: 0.5 }[vehicle.grade];
+  const estimatedPrice = Math.max(15000, Math.round((basePrice * gradeMultiplier) / 1000) * 1000);
+
+  return {
+    id: `upcoming-${i + 1}`,
+    vehicleId: vehicle.id,
+    vehicle,
+    auctionType,
     status: "scheduled",
-    startTime: new Date(NOW.getTime() + 2 * 60 * 60 * 1000), // starts in 2 hours
-    endTime: new Date(NOW.getTime() + 3 * 60 * 60 * 1000),
+    startTime: new Date(NOW.getTime() + startMins * 60 * 1000),
+    endTime: new Date(NOW.getTime() + (startMins + 60) * 60 * 1000),
     minimumBidIncrement: 500,
-    matchScore: 88,
+    matchScore: 70 + Math.floor(Math.random() * 25),
     documents: { rc: true, insurance: true, puc: true, challans: 0, loan: false },
     oemTrust: "high",
-    estimatedPrice: 125000,
-  },
-  {
-    id: "upcoming-2",
-    vehicleId: "v8",
-    vehicle: MOCK_VEHICLES[7],
-    auctionType: "quick",
-    status: "scheduled",
-    startTime: new Date(NOW.getTime() + 4 * 60 * 60 * 1000), // starts in 4 hours
-    endTime: new Date(NOW.getTime() + 4.5 * 60 * 60 * 1000),
-    minimumBidIncrement: 500,
-    matchScore: 90,
-    documents: { rc: true, insurance: true, puc: true, challans: 0, loan: false },
-    oemTrust: "high",
-    estimatedPrice: 68000,
-  },
-];
+    estimatedPrice,
+  };
+});
 
 // ==================== BID DATA ====================
 export type BidStatus = "winning" | "outbid" | "pending" | "won" | "lost" | "expired";
@@ -359,328 +402,129 @@ export interface MockBid {
   effectiveScore: number;
   status: BidStatus;
   placedAt: Date;
-  // For live bids
   timeRemaining?: number;
   endTime?: Date;
   currentHighestBid?: number;
   currentHighestCommission?: number;
-  // For won bids
   wonAt?: Date;
   paymentStatus?: "pending" | "completed";
   deliveryStatus?: "pending_pickup" | "in_transit" | "delivered";
   rcTransferStatus?: "pending" | "in_progress" | "completed";
   rcTransferDeadline?: Date;
-  // For lost bids
   lossReason?: "lower_bid" | "lower_commission" | "auction_cancelled";
   winningBidRange?: string;
 }
 
-// Live bids - broker is currently participating
-export const LIVE_BIDS: MockBid[] = [
-  {
-    id: "bid-1",
-    auctionId: "auction-1",
-    vehicle: MOCK_VEHICLES[0],
-    auctionType: "quick",
-    bidAmount: 37000,
-    commission: 1000,
-    effectiveScore: calculateEffectiveScore(37000, 1000), // 31450 + 150 = 31600
-    status: "winning",
-    placedAt: new Date(NOW.getTime() - 5 * 60 * 1000),
-    timeRemaining: 18 * 60 * 1000,
-    endTime: new Date(NOW.getTime() + 18 * 60 * 1000),
-    currentHighestBid: 37000,
-    currentHighestCommission: 1000,
-  },
-  {
-    id: "bid-2",
-    auctionId: "auction-2",
-    vehicle: MOCK_VEHICLES[1],
-    auctionType: "flexible",
-    bidAmount: 50000,
-    commission: 500,
-    effectiveScore: calculateEffectiveScore(50000, 500), // 42500 + 75 = 42575
-    status: "outbid",
-    placedAt: new Date(NOW.getTime() - 30 * 60 * 1000),
-    timeRemaining: 2.25 * 60 * 60 * 1000,
-    endTime: new Date(NOW.getTime() + 2.25 * 60 * 60 * 1000),
-    currentHighestBid: 52000,
-    currentHighestCommission: 1200,
-  },
-  {
-    id: "bid-3",
-    auctionId: "auction-3",
-    vehicle: MOCK_VEHICLES[2],
-    auctionType: "extended",
-    bidAmount: 27500,
-    commission: 600,
-    effectiveScore: calculateEffectiveScore(27500, 600), // 23375 + 90 = 23465
-    status: "outbid",
-    placedAt: new Date(NOW.getTime() - 6 * 60 * 60 * 1000),
-    timeRemaining: 2 * 24 * 60 * 60 * 1000,
-    endTime: new Date(NOW.getTime() + 2 * 24 * 60 * 60 * 1000),
-    currentHighestBid: 28000,
-    currentHighestCommission: 500,
-  },
-];
+// Generate 15 live bids
+export const LIVE_BIDS: MockBid[] = Array.from({ length: 15 }, (_, i) => {
+  const auction = LIVE_AUCTIONS[i];
+  const isWinning = Math.random() > 0.4;
+  const bidAmount = isWinning 
+    ? auction.currentHighestBid 
+    : auction.currentHighestBid - (Math.floor(Math.random() * 3) + 1) * 500;
+  const commission = Math.round(bidAmount * (0.015 + Math.random() * 0.01));
 
-// Won bids - different delivery states
-export const WON_BIDS: MockBid[] = [
-  {
-    id: "bid-won-1",
-    auctionId: "auction-past-1",
-    vehicle: MOCK_VEHICLES[2],
-    auctionType: "flexible",
-    bidAmount: 32000,
-    commission: 800,
-    effectiveScore: calculateEffectiveScore(32000, 800),
-    status: "won",
-    placedAt: new Date(NOW.getTime() - 3 * 24 * 60 * 60 * 1000),
-    wonAt: new Date(NOW.getTime() - 2 * 24 * 60 * 60 * 1000),
-    paymentStatus: "completed",
-    deliveryStatus: "in_transit",
-    rcTransferStatus: "pending",
-    rcTransferDeadline: new Date(NOW.getTime() + 180 * 24 * 60 * 60 * 1000), // 6 months
-  },
-  {
-    id: "bid-won-2",
-    auctionId: "auction-past-2",
-    vehicle: MOCK_VEHICLES[6],
-    auctionType: "quick",
-    bidAmount: 24000,
-    commission: 500,
-    effectiveScore: calculateEffectiveScore(24000, 500),
-    status: "won",
-    placedAt: new Date(NOW.getTime() - 7 * 24 * 60 * 60 * 1000),
-    wonAt: new Date(NOW.getTime() - 7 * 24 * 60 * 60 * 1000),
-    paymentStatus: "completed",
-    deliveryStatus: "delivered",
-    rcTransferStatus: "in_progress",
-    rcTransferDeadline: new Date(NOW.getTime() + 173 * 24 * 60 * 60 * 1000),
-  },
-  {
-    id: "bid-won-3",
-    auctionId: "auction-past-3",
-    vehicle: MOCK_VEHICLES[7],
-    auctionType: "one_click",
-    bidAmount: 65000,
-    commission: 1500,
-    effectiveScore: calculateEffectiveScore(65000, 1500),
-    status: "won",
-    placedAt: new Date(NOW.getTime() - 14 * 24 * 60 * 60 * 1000),
-    wonAt: new Date(NOW.getTime() - 14 * 24 * 60 * 60 * 1000),
-    paymentStatus: "completed",
-    deliveryStatus: "delivered",
-    rcTransferStatus: "completed",
-  },
-];
+  return {
+    id: `bid-live-${i + 1}`,
+    auctionId: auction.id,
+    vehicle: auction.vehicle,
+    auctionType: auction.auctionType,
+    bidAmount,
+    commission,
+    effectiveScore: calculateEffectiveScore(bidAmount, commission),
+    status: isWinning ? "winning" : "outbid",
+    placedAt: new Date(NOW.getTime() - Math.random() * 30 * 60 * 1000),
+    timeRemaining: auction.timeRemaining,
+    endTime: auction.endTime,
+    currentHighestBid: auction.currentHighestBid,
+    currentHighestCommission: auction.currentHighestCommission,
+  };
+});
 
-// Lost bids - different loss reasons
-export const LOST_BIDS: MockBid[] = [
-  {
-    id: "bid-lost-1",
-    auctionId: "auction-past-4",
-    vehicle: MOCK_VEHICLES[5],
-    auctionType: "flexible",
-    bidAmount: 45000,
-    commission: 500,
-    effectiveScore: calculateEffectiveScore(45000, 500),
+// Generate 25 won bids with various service stages
+export const WON_BIDS: MockBid[] = Array.from({ length: 25 }, (_, i) => {
+  const vehicle = MOCK_VEHICLES[60 + i];
+  const bidAmount = Math.round((25000 + Math.random() * 100000) / 500) * 500;
+  const commission = Math.round(bidAmount * 0.02);
+  const daysAgo = 1 + i * 3 + Math.floor(Math.random() * 5);
+  
+  const paymentStatuses: ("pending" | "completed")[] = ["pending", "completed"];
+  const deliveryStatuses: ("pending_pickup" | "in_transit" | "delivered")[] = ["pending_pickup", "in_transit", "delivered"];
+  const rcStatuses: ("pending" | "in_progress" | "completed")[] = ["pending", "in_progress", "completed"];
+  
+  // Progress through stages based on index
+  const stage = Math.min(Math.floor(i / 5), 4);
+  
+  return {
+    id: `bid-won-${i + 1}`,
+    auctionId: `auction-past-${i + 1}`,
+    vehicle,
+    auctionType: AUCTION_TYPES[i % 4],
+    bidAmount,
+    commission,
+    effectiveScore: calculateEffectiveScore(bidAmount, commission),
+    status: "won",
+    placedAt: new Date(NOW.getTime() - (daysAgo + 1) * 24 * 60 * 60 * 1000),
+    wonAt: new Date(NOW.getTime() - daysAgo * 24 * 60 * 60 * 1000),
+    paymentStatus: stage >= 1 ? "completed" : paymentStatuses[Math.floor(Math.random() * 2)],
+    deliveryStatus: stage >= 2 ? "delivered" : deliveryStatuses[Math.min(stage, 2)],
+    rcTransferStatus: stage >= 3 ? "completed" : rcStatuses[Math.min(stage, 2)],
+    rcTransferDeadline: new Date(NOW.getTime() + (180 - daysAgo) * 24 * 60 * 60 * 1000),
+  };
+});
+
+// Generate 20 lost bids
+export const LOST_BIDS: MockBid[] = Array.from({ length: 20 }, (_, i) => {
+  const vehicle = MOCK_VEHICLES[85 + (i % 15)];
+  const bidAmount = Math.round((20000 + Math.random() * 80000) / 500) * 500;
+  const winningBid = bidAmount + Math.floor(Math.random() * 5 + 1) * 500;
+  
+  return {
+    id: `bid-lost-${i + 1}`,
+    auctionId: `auction-past-lost-${i + 1}`,
+    vehicle,
+    auctionType: AUCTION_TYPES[i % 4],
+    bidAmount,
+    commission: Math.round(bidAmount * 0.015),
+    effectiveScore: calculateEffectiveScore(bidAmount, bidAmount * 0.015),
     status: "lost",
-    placedAt: new Date(NOW.getTime() - 5 * 24 * 60 * 60 * 1000),
-    lossReason: "lower_bid",
-    winningBidRange: "₹47,000 - ₹48,000",
-  },
-  {
-    id: "bid-lost-2",
-    auctionId: "auction-past-5",
-    vehicle: MOCK_VEHICLES[4],
-    auctionType: "extended",
-    bidAmount: 120000,
-    commission: 800,
-    effectiveScore: calculateEffectiveScore(120000, 800),
-    status: "lost",
-    placedAt: new Date(NOW.getTime() - 10 * 24 * 60 * 60 * 1000),
-    lossReason: "lower_commission",
-    winningBidRange: "₹118,000 - ₹122,000 (Higher commission)",
-  },
-];
+    placedAt: new Date(NOW.getTime() - (2 + i) * 24 * 60 * 60 * 1000),
+    lossReason: ["lower_bid", "lower_commission"][Math.floor(Math.random() * 2)] as "lower_bid" | "lower_commission",
+    winningBidRange: `₹${(winningBid / 1000).toFixed(0)}k - ₹${((winningBid + 2000) / 1000).toFixed(0)}k`,
+  };
+});
 
 // ==================== WALLET TRANSACTIONS ====================
-export type TransactionType = "earned" | "spent" | "bonus" | "penalty";
+export type TransactionType = "earned" | "spent" | "bonus" | "penalty" | "refund";
 
 export interface WalletTransaction {
   id: string;
   type: TransactionType;
   amount: number;
-  reason: string;
-  relatedEntityType?: "bid" | "auction" | "rc_transfer" | "streak" | "badge" | "shop";
-  relatedEntityId?: string;
-  date: Date;
+  description: string;
+  timestamp: Date;
   balanceAfter: number;
+  relatedEntity?: string;
 }
 
-// Starting balance: 1500, lifetime earned: 2500, lifetime spent: 1000
 export const WALLET_TRANSACTIONS: WalletTransaction[] = [
-  {
-    id: "tx-1", type: "earned", amount: 100, reason: "Deal completed (TVS Apache)",
-    relatedEntityType: "auction", relatedEntityId: "auction-past-1",
-    date: new Date(NOW.getTime() - 2 * 24 * 60 * 60 * 1000), balanceAfter: 1500
-  },
-  {
-    id: "tx-2", type: "earned", amount: 200, reason: "RC transferred on-time (Bajaj Pulsar)",
-    relatedEntityType: "rc_transfer",
-    date: new Date(NOW.getTime() - 4 * 24 * 60 * 60 * 1000), balanceAfter: 1400
-  },
-  {
-    id: "tx-3", type: "spent", amount: 250, reason: "Priority Support (7 days)",
-    relatedEntityType: "shop",
-    date: new Date(NOW.getTime() - 6 * 24 * 60 * 60 * 1000), balanceAfter: 1200
-  },
-  {
-    id: "tx-4", type: "earned", amount: 300, reason: "Zero disputes streak (10 deals)",
-    relatedEntityType: "streak",
-    date: new Date(NOW.getTime() - 10 * 24 * 60 * 60 * 1000), balanceAfter: 1450
-  },
-  {
-    id: "tx-5", type: "bonus", amount: 500, reason: "KYC completion bonus",
-    relatedEntityType: "badge",
-    date: new Date(NOW.getTime() - 20 * 24 * 60 * 60 * 1000), balanceAfter: 1150
-  },
-  {
-    id: "tx-6", type: "earned", amount: 100, reason: "Deal completed (Honda Activa)",
-    relatedEntityType: "auction",
-    date: new Date(NOW.getTime() - 8 * 24 * 60 * 60 * 1000), balanceAfter: 1550
-  },
-  {
-    id: "tx-7", type: "spent", amount: 100, reason: "Boosted Visibility (3 days)",
-    relatedEntityType: "shop",
-    date: new Date(NOW.getTime() - 12 * 24 * 60 * 60 * 1000), balanceAfter: 1050
-  },
-  {
-    id: "tx-8", type: "earned", amount: 100, reason: "7-day login streak",
-    relatedEntityType: "streak",
-    date: new Date(NOW.getTime() - 15 * 24 * 60 * 60 * 1000), balanceAfter: 650
-  },
+  { id: "txn-1", type: "earned", amount: 150, description: "First bid bonus", timestamp: new Date(NOW.getTime() - 2 * 24 * 60 * 60 * 1000), balanceAfter: 1650 },
+  { id: "txn-2", type: "spent", amount: -50, description: "Premium auction access", timestamp: new Date(NOW.getTime() - 1.5 * 24 * 60 * 60 * 1000), balanceAfter: 1600 },
+  { id: "txn-3", type: "earned", amount: 200, description: "Deal completion reward", timestamp: new Date(NOW.getTime() - 1 * 24 * 60 * 60 * 1000), balanceAfter: 1800 },
+  { id: "txn-4", type: "bonus", amount: 100, description: "Weekly streak bonus", timestamp: new Date(NOW.getTime() - 12 * 60 * 60 * 1000), balanceAfter: 1900 },
+  { id: "txn-5", type: "earned", amount: 75, description: "Quick auction win", timestamp: new Date(NOW.getTime() - 6 * 60 * 60 * 1000), balanceAfter: 1975 },
 ];
-
-// ==================== COIN SHOP ====================
-export interface ShopItem {
-  id: string;
-  name: string;
-  description: string;
-  cost: number;
-  icon: string;
-  duration?: string;
-  category: "visibility" | "support" | "insights" | "access";
-}
-
-export const SHOP_ITEMS: ShopItem[] = [
-  { id: "shop-1", name: "Priority Support", description: "Faster support response", cost: 100, icon: "⚡", duration: "7 days", category: "support" },
-  { id: "shop-2", name: "Boosted Visibility", description: "Stand out to OEMs", cost: 150, icon: "🔥", duration: "3 days", category: "visibility" },
-  { id: "shop-3", name: "Premium Insights", description: "Market analytics & trends", cost: 250, icon: "📊", duration: "30 days", category: "insights" },
-  { id: "shop-4", name: "Early Access", description: "Rare vehicles first", cost: 750, icon: "🌟", duration: "7 days", category: "access" },
-];
-
-// ==================== EARNING OPPORTUNITIES ====================
-export interface EarningOpportunity {
-  action: string;
-  coins: number;
-  description: string;
-}
-
-export const EARNING_OPPORTUNITIES: EarningOpportunity[] = [
-  { action: "Complete a deal", coins: 100, description: "Earn coins for every successful purchase" },
-  { action: "RC transfer on-time", coins: 200, description: "Bonus for timely RC transfer" },
-  { action: "Zero disputes streak", coins: 300, description: "Every 10 deals without disputes" },
-  { action: "7-day login streak", coins: 100, description: "Daily check-in rewards" },
-  { action: "Refer a broker", coins: 500, description: "When they complete first deal" },
-];
-
-// ==================== STRIKES ====================
-export interface BrokerStrike {
-  id: string;
-  severity: "minor" | "major" | "critical";
-  reason: string;
-  penaltyCoins: number;
-  penaltyTrustScore: number;
-  createdAt: Date;
-  expiresAt: Date;
-  appealStatus: "not_appealed" | "under_review" | "upheld" | "overturned";
-}
-
-// Demo broker has 0 strikes, but here's what strikes look like
-export const SAMPLE_STRIKES: BrokerStrike[] = [
-  {
-    id: "strike-sample-1",
-    severity: "minor",
-    reason: "Late RC transfer (7 days overdue)",
-    penaltyCoins: 100,
-    penaltyTrustScore: 5,
-    createdAt: new Date(NOW.getTime() - 30 * 24 * 60 * 60 * 1000),
-    expiresAt: new Date(NOW.getTime() + 60 * 24 * 60 * 60 * 1000),
-    appealStatus: "not_appealed",
-  },
-];
-
-// ==================== BADGES ====================
-export interface BrokerBadge {
-  id: string;
-  name: string;
-  icon: string;
-  description: string;
-  progress: number;
-  target: number;
-  coinsReward: number;
-  earnedAt?: Date;
-}
-
-export const BROKER_BADGES: BrokerBadge[] = [
-  { id: "badge-1", name: "First Deal", icon: "🎉", description: "Complete your first deal", progress: 1, target: 1, coinsReward: 100, earnedAt: new Date(NOW.getTime() - 20 * 24 * 60 * 60 * 1000) },
-  { id: "badge-2", name: "KYC Verified", icon: "✓", description: "Complete KYC verification", progress: 1, target: 1, coinsReward: 500, earnedAt: new Date(NOW.getTime() - 25 * 24 * 60 * 60 * 1000) },
-  { id: "badge-3", name: "Speed Demon", icon: "⚡", description: "Win 5 quick auctions", progress: 3, target: 5, coinsReward: 200 },
-  { id: "badge-4", name: "Streak Master", icon: "🔥", description: "30-day login streak", progress: 12, target: 30, coinsReward: 300 },
-  { id: "badge-5", name: "RC Champion", icon: "📋", description: "10 on-time RC transfers", progress: 11, target: 10, coinsReward: 500, earnedAt: new Date(NOW.getTime() - 5 * 24 * 60 * 60 * 1000) },
-  { id: "badge-6", name: "High Roller", icon: "💰", description: "Spend ₹5L on vehicles", progress: 320000, target: 500000, coinsReward: 1000 },
-];
-
-// ==================== DASHBOARD STATS ====================
-export const getDashboardStats = () => ({
-  auctionsToday: LIVE_AUCTIONS.length + UPCOMING_AUCTIONS.length,
-  winsToday: BROKER_STATS.winsThisMonth, // Simplified for demo
-  disputesToday: BROKER_STATS.disputesThisMonth,
-  activeBids: LIVE_BIDS.length,
-});
 
 // ==================== HELPER FUNCTIONS ====================
 export const formatCurrency = (amount: number): string => {
-  if (amount >= 100000) return `₹${(amount / 100000).toFixed(1)}L`;
-  if (amount >= 1000) return `₹${(amount / 1000).toFixed(0)}k`;
-  return `₹${amount.toLocaleString()}`;
-};
-
-export const getGradeColor = (grade: string): { bg: string; text: string } => {
-  const colors: Record<string, { bg: string; text: string }> = {
-    A: { bg: "bg-green-500", text: "text-white" },
-    B: { bg: "bg-blue-500", text: "text-white" },
-    C: { bg: "bg-yellow-500", text: "text-black" },
-    D: { bg: "bg-orange-500", text: "text-white" },
-    E: { bg: "bg-red-500", text: "text-white" },
-  };
-  return colors[grade] || { bg: "bg-gray-500", text: "text-white" };
-};
-
-export const getAuctionTypeConfig = (type: AuctionType) => {
-  const configs = {
-    quick: { icon: "⚡", name: "Quick", color: "bg-amber-500" },
-    flexible: { icon: "⚖️", name: "Flexible", color: "bg-blue-500" },
-    extended: { icon: "📅", name: "Extended", color: "bg-purple-500" },
-    one_click: { icon: "🎯", name: "One-Click", color: "bg-green-500" },
-  };
-  return configs[type];
+  if (amount >= 100000) {
+    return `₹${(amount / 100000).toFixed(1)}L`;
+  }
+  return `₹${(amount / 1000).toFixed(0)}k`;
 };
 
 export const formatTimeRemaining = (ms: number): string => {
-  if (ms <= 0) return "00:00";
+  if (ms <= 0) return "Ended";
   const hours = Math.floor(ms / (1000 * 60 * 60));
   const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
   const seconds = Math.floor((ms % (1000 * 60)) / 1000);
@@ -689,26 +533,57 @@ export const formatTimeRemaining = (ms: number): string => {
     const days = Math.floor(hours / 24);
     return `${days}d ${hours % 24}h`;
   }
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-  return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 };
 
-export const getLossReasonText = (reason: string): string => {
-  const reasons: Record<string, string> = {
-    lower_bid: "Your vehicle bid was lower than the winner.",
-    lower_commission: "Winner had higher commission despite similar bid.",
-    auction_cancelled: "Auction was cancelled by the seller.",
+export const getAuctionTypeLabel = (type: AuctionType): string => {
+  const labels: Record<AuctionType, string> = {
+    quick: "Quick",
+    flexible: "Flex",
+    extended: "Extended",
+    one_click: "1-Click",
   };
-  return reasons[reason] || "Auction ended.";
+  return labels[type];
 };
 
-export const getLossTip = (reason: string): string => {
-  const tips: Record<string, string> = {
-    lower_bid: "💡 Tip: Increase your bid amount on similar vehicles.",
-    lower_commission: "💡 Tip: A higher commission can improve your effective score.",
-    auction_cancelled: "💡 This was outside your control. Keep bidding!",
-  };
-  return tips[reason] || "";
-};
+// ==================== SHOP & EARNING ====================
+export interface ShopItem {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;
+  category: "boost" | "unlock" | "premium";
+  icon: string;
+  duration?: string;
+}
+
+export const SHOP_ITEMS: ShopItem[] = [
+  { id: "shop-1", name: "Priority Bid", description: "Your bid gets priority in tie-breakers", cost: 100, category: "boost", icon: "⚡", duration: "Single use" },
+  { id: "shop-2", name: "Early Access", description: "See auctions 30 mins before others", cost: 250, category: "premium", icon: "🎯", duration: "7 days" },
+  { id: "shop-3", name: "Bid Shield", description: "Protect your bid from last-second outbids", cost: 150, category: "boost", icon: "🛡️", duration: "Single use" },
+  { id: "shop-4", name: "Analytics Pro", description: "Unlock detailed market insights", cost: 500, category: "unlock", icon: "📊", duration: "30 days" },
+  { id: "shop-5", name: "Express Support", description: "Priority customer support", cost: 200, category: "premium", icon: "💬", duration: "7 days" },
+  { id: "shop-6", name: "Auction Alerts", description: "Custom alerts for preferred vehicles", cost: 75, category: "unlock", icon: "🔔", duration: "14 days" },
+];
+
+export interface EarningOpportunity {
+  id: string;
+  title: string;
+  description: string;
+  reward: number;
+  progress: number;
+  target: number;
+  type: "daily" | "weekly" | "achievement";
+  action: string;
+  coins: number;
+}
+
+export const EARNING_OPPORTUNITIES: EarningOpportunity[] = [
+  { id: "earn-1", title: "First Bid of Day", description: "Place your first bid today", reward: 25, progress: 0, target: 1, type: "daily", action: "First bid of the day", coins: 25 },
+  { id: "earn-2", title: "Win Streak", description: "Win 3 auctions this week", reward: 200, progress: 2, target: 3, type: "weekly", action: "Win an auction", coins: 50 },
+  { id: "earn-3", title: "Perfect Payment", description: "Complete 5 payments on time", reward: 150, progress: 4, target: 5, type: "achievement", action: "On-time payment", coins: 30 },
+  { id: "earn-4", title: "Explorer", description: "Bid on 3 different auction types", reward: 50, progress: 2, target: 3, type: "weekly", action: "Try new auction type", coins: 15 },
+  { id: "earn-5", title: "RC Champion", description: "Complete RC transfer within 90 days", reward: 300, progress: 1, target: 1, type: "achievement", action: "Early RC transfer", coins: 100 },
+  { id: "earn-6", title: "Daily Active", description: "Login for 7 consecutive days", reward: 100, progress: 5, target: 7, type: "weekly", action: "Daily login", coins: 10 },
+];
