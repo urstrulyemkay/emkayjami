@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { 
   Zap, Scale, Calendar, Target, 
-  Clock, ChevronRight, MapPin
+  Clock, ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +16,7 @@ const BIKE_IMAGES: Record<string, string> = {
   "Hero": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80",
   "Suzuki": "https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=400&h=400&fit=crop&q=80",
   "KTM": "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400&h=400&fit=crop&q=80",
+  "Kawasaki": "https://images.unsplash.com/photo-1580310614729-ccd69652491d?w=400&h=400&fit=crop&q=80",
   "default": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80",
 };
 
@@ -77,7 +78,7 @@ const BrokerAuctionCard = ({ auction, onClick }: AuctionCardProps) => {
     if (hours > 0) {
       return `${hours}h ${minutes}m`;
     }
-    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
   const formatPrice = (amount: number) => {
@@ -99,11 +100,11 @@ const BrokerAuctionCard = ({ auction, onClick }: AuctionCardProps) => {
   };
 
   const getAuctionConfig = (type: string) => {
-    const configs: Record<string, { icon: React.ReactNode; name: string; color: string }> = {
-      quick: { icon: <Zap className="w-3 h-3" />, name: "Quick", color: "text-amber-600" },
-      flexible: { icon: <Scale className="w-3 h-3" />, name: "Flex", color: "text-blue-600" },
-      extended: { icon: <Calendar className="w-3 h-3" />, name: "Extended", color: "text-purple-600" },
-      one_click: { icon: <Target className="w-3 h-3" />, name: "1-Click", color: "text-accent" },
+    const configs: Record<string, { icon: React.ReactNode; name: string }> = {
+      quick: { icon: <Zap className="w-3 h-3" />, name: "Quick" },
+      flexible: { icon: <Scale className="w-3 h-3" />, name: "Flex" },
+      extended: { icon: <Calendar className="w-3 h-3" />, name: "Extended" },
+      one_click: { icon: <Target className="w-3 h-3" />, name: "1-Click" },
     };
     return configs[type] || configs.quick;
   };
@@ -111,8 +112,6 @@ const BrokerAuctionCard = ({ auction, onClick }: AuctionCardProps) => {
   const isUrgent = timeLeft < 5 * 60 * 1000 && timeLeft > 0;
   const gradeConfig = getGradeConfig(auction.vehicle.grade);
   const auctionConfig = getAuctionConfig(auction.auctionType);
-  
-  // Use reliable image - never use placeholder.svg
   const thumbnail = BIKE_IMAGES[auction.vehicle.make] || BIKE_IMAGES["default"];
 
   return (
@@ -120,86 +119,68 @@ const BrokerAuctionCard = ({ auction, onClick }: AuctionCardProps) => {
       className="bg-card border rounded-xl overflow-hidden cursor-pointer hover:border-primary/30 hover:shadow-lg transition-all active:scale-[0.99]"
       onClick={onClick}
     >
-      <div className="flex gap-4 p-4">
-        {/* Thumbnail with Grade */}
-        <div className="relative w-24 h-24 bg-muted rounded-xl overflow-hidden shrink-0">
+      <div className="flex gap-3 p-3">
+        {/* Thumbnail */}
+        <div className="relative w-[72px] h-[72px] bg-muted rounded-lg overflow-hidden shrink-0">
           <img
             src={thumbnail}
             alt={`${auction.vehicle.make} ${auction.vehicle.model}`}
             className="w-full h-full object-cover"
             loading="lazy"
           />
-          {/* Grade Badge - bottom left */}
           <div className={cn(
-            "absolute bottom-2 left-2 text-[11px] px-2 py-0.5 rounded-md font-bold",
+            "absolute bottom-1 left-1 text-[10px] px-1.5 py-0.5 rounded font-bold",
             gradeConfig.bg, gradeConfig.text
           )}>
             {auction.vehicle.grade}
           </div>
         </div>
 
-        {/* Content */}
+        {/* Content - compact 3 rows */}
         <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
           {/* Row 1: Title + Timer */}
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <h3 className="font-semibold text-base text-foreground leading-tight">
-                {auction.vehicle.make} {auction.vehicle.model}
-              </h3>
-            </div>
-            
-            {/* Timer Pill */}
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="font-semibold text-sm text-foreground truncate">
+              {auction.vehicle.make} {auction.vehicle.model}
+            </h3>
             {auction.auctionType !== "one_click" && (
               <div className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium shrink-0",
+                "flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium shrink-0",
                 isUrgent 
                   ? "bg-destructive/10 text-destructive" 
-                  : "bg-muted text-muted-foreground"
+                  : "bg-muted/80 text-muted-foreground"
               )}>
-                <Clock className={cn("w-3.5 h-3.5", isUrgent && "animate-pulse")} />
-                <span className="font-mono">{formatTime(timeLeft)}</span>
+                <Clock className={cn("w-3 h-3", isUrgent && "animate-pulse")} />
+                <span className="font-mono tabular-nums">{formatTime(timeLeft)}</span>
               </div>
             )}
           </div>
 
-          {/* Row 2: Specs */}
-          <p className="text-sm text-muted-foreground mt-1.5 flex items-center gap-2">
-            <span>{auction.vehicle.year}</span>
-            <span className="text-muted-foreground/40">•</span>
-            <span>{(auction.vehicle.kms / 1000).toFixed(0)}k km</span>
-            <span className="text-muted-foreground/40">•</span>
-            <span className="flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5" />
-              {auction.vehicle.city}
-            </span>
+          {/* Row 2: Specs - single line */}
+          <p className="text-xs text-muted-foreground truncate">
+            {auction.vehicle.year} · {(auction.vehicle.kms / 1000).toFixed(0)}k km · {auction.vehicle.city}
           </p>
           
-          {/* Row 3: Price + Meta */}
-          <div className="flex items-center justify-between mt-3">
-            {/* Price Section */}
+          {/* Row 3: Price + Type */}
+          <div className="flex items-center justify-between gap-2">
             {auction.auctionType === "one_click" ? (
-              <span className="text-sm font-medium text-primary">Submit Best Bid →</span>
+              <span className="text-xs font-medium text-primary">Submit Bid →</span>
             ) : (
-              <div className="flex items-baseline gap-2">
-                <span className="font-bold text-xl text-foreground">
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-base text-foreground">
                   {formatPrice(auction.currentHighestBid)}
                 </span>
-                <span className="text-sm text-muted-foreground">
-                  {auction.bidCount} bids
+                <span className="text-[10px] text-muted-foreground">
+                  · {auction.bidCount} bids
                 </span>
               </div>
             )}
-
-            {/* Auction Type + Arrow */}
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className={cn(
-                "text-xs gap-1 px-2.5 py-1 font-medium border-muted-foreground/20",
-                auctionConfig.color
-              )}>
+            <div className="flex items-center gap-1">
+              <Badge variant="outline" className="text-[10px] gap-0.5 px-1.5 py-0 h-5 font-medium">
                 {auctionConfig.icon}
                 {auctionConfig.name}
               </Badge>
-              <ChevronRight className="w-5 h-5 text-muted-foreground/40" />
+              <ChevronRight className="w-4 h-4 text-muted-foreground/40" />
             </div>
           </div>
         </div>
