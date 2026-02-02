@@ -33,6 +33,136 @@ export interface BrokerBidWithAuction {
   } | null;
 }
 
+// Mock data for when database is empty
+const MOCK_LIVE_BIDS: BrokerBidWithAuction[] = [
+  {
+    id: "mock-live-1", auction_id: "mock-auction-1", broker_id: "mock-broker",
+    bid_amount: 48000, commission_amount: 2000, effective_score: 48300, placed_at: new Date().toISOString(),
+    status: "winning", bid_type: "competitive",
+    auction: {
+      id: "mock-auction-1", auction_type: "quick", status: "live",
+      start_time: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+      end_time: new Date(Date.now() + 18 * 60 * 1000).toISOString(),
+      current_highest_bid: 48000, current_highest_commission: 2000, winning_broker_id: "mock-broker",
+      inspections: { id: "insp-1", vehicle_make: "Honda", vehicle_model: "Activa 6G", vehicle_year: 2023, odometer_reading: 12450, vehicle_color: "White", condition_score: 85 }
+    }
+  },
+  {
+    id: "mock-live-2", auction_id: "mock-auction-2", broker_id: "mock-broker",
+    bid_amount: 52000, commission_amount: 1500, effective_score: 52225, placed_at: new Date().toISOString(),
+    status: "outbid", bid_type: "initial",
+    auction: {
+      id: "mock-auction-2", auction_type: "flexible", status: "live",
+      start_time: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+      end_time: new Date(Date.now() + 95 * 60 * 1000).toISOString(),
+      current_highest_bid: 55000, current_highest_commission: 2500, winning_broker_id: null,
+      inspections: { id: "insp-2", vehicle_make: "TVS", vehicle_model: "Apache RTR 160", vehicle_year: 2022, odometer_reading: 18200, vehicle_color: "Black", condition_score: 78 }
+    }
+  },
+  {
+    id: "mock-live-3", auction_id: "mock-auction-3", broker_id: "mock-broker",
+    bid_amount: 125000, commission_amount: 5000, effective_score: 125750, placed_at: new Date().toISOString(),
+    status: "winning", bid_type: "aggressive",
+    auction: {
+      id: "mock-auction-3", auction_type: "extended", status: "live",
+      start_time: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      end_time: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+      current_highest_bid: 125000, current_highest_commission: 5000, winning_broker_id: "mock-broker",
+      inspections: { id: "insp-3", vehicle_make: "Royal Enfield", vehicle_model: "Classic 350", vehicle_year: 2021, odometer_reading: 24500, vehicle_color: "Gunmetal Grey", condition_score: 72 }
+    }
+  },
+];
+
+const MOCK_WON_BIDS: BrokerBidWithAuction[] = [
+  {
+    id: "mock-won-1", auction_id: "mock-auction-won-1", broker_id: "mock-broker",
+    bid_amount: 45000, commission_amount: 1800, effective_score: 45270, placed_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    status: "won", bid_type: "competitive",
+    auction: {
+      id: "mock-auction-won-1", auction_type: "quick", status: "ended",
+      start_time: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+      end_time: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      current_highest_bid: 45000, current_highest_commission: 1800, winning_broker_id: "mock-broker",
+      inspections: { id: "insp-won-1", vehicle_make: "Bajaj", vehicle_model: "Pulsar NS200", vehicle_year: 2023, odometer_reading: 8500, vehicle_color: "Red", condition_score: 88 }
+    }
+  },
+  {
+    id: "mock-won-2", auction_id: "mock-auction-won-2", broker_id: "mock-broker",
+    bid_amount: 38000, commission_amount: 1500, effective_score: 38225, placed_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    status: "won", bid_type: "initial",
+    auction: {
+      id: "mock-auction-won-2", auction_type: "flexible", status: "ended",
+      start_time: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
+      end_time: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+      current_highest_bid: 38000, current_highest_commission: 1500, winning_broker_id: "mock-broker",
+      inspections: { id: "insp-won-2", vehicle_make: "Yamaha", vehicle_model: "FZ-S V3", vehicle_year: 2022, odometer_reading: 15800, vehicle_color: "Blue", condition_score: 75 }
+    }
+  },
+  {
+    id: "mock-won-3", auction_id: "mock-auction-won-3", broker_id: "mock-broker",
+    bid_amount: 28000, commission_amount: 1200, effective_score: 28180, placed_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+    status: "won", bid_type: "competitive",
+    auction: {
+      id: "mock-auction-won-3", auction_type: "quick", status: "ended",
+      start_time: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+      end_time: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+      current_highest_bid: 28000, current_highest_commission: 1200, winning_broker_id: "mock-broker",
+      inspections: { id: "insp-won-3", vehicle_make: "Hero", vehicle_model: "Splendor Plus", vehicle_year: 2021, odometer_reading: 32000, vehicle_color: "Black", condition_score: 68 }
+    }
+  },
+  {
+    id: "mock-won-4", auction_id: "mock-auction-won-4", broker_id: "mock-broker",
+    bid_amount: 42000, commission_amount: 2000, effective_score: 42300, placed_at: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
+    status: "won", bid_type: "aggressive",
+    auction: {
+      id: "mock-auction-won-4", auction_type: "extended", status: "ended",
+      start_time: new Date(Date.now() - 50 * 24 * 60 * 60 * 1000).toISOString(),
+      end_time: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
+      current_highest_bid: 42000, current_highest_commission: 2000, winning_broker_id: "mock-broker",
+      inspections: { id: "insp-won-4", vehicle_make: "Suzuki", vehicle_model: "Access 125", vehicle_year: 2023, odometer_reading: 5200, vehicle_color: "Pearl White", condition_score: 90 }
+    }
+  },
+];
+
+const MOCK_LOST_BIDS: BrokerBidWithAuction[] = [
+  {
+    id: "mock-lost-1", auction_id: "mock-auction-lost-1", broker_id: "mock-broker",
+    bid_amount: 40000, commission_amount: 1500, effective_score: 40225, placed_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    status: "lost", bid_type: "initial",
+    auction: {
+      id: "mock-auction-lost-1", auction_type: "quick", status: "ended",
+      start_time: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      end_time: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      current_highest_bid: 44000, current_highest_commission: 2000, winning_broker_id: "other-broker",
+      inspections: { id: "insp-lost-1", vehicle_make: "TVS", vehicle_model: "Jupiter", vehicle_year: 2022, odometer_reading: 18900, vehicle_color: "Grey", condition_score: 76 }
+    }
+  },
+  {
+    id: "mock-lost-2", auction_id: "mock-auction-lost-2", broker_id: "mock-broker",
+    bid_amount: 55000, commission_amount: 2000, effective_score: 55300, placed_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    status: "lost", bid_type: "competitive",
+    auction: {
+      id: "mock-auction-lost-2", auction_type: "flexible", status: "ended",
+      start_time: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+      end_time: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      current_highest_bid: 58000, current_highest_commission: 3000, winning_broker_id: "other-broker",
+      inspections: { id: "insp-lost-2", vehicle_make: "Honda", vehicle_model: "Shine", vehicle_year: 2023, odometer_reading: 9800, vehicle_color: "Silver", condition_score: 82 }
+    }
+  },
+  {
+    id: "mock-lost-3", auction_id: "mock-auction-lost-3", broker_id: "mock-broker",
+    bid_amount: 72000, commission_amount: 2500, effective_score: 72375, placed_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+    status: "lost", bid_type: "aggressive",
+    auction: {
+      id: "mock-auction-lost-3", auction_type: "extended", status: "ended",
+      start_time: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+      end_time: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+      current_highest_bid: 78000, current_highest_commission: 4000, winning_broker_id: "other-broker",
+      inspections: { id: "insp-lost-3", vehicle_make: "Bajaj", vehicle_model: "Dominar 400", vehicle_year: 2021, odometer_reading: 22000, vehicle_color: "Black", condition_score: 70 }
+    }
+  },
+];
+
 interface UseBrokerBidsReturn {
   liveBids: BrokerBidWithAuction[];
   wonBids: BrokerBidWithAuction[];
@@ -124,20 +254,38 @@ export const useBrokerBids = (brokerId: string | undefined): UseBrokerBidsReturn
         }
       }
 
-      setLiveBids(live);
-      setWonBids(won);
-      setLostBids(lost);
+      // Use mock data if database is empty
+      const useMock = live.length === 0 && won.length === 0 && lost.length === 0;
+      
+      if (useMock) {
+        setLiveBids(MOCK_LIVE_BIDS);
+        setWonBids(MOCK_WON_BIDS);
+        setLostBids(MOCK_LOST_BIDS);
+        
+        // Calculate mock stats
+        const mockTotalBids = MOCK_LIVE_BIDS.length + MOCK_WON_BIDS.length + MOCK_LOST_BIDS.length;
+        const mockTotalWins = MOCK_WON_BIDS.length;
+        const mockWinRate = Math.round((mockTotalWins / mockTotalBids) * 100);
+        const mockAvgBid = Math.round(
+          [...MOCK_LIVE_BIDS, ...MOCK_WON_BIDS, ...MOCK_LOST_BIDS].reduce((sum, b) => sum + b.bid_amount, 0) / mockTotalBids
+        );
+        setStats({ totalBids: mockTotalBids, totalWins: mockTotalWins, winRate: mockWinRate, avgBidAmount: mockAvgBid });
+      } else {
+        setLiveBids(live);
+        setWonBids(won);
+        setLostBids(lost);
 
-      // Calculate stats
-      const totalBids = latestBidsByAuction.size;
-      const totalWins = won.length;
-      const winRate = totalBids > 0 ? Math.round((totalWins / totalBids) * 100) : 0;
-      const totalBidAmount = Array.from(latestBidsByAuction.values()).reduce(
-        (sum, b) => sum + b.bid_amount, 0
-      );
-      const avgBidAmount = totalBids > 0 ? Math.round(totalBidAmount / totalBids) : 0;
+        // Calculate stats
+        const totalBids = latestBidsByAuction.size;
+        const totalWins = won.length;
+        const winRate = totalBids > 0 ? Math.round((totalWins / totalBids) * 100) : 0;
+        const totalBidAmount = Array.from(latestBidsByAuction.values()).reduce(
+          (sum, b) => sum + b.bid_amount, 0
+        );
+        const avgBidAmount = totalBids > 0 ? Math.round(totalBidAmount / totalBids) : 0;
 
-      setStats({ totalBids, totalWins, winRate, avgBidAmount });
+        setStats({ totalBids, totalWins, winRate, avgBidAmount });
+      }
     } catch (err) {
       console.error("Error in fetchBids:", err);
     } finally {
