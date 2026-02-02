@@ -38,6 +38,22 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
+// Image mapping by vehicle make
+const VEHICLE_IMAGES: Record<string, string> = {
+  "Honda": "/vehicles/activa1.jpg",
+  "TVS": "/vehicles/pulsar5.jpg",
+  "Bajaj": "/vehicles/pulsar2.jpg",
+  "Royal Enfield": "/vehicles/royalenfield1.jpg",
+  "Yamaha": "/vehicles/pulsar5.jpg",
+  "Hero": "/vehicles/activa2.jpg",
+  "Suzuki": "/vehicles/activa7.jpg",
+  "KTM": "/vehicles/duke390.jpg",
+};
+
+const getVehicleImage = (make: string): string => {
+  return VEHICLE_IMAGES[make] || "/vehicles/activa1.jpg";
+};
+
 // Service stage guidance data
 const SERVICE_GUIDANCE = {
   payment: {
@@ -335,8 +351,12 @@ const BrokerWonVehicleDetail = () => {
         {/* Vehicle Summary Card */}
         <div className="bg-card border rounded-xl p-4">
           <div className="flex items-start gap-4">
-            <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center">
-              <Car className="w-8 h-8 text-muted-foreground" />
+            <div className="w-16 h-16 bg-muted rounded-lg overflow-hidden">
+              <img 
+                src={getVehicleImage(inspection?.vehicle_make || "Honda")} 
+                alt={`${inspection?.vehicle_make} ${inspection?.vehicle_model}`}
+                className="w-full h-full object-cover"
+              />
             </div>
             <div className="flex-1">
               <h2 className="font-semibold">

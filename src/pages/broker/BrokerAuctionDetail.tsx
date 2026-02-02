@@ -102,6 +102,28 @@ interface AuctionData {
   } | null;
 }
 
+// Image mapping by vehicle make
+const VEHICLE_IMAGES: Record<string, string[]> = {
+  "Honda": ["/vehicles/activa1.jpg", "/vehicles/activa2.jpg", "/vehicles/activa3.jpg", "/vehicles/activa4.jpg", "/vehicles/activa6.jpg", "/vehicles/activa7.jpg"],
+  "TVS": ["/vehicles/pulsar5.jpg", "/vehicles/activa7.jpg"],
+  "Bajaj": ["/vehicles/pulsar2.jpg", "/vehicles/pulsar4.jpg", "/vehicles/pulsar5.jpg"],
+  "Royal Enfield": ["/vehicles/royalenfield1.jpg", "/vehicles/royalenfield2.jpg", "/vehicles/royalenfield3.jpg", "/vehicles/royalenfield4.jpg", "/vehicles/royalenfield5.jpg"],
+  "Yamaha": ["/vehicles/pulsar5.jpg", "/vehicles/duke390.jpg"],
+  "Hero": ["/vehicles/activa2.jpg", "/vehicles/activa7.jpg"],
+  "Suzuki": ["/vehicles/pulsar5.jpg", "/vehicles/activa7.jpg"],
+  "KTM": ["/vehicles/duke390.jpg", "/vehicles/duke390_1.jpg", "/vehicles/duke390_2.jpg", "/vehicles/duke390_3.jpg", "/vehicles/duke390_4.jpg", "/vehicles/duke390_5.jpg"],
+};
+
+const getImagesForMake = (make: string): CapturedImage[] => {
+  const images = VEHICLE_IMAGES[make] || VEHICLE_IMAGES["Honda"];
+  return images.map((uri, index) => ({
+    id: `img-${index}`,
+    uri,
+    angle: ["front_right", "rear_left", "dashboard", "engine", "side_profile", "exhaust"][index % 6],
+    captured_at: new Date().toISOString(),
+  }));
+};
+
 // Mock auctions with complete data for demo mode
 const MOCK_AUCTIONS: Record<string, AuctionData> = {
   "mock-auction-1": {
@@ -304,7 +326,13 @@ const BrokerAuctionDetail = () => {
         return;
       }
 
-      setAuction(data as unknown as AuctionData);
+      // Inject images from our local database if no captured images exist
+      const auctionData = data as unknown as AuctionData;
+      if (auctionData.inspections && (!auctionData.inspections.captured_images || auctionData.inspections.captured_images.length === 0)) {
+        auctionData.inspections.captured_images = getImagesForMake(auctionData.inspections.vehicle_make);
+      }
+
+      setAuction(auctionData);
       setBidAmount((data.current_highest_bid || 0) + (data.minimum_bid_increment || 500));
       setLoading(false);
     };
