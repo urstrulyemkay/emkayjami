@@ -151,42 +151,50 @@ export const MOCK_VEHICLES: MockVehicle[] = [
   {
     id: "v1", make: "TVS", model: "Apache RTR 160", variant: "4V BS6", year: 2023,
     kms: 12450, city: "Bangalore", grade: "B", gradeDescription: "Good condition, minor wear",
-    thumbnail: "/placeholder.svg", images: ["/placeholder.svg"], videoUrl: null, engineCC: 160, color: "Red"
+    thumbnail: "https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=400&h=400&fit=crop&q=80",
+    images: [], videoUrl: null, engineCC: 160, color: "Red"
   },
   {
     id: "v2", make: "Bajaj", model: "Pulsar NS200", variant: "ABS", year: 2022,
-    kms: 18200, city: "Bangalore", grade: "A", gradeDescription: "Excellent condition",
-    thumbnail: "/placeholder.svg", images: ["/placeholder.svg"], videoUrl: null, engineCC: 200, color: "Black"
+    kms: 18200, city: "Mumbai", grade: "A", gradeDescription: "Excellent condition",
+    thumbnail: "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400&h=400&fit=crop&q=80",
+    images: [], videoUrl: null, engineCC: 200, color: "Black"
   },
   {
     id: "v3", make: "Hero", model: "Splendor Plus", variant: "i3S", year: 2021,
-    kms: 28500, city: "Bangalore", grade: "C", gradeDescription: "Fair condition, some wear",
-    thumbnail: "/placeholder.svg", images: ["/placeholder.svg"], videoUrl: null, engineCC: 100, color: "Blue"
+    kms: 28500, city: "Delhi", grade: "C", gradeDescription: "Fair condition, some wear",
+    thumbnail: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80",
+    images: [], videoUrl: null, engineCC: 100, color: "Blue"
   },
   {
     id: "v4", make: "Yamaha", model: "FZ-S V3", variant: "FI", year: 2023,
-    kms: 8500, city: "Bangalore", grade: "A", gradeDescription: "Excellent condition",
-    thumbnail: "/placeholder.svg", images: ["/placeholder.svg"], videoUrl: null, engineCC: 150, color: "Yellow"
+    kms: 8500, city: "Chennai", grade: "A", gradeDescription: "Excellent condition",
+    thumbnail: "https://images.unsplash.com/photo-1580310614729-ccd69652491d?w=400&h=400&fit=crop&q=80",
+    images: [], videoUrl: null, engineCC: 150, color: "Yellow"
   },
   {
     id: "v5", make: "Royal Enfield", model: "Classic 350", variant: "Signals", year: 2022,
-    kms: 15000, city: "Bangalore", grade: "B", gradeDescription: "Good condition",
-    thumbnail: "/placeholder.svg", images: ["/placeholder.svg"], videoUrl: null, engineCC: 350, color: "Green"
+    kms: 15000, city: "Hyderabad", grade: "B", gradeDescription: "Good condition",
+    thumbnail: "https://images.unsplash.com/photo-1558980664-769d59546b3d?w=400&h=400&fit=crop&q=80",
+    images: [], videoUrl: null, engineCC: 350, color: "Green"
   },
   {
     id: "v6", make: "Honda", model: "Activa 6G", variant: "DLX", year: 2022,
-    kms: 22000, city: "Mumbai", grade: "B", gradeDescription: "Good condition",
-    thumbnail: "/placeholder.svg", images: ["/placeholder.svg"], videoUrl: null, engineCC: 110, color: "White"
+    kms: 22000, city: "Pune", grade: "B", gradeDescription: "Good condition",
+    thumbnail: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80",
+    images: [], videoUrl: null, engineCC: 110, color: "White"
   },
   {
     id: "v7", make: "TVS", model: "Jupiter", variant: "ZX", year: 2021,
-    kms: 35000, city: "Chennai", grade: "C", gradeDescription: "Fair condition",
-    thumbnail: "/placeholder.svg", images: ["/placeholder.svg"], videoUrl: null, engineCC: 110, color: "Grey"
+    kms: 35000, city: "Bangalore", grade: "C", gradeDescription: "Fair condition",
+    thumbnail: "https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=400&h=400&fit=crop&q=80",
+    images: [], videoUrl: null, engineCC: 110, color: "Grey"
   },
   {
     id: "v8", make: "Suzuki", model: "Access 125", variant: "SE", year: 2023,
-    kms: 5000, city: "Bangalore", grade: "A", gradeDescription: "Excellent, almost new",
-    thumbnail: "/placeholder.svg", images: ["/placeholder.svg"], videoUrl: null, engineCC: 125, color: "Blue"
+    kms: 5000, city: "Kolkata", grade: "A", gradeDescription: "Excellent, almost new",
+    thumbnail: "https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=400&h=400&fit=crop&q=80",
+    images: [], videoUrl: null, engineCC: 125, color: "Blue"
   },
 ];
 

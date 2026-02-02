@@ -28,16 +28,17 @@ import {
   getProgressToNextLevel,
 } from "@/data/brokerMockData";
 
-// Bike thumbnail URLs by make (using placeholder bike images)
+// Reliable bike thumbnail URLs
 const BIKE_THUMBNAILS: Record<string, string> = {
-  "TVS": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop",
-  "Bajaj": "https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=400&h=300&fit=crop",
-  "Hero": "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400&h=300&fit=crop",
-  "Yamaha": "https://images.unsplash.com/photo-1547549082-6bc09f2049ae?w=400&h=300&fit=crop",
-  "Royal Enfield": "https://images.unsplash.com/photo-1558980664-769d59546b3d?w=400&h=300&fit=crop",
-  "Honda": "https://images.unsplash.com/photo-1571646750667-720cacc6a570?w=400&h=300&fit=crop",
-  "Suzuki": "https://images.unsplash.com/photo-1571646750667-720cacc6a570?w=400&h=300&fit=crop",
-  "default": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop",
+  "Honda": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80",
+  "TVS": "https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=400&h=400&fit=crop&q=80",
+  "Bajaj": "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400&h=400&fit=crop&q=80",
+  "Royal Enfield": "https://images.unsplash.com/photo-1558980664-769d59546b3d?w=400&h=400&fit=crop&q=80",
+  "Yamaha": "https://images.unsplash.com/photo-1580310614729-ccd69652491d?w=400&h=400&fit=crop&q=80",
+  "Hero": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80",
+  "Suzuki": "https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=400&h=400&fit=crop&q=80",
+  "KTM": "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400&h=400&fit=crop&q=80",
+  "default": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80",
 };
 
 // Model variants for common bikes
@@ -50,16 +51,17 @@ const BIKE_VARIANTS: Record<string, string> = {
   "Activa 6G": "DLX",
   "Access 125": "SE",
   "Jupiter": "ZX",
+  "Shine": "125 CBS",
 };
 
-// Realistic mock auctions for when database is empty
+// Realistic mock auctions with consistent data
 const MOCK_LIVE_AUCTIONS = [
   { id: "mock-1", make: "Honda", model: "Activa 6G", year: 2023, kms: 12450, city: "Bangalore", grade: "A", auctionType: "quick", bid: 42500, bidCount: 6, endMins: 18 },
-  { id: "mock-2", make: "TVS", model: "Apache RTR 160", year: 2022, kms: 18200, city: "Bangalore", grade: "B", auctionType: "flexible", bid: 56000, bidCount: 8, endMins: 95 },
-  { id: "mock-3", make: "Royal Enfield", model: "Classic 350", year: 2021, kms: 24500, city: "Mumbai", grade: "B", auctionType: "extended", bid: 128000, bidCount: 12, endMins: 2880 },
-  { id: "mock-4", make: "Bajaj", model: "Pulsar NS200", year: 2023, kms: 8500, city: "Bangalore", grade: "A", auctionType: "one_click", bid: 0, bidCount: 0, endMins: 1440 },
-  { id: "mock-5", make: "Yamaha", model: "FZ-S V3", year: 2022, kms: 15800, city: "Chennai", grade: "B", auctionType: "quick", bid: 48000, bidCount: 4, endMins: 12 },
-  { id: "mock-6", make: "Hero", model: "Splendor Plus", year: 2021, kms: 32000, city: "Delhi", grade: "C", auctionType: "flexible", bid: 28500, bidCount: 5, endMins: 180 },
+  { id: "mock-2", make: "TVS", model: "Apache RTR 160", year: 2022, kms: 18200, city: "Mumbai", grade: "B", auctionType: "flexible", bid: 56000, bidCount: 8, endMins: 95 },
+  { id: "mock-3", make: "Royal Enfield", model: "Classic 350", year: 2021, kms: 24500, city: "Delhi", grade: "B", auctionType: "extended", bid: 128000, bidCount: 12, endMins: 2880 },
+  { id: "mock-4", make: "Bajaj", model: "Pulsar NS200", year: 2023, kms: 8500, city: "Chennai", grade: "A", auctionType: "one_click", bid: 0, bidCount: 0, endMins: 1440 },
+  { id: "mock-5", make: "Yamaha", model: "FZ-S V3", year: 2022, kms: 15800, city: "Hyderabad", grade: "B", auctionType: "quick", bid: 48000, bidCount: 4, endMins: 12 },
+  { id: "mock-6", make: "Hero", model: "Splendor Plus", year: 2021, kms: 32000, city: "Pune", grade: "C", auctionType: "flexible", bid: 28500, bidCount: 5, endMins: 180 },
 ];
 
 const MOCK_UPCOMING_AUCTIONS = [
