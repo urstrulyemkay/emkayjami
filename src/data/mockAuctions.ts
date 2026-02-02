@@ -65,85 +65,86 @@ const COLORS = ["Black", "White", "Red", "Blue", "Grey", "Orange", "Green", "Mat
 const GRADES = ["A", "A", "B", "B", "B", "C", "C", "D"];
 const AUCTION_TYPES = ["quick", "quick", "flexible", "extended", "one_click"];
 
-// Generate 100 mock auctions
+// Generate 100 mock auctions with variety (interleaved makes)
 export const generateMockAuctions = (): MockAuction[] => {
   const auctions: MockAuction[] = [];
-  let auctionIndex = 0;
   
-  while (auctions.length < 100) {
-    for (const config of VEHICLE_CONFIGS) {
-      if (auctions.length >= 100) break;
-      
-      for (const variant of config.variants) {
-        if (auctions.length >= 100) break;
-        
-        const year = config.yearRange[auctionIndex % config.yearRange.length];
-        const id = `auction-${String(auctionIndex + 1).padStart(3, '0')}`;
-        const city = CITIES[auctionIndex % CITIES.length];
-        const color = COLORS[auctionIndex % COLORS.length];
-        const grade = GRADES[auctionIndex % GRADES.length];
-        const auctionType = AUCTION_TYPES[auctionIndex % AUCTION_TYPES.length];
-        
-        // Generate realistic KM based on age
-        const age = 2025 - year;
-        const baseKms = age * 8000;
-        const kms = baseKms + (auctionIndex * 500) % 15000;
-        
-        // Generate prices based on vehicle type
-        const basePrice = config.make === "Royal Enfield" ? 120000 :
-                         config.make === "KTM" ? 180000 :
-                         config.make === "Bajaj" ? 80000 : 50000;
-        const priceVariation = (auctionIndex * 1234) % 50000;
-        const highestBid = basePrice + priceVariation - (age * 10000);
-        
-        // Time remaining varies
-        const hoursRemaining = (auctionIndex % 48) + 1;
-        const endTime = new Date(Date.now() + hoursRemaining * 60 * 60 * 1000);
-        
-        // Registration format: XX 00 XX 0000
-        const regPrefix = city.substring(0, 2).toUpperCase();
-        const regYear = String(year).substring(2);
-        const regSuffix = String(1000 + auctionIndex).substring(1);
-        const registration = `${regPrefix} ${regYear} AB ${regSuffix}`;
-        
-        auctions.push({
-          id,
-          vehicle: {
-            make: config.make,
-            model: config.model,
-            variant,
-            year,
-            kms,
-            city,
-            grade,
-            color,
-            registration,
-            engineCC: config.ccRange[0],
-            vin: `VIN${config.make.substring(0, 3).toUpperCase()}${year}${String(auctionIndex).padStart(6, '0')}`,
-          },
-          auctionType,
-          timeRemaining: hoursRemaining * 60 * 60 * 1000,
-          endTime,
-          startTime: new Date(endTime.getTime() - 24 * 60 * 60 * 1000),
-          currentHighestBid: Math.max(highestBid, 25000),
-          currentHighestCommission: Math.floor(highestBid * 0.02) + 500,
-          bidCount: 3 + (auctionIndex % 15),
-          minimumBidIncrement: 500,
-          matchScore: 70 + (auctionIndex % 30),
-          conditionScore: 40 + (auctionIndex % 55),
-          documents: {
-            rc: auctionIndex % 3 !== 0,
-            insurance: auctionIndex % 4 !== 0,
-            puc: auctionIndex % 5 !== 0,
-            challans: auctionIndex % 7,
-            loan: auctionIndex % 10 === 0,
-          },
-          thumbnail: getVehicleImage(config.make, id),
-        });
-        
-        auctionIndex++;
-      }
+  // Create expanded list with all config+variant combinations
+  const expandedConfigs: { config: typeof VEHICLE_CONFIGS[0]; variantIndex: number }[] = [];
+  for (const config of VEHICLE_CONFIGS) {
+    for (let v = 0; v < config.variants.length; v++) {
+      expandedConfigs.push({ config, variantIndex: v });
     }
+  }
+  
+  // Shuffle to interleave different makes (deterministic)
+  const shuffled = expandedConfigs.sort((a, b) => {
+    const hashA = a.config.make.charCodeAt(0) + a.variantIndex * 7;
+    const hashB = b.config.make.charCodeAt(0) + b.variantIndex * 7;
+    return hashA - hashB;
+  });
+  
+  for (let i = 0; i < Math.min(100, shuffled.length); i++) {
+    const { config, variantIndex } = shuffled[i];
+    const variant = config.variants[variantIndex];
+    const year = config.yearRange[i % config.yearRange.length];
+    const id = `auction-${String(i + 1).padStart(3, '0')}`;
+    const city = CITIES[i % CITIES.length];
+    const color = COLORS[i % COLORS.length];
+    const grade = GRADES[i % GRADES.length];
+    const auctionType = AUCTION_TYPES[i % AUCTION_TYPES.length];
+    
+    const age = 2025 - year;
+    const kms = age * 8000 + (i * 500) % 15000;
+    
+    const basePrice = config.make === "Royal Enfield" ? 120000 :
+                     config.make === "KTM" ? 180000 :
+                     config.make === "Bajaj" ? 80000 : 50000;
+    const priceVariation = (i * 1234) % 50000;
+    const highestBid = basePrice + priceVariation - (age * 10000);
+    
+    const hoursRemaining = (i % 48) + 1;
+    const endTime = new Date(Date.now() + hoursRemaining * 60 * 60 * 1000);
+    
+    const regPrefix = city.substring(0, 2).toUpperCase();
+    const regYear = String(year).substring(2);
+    const regSuffix = String(1000 + i).substring(1);
+    const registration = `${regPrefix} ${regYear} AB ${regSuffix}`;
+    
+    auctions.push({
+      id,
+      vehicle: {
+        make: config.make,
+        model: config.model,
+        variant,
+        year,
+        kms,
+        city,
+        grade,
+        color,
+        registration,
+        engineCC: config.ccRange[0],
+        vin: `VIN${config.make.substring(0, 3).toUpperCase()}${year}${String(i).padStart(6, '0')}`,
+      },
+      auctionType,
+      timeRemaining: hoursRemaining * 60 * 60 * 1000,
+      endTime,
+      startTime: new Date(endTime.getTime() - 24 * 60 * 60 * 1000),
+      currentHighestBid: Math.max(highestBid, 25000),
+      currentHighestCommission: Math.floor(highestBid * 0.02) + 500,
+      bidCount: 3 + (i % 15),
+      minimumBidIncrement: 500,
+      matchScore: 70 + (i % 30),
+      conditionScore: 40 + (i % 55),
+      documents: {
+        rc: i % 3 !== 0,
+        insurance: i % 4 !== 0,
+        puc: i % 5 !== 0,
+        challans: i % 7,
+        loan: i % 10 === 0,
+      },
+      thumbnail: getVehicleImage(config.make, id),
+    });
   }
   
   return auctions;
