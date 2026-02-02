@@ -773,37 +773,79 @@ const BrokerDashboard = () => {
               )}
             </div>
 
-            {/* All Levels */}
+            {/* All Levels with Requirements */}
             <div>
-              <h4 className="font-semibold mb-3">All Levels</h4>
-              <div className="space-y-2">
-                {LEVELS.map((level) => (
-                  <div 
-                    key={level.level} 
-                    className={`p-3 rounded-xl border ${broker.level === level.level ? 'border-primary bg-primary/5' : 'border-border'}`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-8 h-8 rounded-lg ${level.bgColor} flex items-center justify-center text-white font-bold text-sm`}>
-                          {level.level}
+              <h4 className="font-semibold mb-3">Level Progression</h4>
+              <div className="space-y-3">
+                {LEVELS.map((level, index) => {
+                  const isCurrentLevel = broker.level === level.level;
+                  const isNextLevel = broker.level + 1 === level.level;
+                  const isPastLevel = broker.level > level.level;
+                  
+                  return (
+                    <div 
+                      key={level.level} 
+                      className={`p-4 rounded-xl border ${
+                        isCurrentLevel ? 'border-primary bg-primary/5' : 
+                        isNextLevel ? 'border-warning/50 bg-warning/5' :
+                        'border-border'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-xl ${level.bgColor} flex items-center justify-center text-white font-bold`}>
+                            {level.level}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-foreground">{level.name}</p>
+                            <p className="text-xs text-muted-foreground">Score: {level.minScore}–{level.maxScore}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium">{level.name}</p>
-                          <p className="text-xs text-muted-foreground">Score: {level.minScore}-{level.maxScore}</p>
+                        {isCurrentLevel && (
+                          <Badge className="bg-primary">Current</Badge>
+                        )}
+                        {isNextLevel && (
+                          <Badge variant="outline" className="text-warning border-warning/50">Next</Badge>
+                        )}
+                        {isPastLevel && (
+                          <Check className="w-5 h-5 text-accent" />
+                        )}
+                      </div>
+                      
+                      {/* Benefits */}
+                      <div className="mb-2">
+                        <p className="text-xs text-muted-foreground mb-1">Benefits:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {level.benefits.map((benefit, i) => (
+                            <Badge key={i} variant="secondary" className="text-xs">
+                              {benefit}
+                            </Badge>
+                          ))}
                         </div>
                       </div>
-                      {broker.level === level.level && (
-                        <Badge className="bg-primary">Current</Badge>
-                      )}
-                      {broker.level > level.level && (
-                        <Check className="w-5 h-5 text-accent" />
+
+                      {/* How to Reach - Show for current and next levels */}
+                      {(isCurrentLevel || isNextLevel) && level.howToReach && (
+                        <div className="mt-3 p-3 rounded-lg bg-muted/50">
+                          <p className="text-xs font-medium text-foreground mb-1">
+                            {isCurrentLevel ? "🎯 To reach next level:" : "🚀 How to reach:"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{level.howToReach}</p>
+                          {level.requirements && (
+                            <ul className="mt-2 space-y-1">
+                              {level.requirements.map((req, i) => (
+                                <li key={i} className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-primary/50" />
+                                  {req}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
                       )}
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {level.benefits[0]}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
