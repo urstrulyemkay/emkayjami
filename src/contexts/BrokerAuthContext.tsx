@@ -81,6 +81,32 @@ export function BrokerAuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Subscribe to broker profile changes for real-time updates
+  useEffect(() => {
+    if (!broker?.id) return;
+
+    const channel = supabase
+      .channel(`broker-profile-${broker.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "brokers",
+          filter: `id=eq.${broker.id}`,
+        },
+        (payload) => {
+          console.log("Broker profile updated:", payload);
+          setBroker(payload.new as BrokerProfile);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [broker?.id]);
+
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
