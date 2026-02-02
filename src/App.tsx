@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { BrokerAuthProvider } from "@/contexts/BrokerAuthContext";
 import MockLogin from "./pages/MockLogin";
 import Auth from "./pages/Auth";
 import ExecutiveDashboard from "./pages/ExecutiveDashboard";
@@ -25,9 +26,17 @@ import DeltaComparison from "./pages/DeltaComparison";
 import DeltaConsentFlow from "./pages/DeltaConsentFlow";
 import NotFound from "./pages/NotFound";
 
+// Broker pages
+import BrokerLogin from "./pages/broker/BrokerLogin";
+import BrokerDashboard from "./pages/broker/BrokerDashboard";
+import BrokerAuctionDetail from "./pages/broker/BrokerAuctionDetail";
+import BrokerBids from "./pages/broker/BrokerBids";
+import BrokerWallet from "./pages/broker/BrokerWallet";
+import BrokerProfile from "./pages/broker/BrokerProfile";
+
 const queryClient = new QueryClient();
 
-// Protected route wrapper
+// Protected route wrapper for executives
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth();
   
@@ -192,6 +201,16 @@ const AppRoutes = () => {
         path="/auth"
         element={<Auth />}
       />
+      
+      {/* Broker Routes - wrapped in BrokerAuthProvider */}
+      <Route path="/broker/login" element={<BrokerLogin />} />
+      <Route path="/broker" element={<BrokerDashboard />} />
+      <Route path="/broker/auction/:id" element={<BrokerAuctionDetail />} />
+      <Route path="/broker/bids" element={<BrokerBids />} />
+      <Route path="/broker/wallet" element={<BrokerWallet />} />
+      <Route path="/broker/profile" element={<BrokerProfile />} />
+      <Route path="/broker/help" element={<BrokerProfile />} />
+      
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>
@@ -202,11 +221,13 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
+        <BrokerAuthProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </BrokerAuthProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

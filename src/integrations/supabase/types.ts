@@ -90,6 +90,395 @@ export type Database = {
           },
         ]
       }
+      auctions: {
+        Row: {
+          allocation_timestamp: string | null
+          auction_type: string
+          bid_count: number | null
+          broker_network: string | null
+          created_at: string
+          current_highest_bid: number | null
+          current_highest_commission: number | null
+          duration_minutes: number
+          end_time: string
+          geo_targeting_city: string | null
+          geo_targeting_radius: number | null
+          id: string
+          inspection_id: string
+          minimum_bid_increment: number | null
+          outcome_reason: string | null
+          reserve_price: number | null
+          selected_broker_ids: string[] | null
+          start_time: string
+          status: string
+          updated_at: string
+          winning_bid_id: string | null
+          winning_broker_id: string | null
+        }
+        Insert: {
+          allocation_timestamp?: string | null
+          auction_type?: string
+          bid_count?: number | null
+          broker_network?: string | null
+          created_at?: string
+          current_highest_bid?: number | null
+          current_highest_commission?: number | null
+          duration_minutes?: number
+          end_time: string
+          geo_targeting_city?: string | null
+          geo_targeting_radius?: number | null
+          id?: string
+          inspection_id: string
+          minimum_bid_increment?: number | null
+          outcome_reason?: string | null
+          reserve_price?: number | null
+          selected_broker_ids?: string[] | null
+          start_time?: string
+          status?: string
+          updated_at?: string
+          winning_bid_id?: string | null
+          winning_broker_id?: string | null
+        }
+        Update: {
+          allocation_timestamp?: string | null
+          auction_type?: string
+          bid_count?: number | null
+          broker_network?: string | null
+          created_at?: string
+          current_highest_bid?: number | null
+          current_highest_commission?: number | null
+          duration_minutes?: number
+          end_time?: string
+          geo_targeting_city?: string | null
+          geo_targeting_radius?: number | null
+          id?: string
+          inspection_id?: string
+          minimum_bid_increment?: number | null
+          outcome_reason?: string | null
+          reserve_price?: number | null
+          selected_broker_ids?: string[] | null
+          start_time?: string
+          status?: string
+          updated_at?: string
+          winning_bid_id?: string | null
+          winning_broker_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auctions_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "inspections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      broker_badges: {
+        Row: {
+          badge_icon: string | null
+          badge_name: string
+          broker_id: string
+          coins_reward: number | null
+          created_at: string
+          description: string | null
+          earned_at: string | null
+          expires_at: string | null
+          id: string
+          progress: number | null
+          target: number | null
+        }
+        Insert: {
+          badge_icon?: string | null
+          badge_name: string
+          broker_id: string
+          coins_reward?: number | null
+          created_at?: string
+          description?: string | null
+          earned_at?: string | null
+          expires_at?: string | null
+          id?: string
+          progress?: number | null
+          target?: number | null
+        }
+        Update: {
+          badge_icon?: string | null
+          badge_name?: string
+          broker_id?: string
+          coins_reward?: number | null
+          created_at?: string
+          description?: string | null
+          earned_at?: string | null
+          expires_at?: string | null
+          id?: string
+          progress?: number | null
+          target?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broker_badges_broker_id_fkey"
+            columns: ["broker_id"]
+            isOneToOne: false
+            referencedRelation: "brokers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      broker_bids: {
+        Row: {
+          auction_id: string
+          bid_amount: number
+          bid_type: string | null
+          broker_id: string
+          commission_amount: number
+          device_info: string | null
+          effective_score: number | null
+          id: string
+          placed_at: string
+          status: string
+          time_offset_ms: number | null
+        }
+        Insert: {
+          auction_id: string
+          bid_amount: number
+          bid_type?: string | null
+          broker_id: string
+          commission_amount?: number
+          device_info?: string | null
+          effective_score?: number | null
+          id?: string
+          placed_at?: string
+          status?: string
+          time_offset_ms?: number | null
+        }
+        Update: {
+          auction_id?: string
+          bid_amount?: number
+          bid_type?: string | null
+          broker_id?: string
+          commission_amount?: number
+          device_info?: string | null
+          effective_score?: number | null
+          id?: string
+          placed_at?: string
+          status?: string
+          time_offset_ms?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broker_bids_auction_id_fkey"
+            columns: ["auction_id"]
+            isOneToOne: false
+            referencedRelation: "auctions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broker_bids_broker_id_fkey"
+            columns: ["broker_id"]
+            isOneToOne: false
+            referencedRelation: "brokers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      broker_strikes: {
+        Row: {
+          appeal_status: string | null
+          broker_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          penalty_coins: number | null
+          penalty_trust_score: number | null
+          reason: string
+          related_entity_id: string | null
+          related_entity_type: string | null
+          severity: string
+        }
+        Insert: {
+          appeal_status?: string | null
+          broker_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          penalty_coins?: number | null
+          penalty_trust_score?: number | null
+          reason: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          severity?: string
+        }
+        Update: {
+          appeal_status?: string | null
+          broker_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          penalty_coins?: number | null
+          penalty_trust_score?: number | null
+          reason?: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broker_strikes_broker_id_fkey"
+            columns: ["broker_id"]
+            isOneToOne: false
+            referencedRelation: "brokers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      broker_wallet_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          broker_id: string
+          created_at: string
+          id: string
+          reason: string | null
+          related_entity_id: string | null
+          related_entity_type: string | null
+          transaction_type: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          broker_id: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          transaction_type: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          broker_id?: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broker_wallet_transactions_broker_id_fkey"
+            columns: ["broker_id"]
+            isOneToOne: false
+            referencedRelation: "brokers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brokers: {
+        Row: {
+          account_status: string
+          age_range: string | null
+          bank_account_number: string | null
+          business_name: string
+          business_type: string | null
+          city: string
+          coins_balance: number
+          created_at: string
+          email: string | null
+          gstin: string | null
+          id: string
+          ifsc_code: string | null
+          kms_range_max: number | null
+          kyc_status: string | null
+          kyc_verified_at: string | null
+          level: number
+          lifetime_coins_earned: number
+          lifetime_coins_spent: number
+          mobile: string
+          operating_radius: number | null
+          owner_name: string
+          pan: string | null
+          preferred_auction_types: string[] | null
+          preferred_categories: string[] | null
+          preferred_makes: string[] | null
+          price_band_max: number | null
+          price_band_min: number | null
+          strikes_count: number
+          trust_score: number
+          updated_at: string
+          upi_id: string | null
+          user_id: string
+        }
+        Insert: {
+          account_status?: string
+          age_range?: string | null
+          bank_account_number?: string | null
+          business_name: string
+          business_type?: string | null
+          city: string
+          coins_balance?: number
+          created_at?: string
+          email?: string | null
+          gstin?: string | null
+          id?: string
+          ifsc_code?: string | null
+          kms_range_max?: number | null
+          kyc_status?: string | null
+          kyc_verified_at?: string | null
+          level?: number
+          lifetime_coins_earned?: number
+          lifetime_coins_spent?: number
+          mobile: string
+          operating_radius?: number | null
+          owner_name: string
+          pan?: string | null
+          preferred_auction_types?: string[] | null
+          preferred_categories?: string[] | null
+          preferred_makes?: string[] | null
+          price_band_max?: number | null
+          price_band_min?: number | null
+          strikes_count?: number
+          trust_score?: number
+          updated_at?: string
+          upi_id?: string | null
+          user_id: string
+        }
+        Update: {
+          account_status?: string
+          age_range?: string | null
+          bank_account_number?: string | null
+          business_name?: string
+          business_type?: string | null
+          city?: string
+          coins_balance?: number
+          created_at?: string
+          email?: string | null
+          gstin?: string | null
+          id?: string
+          ifsc_code?: string | null
+          kms_range_max?: number | null
+          kyc_status?: string | null
+          kyc_verified_at?: string | null
+          level?: number
+          lifetime_coins_earned?: number
+          lifetime_coins_spent?: number
+          mobile?: string
+          operating_radius?: number | null
+          owner_name?: string
+          pan?: string | null
+          preferred_auction_types?: string[] | null
+          preferred_categories?: string[] | null
+          preferred_makes?: string[] | null
+          price_band_max?: number | null
+          price_band_min?: number | null
+          strikes_count?: number
+          trust_score?: number
+          updated_at?: string
+          upi_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       captured_images: {
         Row: {
           angle: string
@@ -363,6 +752,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       voice_recordings: {
         Row: {
           audio_uri: string
@@ -406,10 +816,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "executive" | "broker" | "customer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -536,6 +952,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "executive", "broker", "customer"],
+    },
   },
 } as const
