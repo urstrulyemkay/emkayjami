@@ -265,75 +265,60 @@ const BrokerBids = () => {
               return (
                 <div
                   key={bid.id}
-                  className="bg-card border rounded-xl overflow-hidden cursor-pointer hover:border-primary/50 transition-colors"
+                  className="bg-card border rounded-lg overflow-hidden cursor-pointer hover:border-primary/50 transition-colors"
                   onClick={() => wonVehicle && navigate(`/broker/won/${wonVehicle.id}`)}
                 >
-                  <div className="flex gap-4 p-4">
+                  <div className="flex gap-3 p-3">
                     {/* Vehicle Image */}
-                    <div className="relative w-24 h-20 bg-muted rounded-xl overflow-hidden shrink-0">
+                    <div className="relative w-20 h-16 bg-muted rounded-lg overflow-hidden shrink-0">
                       <img
                         src={thumbnail}
                         alt={bid.auction?.inspections?.vehicle_model || "Vehicle"}
                         className="w-full h-full object-cover"
                       />
-                      <Badge className="absolute top-1 right-1 text-xs bg-accent text-accent-foreground">
-                        <Trophy className="w-3 h-3 mr-1" />
+                      <Badge className="absolute top-0.5 right-0.5 text-[10px] px-1.5 py-0 h-4 bg-accent text-accent-foreground">
+                        <Trophy className="w-3 h-3 mr-0.5" />
                         WON
                       </Badge>
                     </div>
 
                     {/* Vehicle Info */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-semibold text-foreground truncate">
-                            {bid.auction?.inspections?.vehicle_make} {bid.auction?.inspections?.vehicle_model}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            {bid.auction?.inspections?.vehicle_year} • {(bid.auction?.inspections?.odometer_reading || 0).toLocaleString()} km
-                          </p>
-                        </div>
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-semibold text-sm text-foreground truncate">
+                          {bid.auction?.inspections?.vehicle_make} {bid.auction?.inspections?.vehicle_model}
+                        </h3>
                         {isUrgent && (
-                          <Badge variant="destructive" className="text-xs shrink-0">
-                            <AlertTriangle className="w-3 h-3 mr-1" />
+                          <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4 shrink-0">
+                            <AlertTriangle className="w-3 h-3 mr-0.5" />
                             {remainingDays}d
                           </Badge>
                         )}
                       </div>
+                      <p className="text-xs text-muted-foreground">
+                        {bid.auction?.inspections?.vehicle_year} • {(bid.auction?.inspections?.odometer_reading || 0).toLocaleString()} km
+                      </p>
                       
-                      {/* Service Progress */}
-                      <div className="mt-2">
-                        <div className="flex justify-between items-center text-xs mb-1">
-                          <span className="text-muted-foreground">Service</span>
-                          <span className={serviceProgress === 100 ? "text-accent font-medium" : "text-muted-foreground"}>
+                      {/* Bid + Progress row */}
+                      <div className="flex items-center justify-between mt-1.5 gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-semibold text-sm text-accent">
+                            ₹{bid.bid_amount.toLocaleString()}
+                          </span>
+                          {bid.commission_amount > 0 && (
+                            <span className="text-warning text-xs">+₹{bid.commission_amount.toLocaleString()}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-12">
+                            <Progress value={serviceProgress} className="h-1" />
+                          </div>
+                          <span className={`text-[10px] ${serviceProgress === 100 ? "text-accent font-medium" : "text-muted-foreground"}`}>
                             {serviceProgress}%
                           </span>
+                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
                         </div>
-                        <Progress value={serviceProgress} className="h-1.5" />
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Footer */}
-                  <div className="px-4 py-3 border-t bg-muted/30 flex justify-between items-center">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Winning bid</p>
-                      <p className="font-semibold text-accent">
-                        ₹{bid.bid_amount.toLocaleString()}
-                        {bid.commission_amount > 0 && (
-                          <span className="text-warning text-sm"> + ₹{bid.commission_amount.toLocaleString()}</span>
-                        )}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {serviceProgress === 100 ? (
-                        <Badge variant="outline" className="text-accent border-accent/20">
-                          Completed
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">In Progress</Badge>
-                      )}
-                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
                     </div>
                   </div>
                 </div>
@@ -363,51 +348,39 @@ const BrokerBids = () => {
               return (
                 <div
                   key={bid.id}
-                  className="bg-card border rounded-xl overflow-hidden"
+                  className="bg-card border rounded-lg overflow-hidden opacity-75"
                 >
-                  <div className="flex gap-4 p-4">
+                  <div className="flex gap-3 p-3">
                     {/* Vehicle Image */}
-                    <div className="relative w-24 h-20 bg-muted rounded-xl overflow-hidden shrink-0 grayscale opacity-75">
+                    <div className="relative w-20 h-16 bg-muted rounded-lg overflow-hidden shrink-0 grayscale">
                       <img
                         src={thumbnail}
                         alt={bid.auction?.inspections?.vehicle_model || "Vehicle"}
                         className="w-full h-full object-cover"
                       />
-                      <Badge variant="secondary" className="absolute top-1 right-1 text-xs">
+                      <Badge variant="secondary" className="absolute top-0.5 right-0.5 text-[10px] px-1.5 py-0 h-4">
                         LOST
                       </Badge>
                     </div>
 
                     {/* Vehicle Info */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-foreground truncate">
+                      <h3 className="font-semibold text-sm text-foreground truncate">
                         {bid.auction?.inspections?.vehicle_make} {bid.auction?.inspections?.vehicle_model}
                       </h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs text-muted-foreground">
                         {bid.auction?.inspections?.vehicle_year} • {(bid.auction?.inspections?.odometer_reading || 0).toLocaleString()} km
                       </p>
                       
-                      <div className="flex items-center gap-4 mt-2 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">Your bid: </span>
-                          <span className="font-medium">₹{bid.bid_amount.toLocaleString()}</span>
+                      {/* Bid comparison row */}
+                      <div className="flex items-center justify-between mt-1.5">
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="text-muted-foreground">You: <span className="font-medium text-foreground">₹{bid.bid_amount.toLocaleString()}</span></span>
+                          <span className="text-muted-foreground">Won: <span className="font-medium text-accent">₹{winningBid.toLocaleString()}</span></span>
                         </div>
-                        <div>
-                          <span className="text-muted-foreground">Winning: </span>
-                          <span className="font-medium text-accent">₹{winningBid.toLocaleString()}</span>
-                        </div>
+                        <span className="text-[10px] text-destructive">-₹{difference.toLocaleString()}</span>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Analysis Footer */}
-                  <div className="px-4 py-3 border-t bg-muted/30">
-                    <p className="text-sm text-muted-foreground">
-                      ❌ Lost by <span className="font-medium text-foreground">₹{difference.toLocaleString()}</span>
-                    </p>
-                    <p className="text-xs text-warning mt-1">
-                      💡 Consider adding commission to boost your effective score
-                    </p>
                   </div>
                 </div>
               );
