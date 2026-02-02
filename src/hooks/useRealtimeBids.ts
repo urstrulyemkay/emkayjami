@@ -93,8 +93,7 @@ export const useRealtimeBids = (auctionId: string, brokerId: string | undefined)
       throw new Error("Broker ID and Auction ID are required");
     }
 
-    const effectiveScore = calculateEffectiveScore(bidAmount, commission);
-
+    // Note: effective_score is a generated column, don't include it in insert
     const { data, error } = await supabase
       .from("broker_bids")
       .insert({
@@ -102,7 +101,7 @@ export const useRealtimeBids = (auctionId: string, brokerId: string | undefined)
         broker_id: brokerId,
         bid_amount: bidAmount,
         commission_amount: commission,
-        effective_score: effectiveScore,
+        // effective_score is auto-generated: (bid_amount * 0.85) + (commission_amount * 0.15)
         bid_type: auctionState.myBid ? "revision" : "initial",
         status: "active",
       })
@@ -129,6 +128,8 @@ export const useRealtimeBids = (auctionId: string, brokerId: string | undefined)
       .eq("id", auctionId)
       .single();
 
+    // Calculate effective score for comparison
+    const effectiveScore = calculateEffectiveScore(bidAmount, commission);
     const currentHighestEffective = calculateEffectiveScore(
       currentAuction?.current_highest_bid || 0,
       currentAuction?.current_highest_commission || 0
