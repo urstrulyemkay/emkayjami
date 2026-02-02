@@ -261,13 +261,19 @@ const BrokerDashboard = () => {
     // getAuctionById handles ID-based hashing for consistent mock data even for unknown UUIDs
     const mockAuction = getAuctionById(auction.id) || MOCK_AUCTIONS[0];
     
-    // Use inspection data if available, otherwise fall back to centralized mock
-    const hasInspection = auction.inspections && auction.inspections.vehicle_make;
-    const make = hasInspection ? auction.inspections.vehicle_make : mockAuction.vehicle.make;
-    const model = hasInspection ? auction.inspections.vehicle_model : mockAuction.vehicle.model;
-    const year = hasInspection && auction.inspections.vehicle_year ? auction.inspections.vehicle_year : mockAuction.vehicle.year;
-    const kms = hasInspection && auction.inspections.odometer_reading ? auction.inspections.odometer_reading : mockAuction.vehicle.kms;
-    const conditionScore = hasInspection && auction.inspections.condition_score ? auction.inspections.condition_score : mockAuction.conditionScore;
+    // Check if DB has complete inspection data - must match PDP logic exactly
+    // RLS often blocks brokers from reading inspection details
+    const hasCompleteDbInspection = 
+      auction.inspections && 
+      auction.inspections.vehicle_make && 
+      auction.inspections.vehicle_model;
+    
+    // Use mock data when DB inspection is incomplete - ensures consistency with PDP
+    const make = hasCompleteDbInspection ? auction.inspections!.vehicle_make : mockAuction.vehicle.make;
+    const model = hasCompleteDbInspection ? auction.inspections!.vehicle_model : mockAuction.vehicle.model;
+    const year = hasCompleteDbInspection && auction.inspections!.vehicle_year ? auction.inspections!.vehicle_year : mockAuction.vehicle.year;
+    const kms = hasCompleteDbInspection && auction.inspections!.odometer_reading ? auction.inspections!.odometer_reading : mockAuction.vehicle.kms;
+    const conditionScore = hasCompleteDbInspection && auction.inspections!.condition_score ? auction.inspections!.condition_score : mockAuction.conditionScore;
     const grade = getGradeFromScore(conditionScore);
 
     return {
