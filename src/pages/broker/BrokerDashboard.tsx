@@ -185,88 +185,92 @@ const BrokerDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-lg font-bold">DriveX Broker</h1>
-            <p className="text-sm opacity-90">{broker.city}</p>
+      {/* Header - Professional Dark */}
+      <div className="broker-header text-white">
+        <div className="px-5 pt-6 pb-4">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <p className="text-xs text-white/60 uppercase tracking-wider mb-0.5">Welcome back</p>
+              <h1 className="text-xl font-semibold">{broker.owner_name || broker.business_name}</h1>
+            </div>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-white/10 rounded-full">
+                <Bell className="w-5 h-5" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="text-white/80 hover:text-white hover:bg-white/10 rounded-full"
+                onClick={() => navigate("/broker/profile")}
+              >
+                <User className="w-5 h-5" />
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
-              <Bell className="w-5 h-5" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="text-white hover:bg-white/20"
-              onClick={() => navigate("/broker/profile")}
-            >
-              <User className="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
 
-        {/* Stats */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 bg-white/20 rounded-full px-3 py-1">
-            <Coins className="w-4 h-4" />
-            <span className="font-semibold">{broker.coins_balance.toLocaleString()}</span>
+          {/* Stats Row */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
+              <Coins className="w-4 h-4 text-amber-400" />
+              <span className="font-medium">{broker.coins_balance.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
+              <Star className="w-4 h-4 text-amber-400" />
+              <span className="font-medium">Lvl {broker.level}</span>
+            </div>
+            <Badge className="bg-white/20 text-white border-0">
+              {levelConfig.name}
+            </Badge>
           </div>
-          <div className="flex items-center gap-2 bg-white/20 rounded-full px-3 py-1">
-            <Star className="w-4 h-4" />
-            <span className="font-semibold">Level {broker.level}</span>
-          </div>
-          <Badge className={`${levelConfig.bgColor} text-white`}>
-            {levelConfig.name}
-          </Badge>
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="px-4 py-3 bg-muted/50 border-b">
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div>
-            <p className="text-2xl font-bold text-foreground">{liveAuctions.length + upcomingAuctions.length}</p>
-            <p className="text-xs text-muted-foreground">Auctions Today</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-green-600">{BROKER_STATS.winsThisMonth}</p>
-            <p className="text-xs text-muted-foreground">Wins</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-foreground">{BROKER_STATS.disputesThisMonth}</p>
-            <p className="text-xs text-muted-foreground">Disputes</p>
+      {/* Quick Stats - Card Style */}
+      <div className="px-4 -mt-3">
+        <div className="bg-card border border-border rounded-2xl shadow-sm">
+          <div className="grid grid-cols-3 divide-x divide-border">
+            <div className="p-4 text-center">
+              <p className="text-2xl font-bold text-foreground">{liveAuctions.length + upcomingAuctions.length}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Today</p>
+            </div>
+            <div className="p-4 text-center">
+              <p className="text-2xl font-bold text-accent">{BROKER_STATS.winsThisMonth}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Wins</p>
+            </div>
+            <div className="p-4 text-center">
+              <p className="text-2xl font-bold text-foreground">{BROKER_STATS.disputesThisMonth}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Disputes</p>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="px-4 mt-4">
-        <TabsList className="grid w-full grid-cols-2 mb-4">
-          <TabsTrigger value="live" className="gap-2">
-            <Zap className="w-4 h-4" />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="px-4 mt-6">
+        <TabsList className="grid w-full grid-cols-2 mb-5 h-12 p-1 bg-muted rounded-xl">
+          <TabsTrigger value="live" className="gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
             Live ({liveAuctions.length})
           </TabsTrigger>
-          <TabsTrigger value="upcoming" className="gap-2">
+          <TabsTrigger value="upcoming" className="gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <Clock className="w-4 h-4" />
             Upcoming ({upcomingAuctions.length})
           </TabsTrigger>
         </TabsList>
 
         {/* Filters */}
-        <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-2">
-          <Button variant="outline" size="sm" className="shrink-0">
-            <Filter className="w-4 h-4 mr-2" />
-            Filters
+        <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-2 -mx-4 px-4">
+          <Button variant="outline" size="sm" className="shrink-0 rounded-full h-8">
+            <Filter className="w-3.5 h-3.5 mr-1.5" />
+            Filter
           </Button>
-          <Badge variant="secondary" className="shrink-0 cursor-pointer hover:bg-secondary/80">
+          <Badge variant="secondary" className="shrink-0 cursor-pointer hover:bg-secondary/80 rounded-full px-3 py-1">
             All Cities
           </Badge>
-          <Badge variant="secondary" className="shrink-0 cursor-pointer hover:bg-secondary/80">
+          <Badge variant="secondary" className="shrink-0 cursor-pointer hover:bg-secondary/80 rounded-full px-3 py-1">
             ₹20k-₹50k
           </Badge>
-          <Badge variant="secondary" className="shrink-0 cursor-pointer hover:bg-secondary/80">
+          <Badge variant="secondary" className="shrink-0 cursor-pointer hover:bg-secondary/80 rounded-full px-3 py-1">
             Grade A-B
           </Badge>
         </div>
