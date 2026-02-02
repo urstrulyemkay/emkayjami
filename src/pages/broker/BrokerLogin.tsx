@@ -226,7 +226,7 @@ const BrokerLogin = () => {
         {isLogin && (
           <div className="mt-6 p-4 bg-amber-100 dark:bg-amber-900/20 rounded-xl max-w-md mx-auto">
             <p className="text-sm text-amber-800 dark:text-amber-200 text-center">
-              <strong>Demo Account:</strong> broker@drivex.com / broker123
+              <strong>Demo:</strong> Use pre-filled credentials or sign up as a new broker
             </p>
           </div>
         )}
