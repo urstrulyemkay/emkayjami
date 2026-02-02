@@ -3,10 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { useBrokerAuth } from "@/contexts/BrokerAuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, TrendingUp, Trophy, XCircle, Clock, Gavel } from "lucide-react";
+import { ArrowLeft, TrendingUp, Trophy, XCircle, Clock, Gavel, ChevronRight, AlertTriangle } from "lucide-react";
 import BrokerBottomNav from "@/components/broker/BrokerBottomNav";
 import { useBrokerBids } from "@/hooks/useBrokerBids";
+import { useBrokerWonVehicles } from "@/hooks/useBrokerWonVehicles";
 import {
   formatTimeRemaining,
   formatCurrency,
@@ -21,6 +23,34 @@ const BrokerBids = () => {
 
   // Real-time bids hook
   const { liveBids, wonBids, lostBids, loading, stats } = useBrokerBids(broker?.id);
+  
+  // Won vehicles with service tracking
+  const { wonVehicles, loading: wonVehiclesLoading, urgentCount } = useBrokerWonVehicles(broker?.id);
+
+  // Helper to get won vehicle data for a bid
+  const getWonVehicleForBid = (auctionId: string) => {
+    return wonVehicles.find((wv) => wv.auction_id === auctionId);
+  };
+
+  // Calculate service progress percentage
+  const getServiceProgress = (wv: typeof wonVehicles[0]) => {
+    const stages = [
+      wv.payment_status === "completed",
+      wv.pickup_status === "completed",
+      wv.delivery_status === "completed" || wv.delivery_status === "delivered",
+      wv.rc_transfer_status === "completed",
+      wv.name_transfer_status === "completed",
+    ];
+    return Math.round((stages.filter(Boolean).length / stages.length) * 100);
+  };
+
+  // Calculate remaining days for RC deadline
+  const getRemainingDays = (deadline: string) => {
+    const today = new Date();
+    const deadlineDate = new Date(deadline);
+    const diffTime = deadlineDate.getTime() - today.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -181,7 +211,20 @@ const BrokerBids = () => {
         </TabsContent>
 
         <TabsContent value="won" className="space-y-3 mt-0">
-          {loading ? (
+          {/* Urgent banner */}
+          {urgentCount > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-600" />
+              <div>
+                <p className="text-sm font-medium text-amber-800">
+                  {urgentCount} vehicle{urgentCount > 1 ? "s" : ""} need{urgentCount === 1 ? "s" : ""} RC transfer soon
+                </p>
+                <p className="text-xs text-amber-600">Complete before deadline to avoid penalties</p>
+              </div>
+            </div>
+          )}
+
+          {loading || wonVehiclesLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
             </div>
@@ -192,44 +235,82 @@ const BrokerBids = () => {
               <p className="text-sm">Keep bidding to win auctions!</p>
             </div>
           ) : (
-            wonBids.map((bid) => (
-              <div
-                key={bid.id}
-                className="bg-card border rounded-xl p-4 cursor-pointer hover:border-primary/50"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h3 className="font-semibold">
-                      {bid.auction?.inspections?.vehicle_make} {bid.auction?.inspections?.vehicle_model}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {bid.auction?.inspections?.vehicle_year}
-                    </p>
-                  </div>
-                  <Badge className="bg-green-500 text-white">
-                    <Trophy className="w-3 h-3 mr-1" />
-                    WON
-                  </Badge>
-                </div>
-                
-                <div className="flex justify-between items-center mt-3">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Winning bid</p>
-                    <p className="font-semibold text-green-600">
-                      ₹{bid.bid_amount.toLocaleString()}
-                      {bid.commission_amount > 0 && (
-                        <span className="text-amber-600 text-sm"> + ₹{bid.commission_amount.toLocaleString()}</span>
+            wonBids.map((bid) => {
+              const wonVehicle = getWonVehicleForBid(bid.auction_id);
+              const serviceProgress = wonVehicle ? getServiceProgress(wonVehicle) : 0;
+              const remainingDays = wonVehicle ? getRemainingDays(wonVehicle.rc_transfer_deadline) : 180;
+              const isUrgent = remainingDays <= 30 && wonVehicle?.rc_transfer_status !== "completed";
+              
+              return (
+                <div
+                  key={bid.id}
+                  className="bg-card border rounded-xl p-4 cursor-pointer hover:border-primary/50 transition-colors"
+                  onClick={() => wonVehicle && navigate(`/broker/won/${wonVehicle.id}`)}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="font-semibold">
+                        {bid.auction?.inspections?.vehicle_make} {bid.auction?.inspections?.vehicle_model}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {bid.auction?.inspections?.vehicle_year}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {isUrgent && (
+                        <Badge variant="destructive" className="text-xs">
+                          <AlertTriangle className="w-3 h-3 mr-1" />
+                          {remainingDays}d left
+                        </Badge>
                       )}
-                    </p>
+                      <Badge className="bg-green-500 text-white">
+                        <Trophy className="w-3 h-3 mr-1" />
+                        WON
+                      </Badge>
+                    </div>
                   </div>
-                  <div className="text-right space-y-1">
-                    <Badge variant="outline" className="capitalize">
-                      Completed
-                    </Badge>
+                  
+                  {/* Service Progress */}
+                  {wonVehicle && (
+                    <div className="mb-3">
+                      <div className="flex justify-between items-center text-xs mb-1">
+                        <span className="text-muted-foreground">Service Progress</span>
+                        <span className={serviceProgress === 100 ? "text-green-600 font-medium" : "text-muted-foreground"}>
+                          {serviceProgress}%
+                        </span>
+                      </div>
+                      <Progress value={serviceProgress} className="h-2" />
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between items-center mt-3">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Winning bid</p>
+                      <p className="font-semibold text-green-600">
+                        ₹{bid.bid_amount.toLocaleString()}
+                        {bid.commission_amount > 0 && (
+                          <span className="text-amber-600 text-sm"> + ₹{bid.commission_amount.toLocaleString()}</span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {wonVehicle ? (
+                        serviceProgress === 100 ? (
+                          <Badge variant="outline" className="text-green-600 border-green-200">
+                            Completed
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">In Progress</Badge>
+                        )
+                      ) : (
+                        <Badge variant="secondary">Processing</Badge>
+                      )}
+                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </TabsContent>
 
