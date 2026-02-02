@@ -31,7 +31,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, MapPin, Clock, Zap, Check, AlertTriangle,
-  Play, Image as ImageIcon, Info, Heart,
+  Play, Image as ImageIcon, Info, Heart, Shield, Car, Mic,
   Share2, TrendingUp, Scale, Calendar, Target
 } from "lucide-react";
 import { useRealtimeBids } from "@/hooks/useRealtimeBids";
@@ -42,6 +42,15 @@ interface CapturedImage {
   id: string;
   uri: string;
   angle: string;
+  captured_at: string;
+}
+
+interface CapturedVideo {
+  id: string;
+  uri: string;
+  video_type: string;
+  duration: number;
+  captured_at: string;
 }
 
 interface Defect {
@@ -49,6 +58,15 @@ interface Defect {
   category: string;
   severity: string;
   description: string;
+  extracted_from: string;
+  confidence: number | null;
+}
+
+interface VoiceRecording {
+  id: string;
+  category: string;
+  transcript: string;
+  duration: number;
 }
 
 interface AuctionData {
@@ -72,8 +90,14 @@ interface AuctionData {
     condition_score: number | null;
     vehicle_registration: string | null;
     engine_cc: number | null;
+    vehicle_vin: string | null;
+    ai_confidence: number | null;
+    created_at: string;
+    consented_at: string | null;
     captured_images: CapturedImage[];
+    captured_videos: CapturedVideo[];
     defects: Defect[];
+    voice_recordings: VoiceRecording[];
   } | null;
 }
 
@@ -133,9 +157,12 @@ const BrokerAuctionDetail = () => {
           inspections (
             id, vehicle_make, vehicle_model, vehicle_year,
             odometer_reading, vehicle_color, condition_score,
-            vehicle_registration, engine_cc,
-            captured_images (id, uri, angle),
-            defects (id, category, severity, description)
+            vehicle_registration, engine_cc, vehicle_vin,
+            ai_confidence, created_at, consented_at,
+            captured_images (id, uri, angle, captured_at),
+            captured_videos (id, uri, video_type, duration, captured_at),
+            defects (id, category, severity, description, extracted_from, confidence),
+            voice_recordings (id, category, transcript, duration)
           )
         `)
         .eq("id", id)
@@ -446,69 +473,278 @@ const BrokerAuctionDetail = () => {
         </div>
       </div>
 
-      {/* Vehicle Specifications */}
+      {/* Full Inspection Report */}
       <div className="p-4 border-b">
-        <h3 className="font-semibold mb-3">Vehicle Details</h3>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-muted rounded-lg p-3">
-            <p className="text-xs text-muted-foreground">Registration</p>
-            <p className="font-medium">{auction.inspections?.vehicle_registration || "N/A"}</p>
-          </div>
-          <div className="bg-muted rounded-lg p-3">
-            <p className="text-xs text-muted-foreground">Engine</p>
-            <p className="font-medium">{auction.inspections?.engine_cc ? `${auction.inspections.engine_cc}cc` : "N/A"}</p>
-          </div>
-          <div className="bg-muted rounded-lg p-3">
-            <p className="text-xs text-muted-foreground">Color</p>
-            <p className="font-medium">{auction.inspections?.vehicle_color || "N/A"}</p>
-          </div>
-          <div className="bg-muted rounded-lg p-3">
-            <p className="text-xs text-muted-foreground">Condition Score</p>
-            <p className="font-medium">{auction.inspections?.condition_score ? `${auction.inspections.condition_score}/100` : "N/A"}</p>
-          </div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-foreground">Inspection Report</h3>
+          {auction.inspections?.ai_confidence && (
+            <Badge variant="secondary" className="gap-1">
+              <Shield className="w-3 h-3" />
+              {auction.inspections.ai_confidence}% AI Verified
+            </Badge>
+          )}
         </div>
-      </div>
 
-      {/* Defects Section */}
-      {auction.inspections?.defects && auction.inspections.defects.length > 0 && (
-        <div className="p-4 border-b">
-          <h3 className="font-semibold mb-3 flex items-center gap-2 text-foreground">
-            <AlertTriangle className="w-4 h-4 text-warning" />
-            Reported Issues ({auction.inspections.defects.length})
-          </h3>
-          <div className="space-y-2">
-            {auction.inspections.defects.map((defect) => (
-              <div
-                key={defect.id}
-                className={`rounded-xl p-3 border ${
-                  defect.severity === "major"
-                    ? "bg-destructive/5 border-destructive/20"
-                    : defect.severity === "moderate"
-                    ? "bg-warning/5 border-warning/20"
-                    : "bg-muted border-border"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-medium text-sm text-foreground">{defect.category}</span>
-                  <Badge
-                    variant="outline"
-                    className={
-                      defect.severity === "major"
-                        ? "border-destructive/30 text-destructive"
-                        : defect.severity === "moderate"
-                        ? "border-warning/30 text-warning"
-                        : "border-border text-muted-foreground"
-                    }
-                  >
-                    {defect.severity}
-                  </Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">{defect.description}</p>
+        {/* Condition Score Card */}
+        <div className="bg-muted/50 rounded-xl p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">Condition Score</p>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-3xl font-bold text-foreground">
+                  {auction.inspections?.condition_score || "N/A"}
+                </span>
+                <span className="text-muted-foreground">/100</span>
               </div>
-            ))}
+            </div>
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold ${
+              (auction.inspections?.condition_score || 0) >= 85 ? "bg-accent/20 text-accent" :
+              (auction.inspections?.condition_score || 0) >= 70 ? "bg-info/20 text-info" :
+              (auction.inspections?.condition_score || 0) >= 55 ? "bg-warning/20 text-warning" :
+              "bg-destructive/20 text-destructive"
+            }`}>
+              {grade}
+            </div>
+          </div>
+          <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-1.5">
+              <ImageIcon className="w-4 h-4 text-muted-foreground" />
+              <span>{auction.inspections?.captured_images?.length || 0} photos</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Play className="w-4 h-4 text-muted-foreground" />
+              <span>{auction.inspections?.captured_videos?.length || 0} videos</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <AlertTriangle className="w-4 h-4 text-muted-foreground" />
+              <span>{auction.inspections?.defects?.length || 0} issues</span>
+            </div>
           </div>
         </div>
-      )}
+
+        {/* Vehicle Specifications Grid */}
+        <Accordion type="single" collapsible defaultValue="specs" className="space-y-2">
+          <AccordionItem value="specs" className="border rounded-xl px-4">
+            <AccordionTrigger className="hover:no-underline py-3">
+              <div className="flex items-center gap-2">
+                <Car className="w-4 h-4 text-muted-foreground" />
+                <span className="font-medium">Vehicle Specifications</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pb-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-muted rounded-lg p-3">
+                  <p className="text-xs text-muted-foreground">Registration</p>
+                  <p className="font-medium text-foreground">{auction.inspections?.vehicle_registration || "N/A"}</p>
+                </div>
+                <div className="bg-muted rounded-lg p-3">
+                  <p className="text-xs text-muted-foreground">Year</p>
+                  <p className="font-medium text-foreground">{auction.inspections?.vehicle_year || "N/A"}</p>
+                </div>
+                <div className="bg-muted rounded-lg p-3">
+                  <p className="text-xs text-muted-foreground">Engine</p>
+                  <p className="font-medium text-foreground">{auction.inspections?.engine_cc ? `${auction.inspections.engine_cc}cc` : "N/A"}</p>
+                </div>
+                <div className="bg-muted rounded-lg p-3">
+                  <p className="text-xs text-muted-foreground">Color</p>
+                  <p className="font-medium text-foreground">{auction.inspections?.vehicle_color || "N/A"}</p>
+                </div>
+                <div className="bg-muted rounded-lg p-3">
+                  <p className="text-xs text-muted-foreground">Odometer</p>
+                  <p className="font-medium text-foreground">{auction.inspections?.odometer_reading ? `${auction.inspections.odometer_reading.toLocaleString()} km` : "N/A"}</p>
+                </div>
+                <div className="bg-muted rounded-lg p-3">
+                  <p className="text-xs text-muted-foreground">VIN/Chassis</p>
+                  <p className="font-medium text-foreground text-xs">{auction.inspections?.vehicle_vin || "N/A"}</p>
+                </div>
+              </div>
+              {auction.inspections?.consented_at && (
+                <div className="mt-3 flex items-center gap-2 text-xs text-accent">
+                  <Check className="w-3 h-3" />
+                  <span>Customer verified on {new Date(auction.inspections.consented_at).toLocaleDateString()}</span>
+                </div>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Photo Evidence */}
+          {auction.inspections?.captured_images && auction.inspections.captured_images.length > 0 && (
+            <AccordionItem value="photos" className="border rounded-xl px-4">
+              <AccordionTrigger className="hover:no-underline py-3">
+                <div className="flex items-center gap-2">
+                  <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-medium">Photo Evidence ({auction.inspections.captured_images.length})</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pb-4">
+                <div className="grid grid-cols-3 gap-2">
+                  {auction.inspections.captured_images.map((image) => (
+                    <div key={image.id} className="relative aspect-square rounded-lg overflow-hidden bg-muted">
+                      <img
+                        src={image.uri}
+                        alt={image.angle}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-1.5">
+                        <p className="text-[10px] text-white capitalize">{image.angle.replace(/_/g, " ")}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
+
+          {/* Video Evidence */}
+          {auction.inspections?.captured_videos && auction.inspections.captured_videos.length > 0 && (
+            <AccordionItem value="videos" className="border rounded-xl px-4">
+              <AccordionTrigger className="hover:no-underline py-3">
+                <div className="flex items-center gap-2">
+                  <Play className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-medium">Video Evidence ({auction.inspections.captured_videos.length})</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pb-4">
+                <div className="space-y-2">
+                  {auction.inspections.captured_videos.map((video) => (
+                    <div key={video.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Play className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm text-foreground capitalize">
+                            {video.video_type.replace(/_/g, " ")}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {video.duration}s duration
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" className="rounded-lg">
+                        Play
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
+
+          {/* Defects / Issues */}
+          {auction.inspections?.defects && auction.inspections.defects.length > 0 && (
+            <AccordionItem value="defects" className="border rounded-xl px-4">
+              <AccordionTrigger className="hover:no-underline py-3">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-warning" />
+                  <span className="font-medium">Reported Issues ({auction.inspections.defects.length})</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pb-4">
+                <div className="space-y-2">
+                  {auction.inspections.defects.map((defect) => (
+                    <div
+                      key={defect.id}
+                      className={`rounded-xl p-3 border ${
+                        defect.severity === "major" || defect.severity === "critical"
+                          ? "bg-destructive/5 border-destructive/20"
+                          : defect.severity === "moderate"
+                          ? "bg-warning/5 border-warning/20"
+                          : "bg-muted border-border"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-medium text-sm text-foreground capitalize">{defect.category}</span>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className={
+                              defect.severity === "major" || defect.severity === "critical"
+                                ? "border-destructive/30 text-destructive"
+                                : defect.severity === "moderate"
+                                ? "border-warning/30 text-warning"
+                                : "border-border text-muted-foreground"
+                            }
+                          >
+                            {defect.severity}
+                          </Badge>
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{defect.description}</p>
+                      <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                        <span className="capitalize">Source: {defect.extracted_from}</span>
+                        {defect.confidence && (
+                          <span>{Math.round(defect.confidence * 100)}% confidence</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Defect Summary */}
+                <div className="mt-4 p-3 bg-muted rounded-lg">
+                  <p className="text-xs font-medium text-foreground mb-2">Issue Summary</p>
+                  <div className="flex items-center gap-4 text-sm">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-destructive"></span>
+                      <span className="text-muted-foreground">
+                        {auction.inspections.defects.filter(d => d.severity === "major" || d.severity === "critical").length} Major
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-warning"></span>
+                      <span className="text-muted-foreground">
+                        {auction.inspections.defects.filter(d => d.severity === "moderate").length} Moderate
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-muted-foreground"></span>
+                      <span className="text-muted-foreground">
+                        {auction.inspections.defects.filter(d => d.severity === "minor").length} Minor
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
+
+          {/* Voice Notes */}
+          {auction.inspections?.voice_recordings && auction.inspections.voice_recordings.length > 0 && (
+            <AccordionItem value="voice" className="border rounded-xl px-4">
+              <AccordionTrigger className="hover:no-underline py-3">
+                <div className="flex items-center gap-2">
+                  <Mic className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-medium">Inspector Notes ({auction.inspections.voice_recordings.length})</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pb-4">
+                <div className="space-y-2">
+                  {auction.inspections.voice_recordings.map((recording) => (
+                    <div key={recording.id} className="p-3 bg-muted rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge variant="secondary" className="capitalize text-xs">
+                          {recording.category}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">{recording.duration}s</span>
+                      </div>
+                      <p className="text-sm text-foreground italic">"{recording.transcript}"</p>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
+        </Accordion>
+
+        {/* Inspection Metadata */}
+        {auction.inspections?.created_at && (
+          <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+            <span>Inspected: {new Date(auction.inspections.created_at).toLocaleDateString()}</span>
+            <span>ID: {auction.inspections.id.slice(0, 8)}</span>
+          </div>
+        )}
+      </div>
 
       {/* RC Transfer Warning */}
       <div className="p-4 border-b bg-warning/5">
