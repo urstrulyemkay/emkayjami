@@ -42,9 +42,32 @@ const BrokerDashboard = () => {
   const navigate = useNavigate();
   const { broker, isAuthenticated, isLoading } = useBrokerAuth();
   const [activeTab, setActiveTab] = useState("live");
+  const [activeTypeFilter, setActiveTypeFilter] = useState<string | null>(null);
   const [liveAuctions, setLiveAuctions] = useState<AuctionWithInspection[]>([]);
   const [upcomingAuctions, setUpcomingAuctions] = useState<AuctionWithInspection[]>([]);
   const [loadingAuctions, setLoadingAuctions] = useState(true);
+
+  // Auction type configuration
+  const auctionTypes = [
+    { id: "quick", label: "Quick", icon: Zap, color: "text-amber-500", bgColor: "bg-amber-500/10" },
+    { id: "flexible", label: "Flex", icon: Scale, color: "text-blue-500", bgColor: "bg-blue-500/10" },
+    { id: "extended", label: "Extended", icon: Calendar, color: "text-purple-500", bgColor: "bg-purple-500/10" },
+    { id: "one_click", label: "1-Click", icon: Target, color: "text-accent", bgColor: "bg-accent/10" },
+  ];
+
+  // Filter auctions by type
+  const getFilteredAuctions = (auctions: AuctionWithInspection[]) => {
+    if (!activeTypeFilter) return auctions;
+    return auctions.filter(a => a.auction_type === activeTypeFilter);
+  };
+
+  // Group auctions by type for display
+  const groupAuctionsByType = (auctions: AuctionWithInspection[]) => {
+    return auctionTypes.map(type => ({
+      ...type,
+      auctions: auctions.filter(a => a.auction_type === type.id)
+    })).filter(group => group.auctions.length > 0);
+  };
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -258,96 +281,209 @@ const BrokerDashboard = () => {
           </TabsTrigger>
         </TabsList>
 
-        {/* Filters */}
+        {/* Auction Type Filters */}
         <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-2 -mx-4 px-4">
-          <Button variant="outline" size="sm" className="shrink-0 rounded-full h-8">
-            <Filter className="w-3.5 h-3.5 mr-1.5" />
-            Filter
+          <Button 
+            variant={activeTypeFilter === null ? "default" : "outline"} 
+            size="sm" 
+            className="shrink-0 rounded-full h-8"
+            onClick={() => setActiveTypeFilter(null)}
+          >
+            All
           </Button>
-          <Badge variant="secondary" className="shrink-0 cursor-pointer hover:bg-secondary/80 rounded-full px-3 py-1">
-            All Cities
-          </Badge>
-          <Badge variant="secondary" className="shrink-0 cursor-pointer hover:bg-secondary/80 rounded-full px-3 py-1">
-            ₹20k-₹50k
-          </Badge>
-          <Badge variant="secondary" className="shrink-0 cursor-pointer hover:bg-secondary/80 rounded-full px-3 py-1">
-            Grade A-B
-          </Badge>
+          {auctionTypes.map((type) => {
+            const Icon = type.icon;
+            const isActive = activeTypeFilter === type.id;
+            const count = (activeTab === "live" ? liveAuctions : upcomingAuctions)
+              .filter(a => a.auction_type === type.id).length;
+            
+            return (
+              <Button
+                key={type.id}
+                variant={isActive ? "default" : "outline"}
+                size="sm"
+                className={`shrink-0 rounded-full h-8 gap-1.5 ${!isActive ? type.bgColor : ""}`}
+                onClick={() => setActiveTypeFilter(isActive ? null : type.id)}
+              >
+                <Icon className={`w-3.5 h-3.5 ${!isActive ? type.color : ""}`} />
+                {type.label}
+                {count > 0 && (
+                  <span className={`text-xs ${isActive ? "opacity-80" : "text-muted-foreground"}`}>
+                    ({count})
+                  </span>
+                )}
+              </Button>
+            );
+          })}
         </div>
 
-        <TabsContent value="live" className="space-y-4 mt-0">
+        <TabsContent value="live" className="space-y-6 mt-0">
           {loadingAuctions ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
             </div>
-          ) : liveAuctions.length === 0 ? (
+          ) : getFilteredAuctions(liveAuctions).length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Gavel className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>No live auctions at the moment</p>
+              <p>No {activeTypeFilter ? auctionTypes.find(t => t.id === activeTypeFilter)?.label : ""} auctions live</p>
               <p className="text-sm">Check back soon!</p>
             </div>
+          ) : activeTypeFilter ? (
+            // Filtered view - flat list
+            <div className="space-y-3">
+              {getFilteredAuctions(liveAuctions).map((auction) => (
+                <BrokerAuctionCard
+                  key={auction.id}
+                  auction={transformAuctionForCard(auction)}
+                  onClick={() => navigate(`/broker/auction/${auction.id}`)}
+                />
+              ))}
+            </div>
           ) : (
-            liveAuctions.map((auction) => (
-              <BrokerAuctionCard
-                key={auction.id}
-                auction={transformAuctionForCard(auction)}
-                onClick={() => navigate(`/broker/auction/${auction.id}`)}
-              />
-            ))
+            // Grouped view by auction type
+            groupAuctionsByType(liveAuctions).map((group) => {
+              const Icon = group.icon;
+              return (
+                <div key={group.id} className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className={`p-1.5 rounded-lg ${group.bgColor}`}>
+                      <Icon className={`w-4 h-4 ${group.color}`} />
+                    </div>
+                    <h3 className="font-semibold text-foreground">{group.label} Auctions</h3>
+                    <Badge variant="secondary" className="text-xs">{group.auctions.length}</Badge>
+                  </div>
+                  <div className="space-y-3">
+                    {group.auctions.map((auction) => (
+                      <BrokerAuctionCard
+                        key={auction.id}
+                        auction={transformAuctionForCard(auction)}
+                        onClick={() => navigate(`/broker/auction/${auction.id}`)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })
           )}
         </TabsContent>
 
-        <TabsContent value="upcoming" className="space-y-4 mt-0">
+        <TabsContent value="upcoming" className="space-y-6 mt-0">
           {loadingAuctions ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
             </div>
-          ) : upcomingAuctions.length === 0 ? (
+          ) : getFilteredAuctions(upcomingAuctions).length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Clock className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>No upcoming auctions scheduled</p>
+              <p>No {activeTypeFilter ? auctionTypes.find(t => t.id === activeTypeFilter)?.label : ""} upcoming auctions</p>
             </div>
-          ) : (
-            upcomingAuctions.map((auction) => {
-              const startTime = new Date(auction.start_time);
-              const timeUntilStart = startTime.getTime() - Date.now();
-              
-              return (
-                <div
-                  key={auction.id}
-                  className="bg-card rounded-xl border p-4 cursor-pointer hover:border-primary/50 transition-colors"
-                  onClick={() => {}}
-                >
-                  <div className="flex gap-4">
-                    <div className="w-24 h-20 bg-muted rounded-lg overflow-hidden">
-                      <img
-                        src="/placeholder.svg"
-                        alt={auction.inspections?.vehicle_model}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold">
-                        {auction.inspections?.vehicle_make} {auction.inspections?.vehicle_model}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {auction.inspections?.vehicle_year} • {(auction.inspections?.odometer_reading || 0).toLocaleString()} km
-                      </p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="outline" className="gap-1">
-                          <Clock className="w-3 h-3" />
-                          Starts in {formatTimeRemaining(timeUntilStart)}
-                        </Badge>
-                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                          {auction.geo_targeting_city}
-                        </Badge>
+          ) : activeTypeFilter ? (
+            // Filtered view
+            <div className="space-y-3">
+              {getFilteredAuctions(upcomingAuctions).map((auction) => {
+                const startTime = new Date(auction.start_time);
+                const timeUntilStart = startTime.getTime() - Date.now();
+                const typeConfig = auctionTypes.find(t => t.id === auction.auction_type);
+                const TypeIcon = typeConfig?.icon || Clock;
+                
+                return (
+                  <div
+                    key={auction.id}
+                    className="broker-card p-4"
+                    onClick={() => {}}
+                  >
+                    <div className="flex gap-4">
+                      <div className="w-24 h-20 bg-muted rounded-xl overflow-hidden">
+                        <img
+                          src="/placeholder.svg"
+                          alt={auction.inspections?.vehicle_model}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-foreground">
+                          {auction.inspections?.vehicle_make} {auction.inspections?.vehicle_model}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {auction.inspections?.vehicle_year} • {(auction.inspections?.odometer_reading || 0).toLocaleString()} km
+                        </p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline" className="gap-1">
+                            <Clock className="w-3 h-3" />
+                            {formatTimeRemaining(timeUntilStart)}
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            {auction.geo_targeting_city}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
+                    <Button variant="outline" className="w-full mt-3 rounded-xl">
+                      <Bell className="w-4 h-4 mr-2" />
+                      Remind Me
+                    </Button>
                   </div>
-                  <Button variant="outline" className="w-full mt-3">
-                    <Bell className="w-4 h-4 mr-2" />
-                    Remind Me
-                  </Button>
+                );
+              })}
+            </div>
+          ) : (
+            // Grouped view
+            groupAuctionsByType(upcomingAuctions).map((group) => {
+              const Icon = group.icon;
+              return (
+                <div key={group.id} className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className={`p-1.5 rounded-lg ${group.bgColor}`}>
+                      <Icon className={`w-4 h-4 ${group.color}`} />
+                    </div>
+                    <h3 className="font-semibold text-foreground">{group.label} Auctions</h3>
+                    <Badge variant="secondary" className="text-xs">{group.auctions.length}</Badge>
+                  </div>
+                  <div className="space-y-3">
+                    {group.auctions.map((auction) => {
+                      const startTime = new Date(auction.start_time);
+                      const timeUntilStart = startTime.getTime() - Date.now();
+                      
+                      return (
+                        <div
+                          key={auction.id}
+                          className="broker-card p-4"
+                          onClick={() => {}}
+                        >
+                          <div className="flex gap-4">
+                            <div className="w-24 h-20 bg-muted rounded-xl overflow-hidden">
+                              <img
+                                src="/placeholder.svg"
+                                alt={auction.inspections?.vehicle_model}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-foreground">
+                                {auction.inspections?.vehicle_make} {auction.inspections?.vehicle_model}
+                              </h3>
+                              <p className="text-sm text-muted-foreground">
+                                {auction.inspections?.vehicle_year} • {(auction.inspections?.odometer_reading || 0).toLocaleString()} km
+                              </p>
+                              <div className="flex items-center gap-2 mt-2">
+                                <Badge variant="outline" className="gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {formatTimeRemaining(timeUntilStart)}
+                                </Badge>
+                                <Badge variant="secondary" className="text-xs">
+                                  {auction.geo_targeting_city}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                          <Button variant="outline" className="w-full mt-3 rounded-xl">
+                            <Bell className="w-4 h-4 mr-2" />
+                            Remind Me
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               );
             })
