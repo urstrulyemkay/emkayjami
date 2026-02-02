@@ -141,10 +141,10 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
       )}
       onClick={onClick}
     >
-      <div className="flex gap-3 p-3">
-        {/* Vehicle Image */}
+      <div className="flex gap-4 p-4">
+        {/* Thumbnail - taller */}
         <div className={cn(
-          "relative w-20 h-16 bg-muted rounded-lg overflow-hidden shrink-0",
+          "relative w-24 h-24 bg-muted rounded-lg overflow-hidden shrink-0",
           status.type === "lost" && "grayscale"
         )}>
           <img
@@ -154,104 +154,104 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
           />
           {/* Grade Badge */}
           {gradeConfig && (
-            <div className={`absolute top-0.5 left-0.5 px-1 py-0 rounded text-[10px] font-bold ${gradeConfig.bg} ${gradeConfig.text}`}>
+            <div className={`absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold ${gradeConfig.bg} ${gradeConfig.text}`}>
               {vehicle.grade}
             </div>
           )}
           {/* Status Badge */}
-          <div className="absolute top-0.5 right-0.5">
+          <div className="absolute top-1.5 right-1.5">
             {getStatusBadge()}
           </div>
         </div>
 
-        {/* Vehicle Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="font-semibold text-sm text-foreground truncate">
-              {vehicle.make} {vehicle.model}
-            </h3>
-            {/* Timer for live */}
-            {status.type === "live" && status.timeRemaining !== undefined && (
-              <div className="flex items-center gap-1 shrink-0">
-                <Clock className="w-3 h-3 text-muted-foreground" />
-                <span className={`text-xs font-medium ${isUrgentTime ? "text-destructive" : "text-muted-foreground"}`}>
+        {/* Vehicle Info - vertically centered */}
+        <div className="flex-1 min-w-0 flex flex-col justify-center gap-2">
+          {/* Title & Specs */}
+          <div>
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-semibold text-base text-foreground leading-tight">
+                {vehicle.make} {vehicle.model}
+              </h3>
+              {/* Timer for live */}
+              {status.type === "live" && status.timeRemaining !== undefined && (
+                <div className={`flex items-center gap-1 shrink-0 text-xs font-medium ${isUrgentTime ? "text-destructive" : "text-muted-foreground"}`}>
+                  <Clock className="w-3 h-3" />
                   {formatTime(status.timeRemaining)}
-                </span>
-              </div>
-            )}
-            {/* Urgent days for won */}
-            {status.type === "won" && status.isUrgent && status.remainingDays !== undefined && (
-              <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4 shrink-0">
-                <AlertTriangle className="w-3 h-3 mr-0.5" />
-                {status.remainingDays}d
-              </Badge>
-            )}
+                </div>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              {vehicle.year || "2023"} · {((vehicle.kms || 0) / 1000).toFixed(0)}k km{vehicle.city && ` · ${vehicle.city}`}
+            </p>
           </div>
           
-          <p className="text-xs text-muted-foreground">
-            {vehicle.year || "2023"} • {(vehicle.kms || 0).toLocaleString()} km
-            {vehicle.city && ` • ${vehicle.city}`}
-          </p>
-          
-          {/* Bottom row - depends on status type */}
-          <div className="flex items-center justify-between mt-1.5 gap-2">
+          {/* Bottom row - price & actions */}
+          <div className="flex items-center justify-between">
             {/* Bid amount */}
-            {status.bidAmount !== undefined && status.bidAmount > 0 && (
-              <div className="flex items-center gap-1.5">
-                <span className={`font-semibold text-sm ${status.type === "won" ? "text-accent" : "text-foreground"}`}>
-                  ₹{status.bidAmount.toLocaleString()}
+            {status.bidAmount !== undefined && status.bidAmount > 0 && status.type !== "lost" && (
+              <div className="flex items-center gap-2">
+                <span className={`font-semibold text-base ${status.type === "won" ? "text-accent" : "text-foreground"}`}>
+                  ₹{(status.bidAmount / 1000).toFixed(0)}k
                 </span>
                 {status.commission !== undefined && status.commission > 0 && (
-                  <span className="text-warning text-xs">+₹{status.commission.toLocaleString()}</span>
+                  <span className="text-warning text-xs">+₹{(status.commission / 1000).toFixed(1)}k</span>
                 )}
               </div>
             )}
 
-            {/* Lost comparison */}
-            {status.type === "lost" && status.winningBid !== undefined && (
-              <div className="flex items-center gap-2 text-xs">
+            {/* Lost comparison - simplified */}
+            {status.type === "lost" && (
+              <div className="flex items-center gap-3 text-sm">
                 <span className="text-muted-foreground">
-                  You: <span className="font-medium text-foreground">₹{(status.bidAmount || 0).toLocaleString()}</span>
+                  You: <span className="font-medium text-foreground">₹{((status.bidAmount || 0) / 1000).toFixed(0)}k</span>
                 </span>
                 <span className="text-muted-foreground">
-                  Won: <span className="font-medium text-accent">₹{status.winningBid.toLocaleString()}</span>
+                  Won: <span className="font-medium text-accent">₹{((status.winningBid || 0) / 1000).toFixed(0)}k</span>
                 </span>
               </div>
             )}
 
             {/* Right side actions/info */}
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
               {/* Auction type badge for live */}
               {status.type === "live" && auctionConfig && (
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 gap-0.5">
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 h-5 gap-0.5">
                   {auctionConfig.icon} {auctionConfig.name}
                 </Badge>
               )}
               
               {/* Raise button for outbid */}
               {status.type === "live" && status.bidDifference !== undefined && status.bidDifference < 0 && (
-                <button className="h-6 px-2 text-xs bg-warning text-warning-foreground hover:bg-warning/90 rounded-md flex items-center gap-0.5 font-medium">
+                <button className="h-6 px-2.5 text-xs bg-warning text-warning-foreground hover:bg-warning/90 rounded-md flex items-center gap-1 font-medium">
                   <TrendingUp className="w-3 h-3" />
                   Raise
                 </button>
               )}
 
+              {/* Urgent days for won */}
+              {status.type === "won" && status.isUrgent && status.remainingDays !== undefined && (
+                <Badge variant="destructive" className="text-[10px] px-1.5 py-0.5 h-5 shrink-0">
+                  <AlertTriangle className="w-3 h-3 mr-0.5" />
+                  {status.remainingDays}d left
+                </Badge>
+              )}
+
               {/* Service progress for won */}
               {status.type === "won" && status.serviceProgress !== undefined && (
-                <>
-                  <div className="w-12">
-                    <Progress value={status.serviceProgress} className="h-1" />
+                <div className="flex items-center gap-2">
+                  <div className="w-14">
+                    <Progress value={status.serviceProgress} className="h-1.5" />
                   </div>
-                  <span className={`text-[10px] ${status.serviceProgress === 100 ? "text-accent font-medium" : "text-muted-foreground"}`}>
+                  <span className={`text-xs ${status.serviceProgress === 100 ? "text-accent font-medium" : "text-muted-foreground"}`}>
                     {status.serviceProgress}%
                   </span>
                   <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                </>
+                </div>
               )}
 
               {/* Lost difference */}
               {status.type === "lost" && status.bidDifference !== undefined && (
-                <span className="text-[10px] text-destructive">-₹{Math.abs(status.bidDifference).toLocaleString()}</span>
+                <span className="text-xs text-destructive font-medium">-₹{(Math.abs(status.bidDifference) / 1000).toFixed(0)}k</span>
               )}
             </div>
           </div>
