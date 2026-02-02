@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { UserRole } from "@/types/inspection";
-import { User, Briefcase, Shield, Bike } from "lucide-react";
+import { User, Briefcase, Shield, Bike, Store } from "lucide-react";
 
 const MockLogin = () => {
   const navigate = useNavigate();
@@ -85,6 +85,31 @@ const MockLogin = () => {
               </div>
             </button>
           ))}
+
+          {/* Broker Login - Separate Flow */}
+          <div className="pt-4 border-t mt-6">
+            <p className="text-sm text-muted-foreground uppercase tracking-wider mb-4">
+              B2B Platform
+            </p>
+            <button
+              onClick={() => navigate("/broker/login")}
+              className="w-full p-4 rounded-xl border text-left transition-all bg-gradient-to-r from-amber-500 to-orange-500 text-white border-amber-500"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white/20">
+                  <Store className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-white">
+                    Broker / Dealer
+                  </p>
+                  <p className="text-sm text-white/80">
+                    Bid on vehicles, manage purchases
+                  </p>
+                </div>
+              </div>
+            </button>
+          </div>
         </div>
       </div>
 
