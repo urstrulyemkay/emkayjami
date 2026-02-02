@@ -9,6 +9,7 @@ import VehicleCard from "@/components/broker/VehicleCard";
 import { useBrokerBids } from "@/hooks/useBrokerBids";
 import { useBrokerWonVehicles } from "@/hooks/useBrokerWonVehicles";
 import { formatCurrency } from "@/data/brokerMockData";
+import { getAuctionById } from "@/data/mockAuctions";
 
 const BrokerBids = () => {
   const navigate = useNavigate();
@@ -63,6 +64,31 @@ const BrokerBids = () => {
   const getTimeRemaining = (endTime: string) => {
     const end = new Date(endTime).getTime();
     return Math.max(0, end - Date.now());
+  };
+
+  // Helper to get vehicle info - prioritize DB, fallback to centralized mock
+  const getVehicleInfo = (auctionId: string, inspections: any) => {
+    // Check if DB has complete data
+    if (inspections?.vehicle_make && inspections?.vehicle_model && inspections?.vehicle_registration) {
+      return {
+        make: inspections.vehicle_make,
+        model: inspections.vehicle_model,
+        year: inspections.vehicle_year || 2023,
+        kms: inspections.odometer_reading || 12000,
+        color: inspections.vehicle_color,
+        city: "Bangalore",
+      };
+    }
+    // Fallback to centralized mock data
+    const mockAuction = getAuctionById(auctionId);
+    return {
+      make: mockAuction.vehicle.make,
+      model: mockAuction.vehicle.model,
+      year: mockAuction.vehicle.year,
+      kms: mockAuction.vehicle.kms,
+      color: mockAuction.vehicle.color,
+      city: mockAuction.vehicle.city,
+    };
   };
 
   return (
@@ -136,18 +162,12 @@ const BrokerBids = () => {
               const timeRemaining = bid.auction ? getTimeRemaining(bid.auction.end_time) : 0;
               const highestBid = bid.auction?.current_highest_bid || 0;
               const bidDifference = bid.bid_amount - highestBid;
+              const vehicleInfo = getVehicleInfo(bid.auction_id, bid.auction?.inspections);
               
               return (
                 <VehicleCard
                   key={bid.id}
-                  vehicle={{
-                    make: bid.auction?.inspections?.vehicle_make || "Honda",
-                    model: bid.auction?.inspections?.vehicle_model || "Activa 6G",
-                    year: bid.auction?.inspections?.vehicle_year || 2023,
-                    kms: bid.auction?.inspections?.odometer_reading || 12000,
-                    color: bid.auction?.inspections?.vehicle_color,
-                    city: "Bangalore",
-                  }}
+                  vehicle={vehicleInfo}
                   status={{
                     type: "live",
                     bidAmount: bid.bid_amount,
@@ -194,17 +214,12 @@ const BrokerBids = () => {
               const serviceProgress = wonVehicle ? getServiceProgress(wonVehicle) : 0;
               const remainingDays = wonVehicle ? getRemainingDays(wonVehicle.rc_transfer_deadline) : 180;
               const isUrgent = remainingDays <= 30 && wonVehicle?.rc_transfer_status !== "completed";
+              const vehicleInfo = getVehicleInfo(bid.auction_id, bid.auction?.inspections);
               
               return (
                 <VehicleCard
                   key={bid.id}
-                  vehicle={{
-                    make: bid.auction?.inspections?.vehicle_make || "Honda",
-                    model: bid.auction?.inspections?.vehicle_model || "Activa 6G",
-                    year: bid.auction?.inspections?.vehicle_year || 2023,
-                    kms: bid.auction?.inspections?.odometer_reading || 12000,
-                    color: bid.auction?.inspections?.vehicle_color,
-                  }}
+                  vehicle={vehicleInfo}
                   status={{
                     type: "won",
                     bidAmount: bid.bid_amount,
@@ -236,17 +251,12 @@ const BrokerBids = () => {
             lostBids.map((bid) => {
               const winningBid = bid.auction?.current_highest_bid || 0;
               const difference = winningBid - bid.bid_amount;
+              const vehicleInfo = getVehicleInfo(bid.auction_id, bid.auction?.inspections);
               
               return (
                 <VehicleCard
                   key={bid.id}
-                  vehicle={{
-                    make: bid.auction?.inspections?.vehicle_make || "Honda",
-                    model: bid.auction?.inspections?.vehicle_model || "Activa 6G",
-                    year: bid.auction?.inspections?.vehicle_year || 2023,
-                    kms: bid.auction?.inspections?.odometer_reading || 12000,
-                    color: bid.auction?.inspections?.vehicle_color,
-                  }}
+                  vehicle={vehicleInfo}
                   status={{
                     type: "lost",
                     bidAmount: bid.bid_amount,
