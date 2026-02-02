@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateEffectiveScore } from "@/data/brokerMockData";
 import { toast } from "sonner";
+import { playSoundIfEnabled } from "@/hooks/useSoundNotifications";
 
 export interface RealtimeBid {
   id: string;
@@ -26,8 +27,11 @@ export interface AuctionState {
   wasOutbid: boolean;
 }
 
-// Trigger outbid notification - shows toast and sends push notification
+// Trigger outbid notification - shows toast, plays sound, and sends push notification
 const triggerOutbidNotification = async (brokerId: string, auctionId: string, newHighestBid: number) => {
+  // Play outbid sound
+  playSoundIfEnabled('outbid');
+  
   // Show immediate toast notification
   toast.error("You've been outbid!", {
     description: `New highest bid: ₹${newHighestBid.toLocaleString()}`,

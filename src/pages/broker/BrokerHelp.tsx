@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 import BrokerBottomNav from "@/components/broker/BrokerBottomNav";
 import { useToast } from "@/hooks/use-toast";
-
+import { useSoundNotifications } from "@/hooks/useSoundNotifications";
 // Grievance categories
 const GRIEVANCE_CATEGORIES = [
   {
@@ -127,7 +127,7 @@ const BrokerHelp = () => {
   const navigate = useNavigate();
   const { broker } = useBrokerAuth();
   const { toast } = useToast();
-  
+  const { playSound } = useSoundNotifications();
   const [searchQuery, setSearchQuery] = useState("");
   const [ticketSheetOpen, setTicketSheetOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -159,6 +159,7 @@ const BrokerHelp = () => {
         description: "Please fill in all required fields.",
         variant: "destructive",
       });
+      playSound('error');
       return;
     }
 
@@ -171,6 +172,7 @@ const BrokerHelp = () => {
       title: "Ticket Submitted",
       description: "Your support ticket has been created. We'll respond within 24-48 hours.",
     });
+    playSound('success');
     
     setTicketSheetOpen(false);
     setTicketForm({ category: "", subject: "", description: "", relatedAuctionId: "" });

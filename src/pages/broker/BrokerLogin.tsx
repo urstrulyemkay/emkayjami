@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Briefcase, Mail, Lock, User, Phone, MapPin, Building, ArrowRight, ArrowLeft } from "lucide-react";
+import { useSoundNotifications } from "@/hooks/useSoundNotifications";
 
 const BrokerLogin = () => {
   const navigate = useNavigate();
@@ -22,7 +23,9 @@ const BrokerLogin = () => {
   const [ownerName, setOwnerName] = useState("");
   const [mobile, setMobile] = useState("");
   const [city, setCity] = useState("Bangalore");
-
+  
+  // Sound notifications
+  const { playSound } = useSoundNotifications();
   // Redirect if already authenticated
   if (isAuthenticated) {
     navigate("/broker");
@@ -38,6 +41,7 @@ const BrokerLogin = () => {
       if (isLogin) {
         const { error } = await login(email, password);
         if (error) throw error;
+        playSound('success');
         navigate("/broker");
       } else {
         const { error } = await signup({
@@ -49,10 +53,12 @@ const BrokerLogin = () => {
           city,
         });
         if (error) throw error;
+        playSound('success');
         navigate("/broker");
       }
     } catch (err: any) {
       setError(err.message);
+      playSound('error');
     } finally {
       setLoading(false);
     }
