@@ -62,24 +62,60 @@ function getMockVahanData(registrationNumber: string): VahanResponse {
     };
   }
   
-  // Generate realistic mock data
-  const makes = ["Honda", "TVS", "Bajaj", "Yamaha", "Royal Enfield", "Hero", "Suzuki"];
-  const models: Record<string, string[]> = {
-    "Honda": ["Activa 6G", "Shine", "Unicorn", "SP 125", "Dio"],
-    "TVS": ["Jupiter", "Apache RTR 160", "Ntorq", "Raider 125", "iQube"],
-    "Bajaj": ["Pulsar NS200", "Platina", "CT 110", "Dominar 400", "Chetak"],
-    "Yamaha": ["FZ-S", "Ray ZR", "R15 V4", "MT-15", "Fascino"],
-    "Royal Enfield": ["Classic 350", "Meteor 350", "Hunter 350", "Bullet 350", "Continental GT"],
-    "Hero": ["Splendor Plus", "HF Deluxe", "Xtreme 160R", "Glamour", "Passion Pro"],
-    "Suzuki": ["Access 125", "Burgman Street", "Gixxer SF", "Avenis", "Hayabusa"],
-  };
-  const colors = ["Pearl White", "Midnight Black", "Racing Red", "Matt Blue", "Silver Grey"];
-  const financiers = ["HDFC Bank", "ICICI Bank", "Bajaj Finance", "TVS Credit", null, null]; // null = no loan
-  const insurers = ["ICICI Lombard", "HDFC ERGO", "Bajaj Allianz", "New India Assurance", "TATA AIG"];
+  // Generate realistic mock data for Indian 2-wheelers
+  const vehicleData: { make: string; model: string; engineCC: number; category: string }[] = [
+    // Honda
+    { make: "Honda", model: "Activa 6G", engineCC: 110, category: "Scooter" },
+    { make: "Honda", model: "Shine", engineCC: 125, category: "Commuter" },
+    { make: "Honda", model: "Unicorn", engineCC: 160, category: "Commuter" },
+    { make: "Honda", model: "SP 125", engineCC: 125, category: "Commuter" },
+    { make: "Honda", model: "Dio", engineCC: 110, category: "Scooter" },
+    { make: "Honda", model: "CB350", engineCC: 350, category: "Cruiser" },
+    // TVS
+    { make: "TVS", model: "Jupiter", engineCC: 110, category: "Scooter" },
+    { make: "TVS", model: "Apache RTR 160", engineCC: 160, category: "Sports" },
+    { make: "TVS", model: "Ntorq 125", engineCC: 125, category: "Scooter" },
+    { make: "TVS", model: "Raider 125", engineCC: 125, category: "Commuter" },
+    { make: "TVS", model: "iQube Electric", engineCC: 0, category: "Electric Scooter" },
+    { make: "TVS", model: "Apache RR 310", engineCC: 310, category: "Sports" },
+    // Bajaj
+    { make: "Bajaj", model: "Pulsar NS200", engineCC: 200, category: "Sports" },
+    { make: "Bajaj", model: "Pulsar 150", engineCC: 150, category: "Sports" },
+    { make: "Bajaj", model: "Platina 110", engineCC: 110, category: "Commuter" },
+    { make: "Bajaj", model: "CT 110", engineCC: 110, category: "Commuter" },
+    { make: "Bajaj", model: "Dominar 400", engineCC: 400, category: "Touring" },
+    { make: "Bajaj", model: "Chetak Electric", engineCC: 0, category: "Electric Scooter" },
+    // Yamaha
+    { make: "Yamaha", model: "FZ-S V3", engineCC: 150, category: "Street" },
+    { make: "Yamaha", model: "Ray ZR 125", engineCC: 125, category: "Scooter" },
+    { make: "Yamaha", model: "R15 V4", engineCC: 155, category: "Sports" },
+    { make: "Yamaha", model: "MT-15 V2", engineCC: 155, category: "Street" },
+    { make: "Yamaha", model: "Fascino 125", engineCC: 125, category: "Scooter" },
+    // Royal Enfield
+    { make: "Royal Enfield", model: "Classic 350", engineCC: 350, category: "Cruiser" },
+    { make: "Royal Enfield", model: "Meteor 350", engineCC: 350, category: "Cruiser" },
+    { make: "Royal Enfield", model: "Hunter 350", engineCC: 350, category: "Roadster" },
+    { make: "Royal Enfield", model: "Bullet 350", engineCC: 350, category: "Classic" },
+    { make: "Royal Enfield", model: "Himalayan", engineCC: 411, category: "Adventure" },
+    // Hero
+    { make: "Hero", model: "Splendor Plus", engineCC: 100, category: "Commuter" },
+    { make: "Hero", model: "HF Deluxe", engineCC: 100, category: "Commuter" },
+    { make: "Hero", model: "Xtreme 160R", engineCC: 160, category: "Sports" },
+    { make: "Hero", model: "Glamour", engineCC: 125, category: "Commuter" },
+    { make: "Hero", model: "Passion Pro", engineCC: 110, category: "Commuter" },
+    { make: "Hero", model: "Destini 125", engineCC: 125, category: "Scooter" },
+    // Suzuki
+    { make: "Suzuki", model: "Access 125", engineCC: 125, category: "Scooter" },
+    { make: "Suzuki", model: "Burgman Street", engineCC: 125, category: "Scooter" },
+    { make: "Suzuki", model: "Gixxer SF 250", engineCC: 250, category: "Sports" },
+    { make: "Suzuki", model: "Avenis 125", engineCC: 125, category: "Scooter" },
+  ];
   
-  const randomMake = makes[Math.floor(Math.random() * makes.length)];
-  const makeModels = models[randomMake] || ["Unknown Model"];
-  const randomModel = makeModels[Math.floor(Math.random() * makeModels.length)];
+  const colors = ["Pearl Spartan Red", "Matte Black", "Pearl White", "Racing Blue", "Titanium Grey", "Candy Orange", "Midnight Blue", "Glitter Silver"];
+  const financiers = ["HDFC Bank", "ICICI Bank", "Bajaj Finance", "TVS Credit", "Mahindra Finance", null, null, null]; // null = no loan
+  const insurers = ["ICICI Lombard", "HDFC ERGO", "Bajaj Allianz", "New India Assurance", "TATA AIG", "United India Insurance"];
+  
+  const randomVehicle = vehicleData[Math.floor(Math.random() * vehicleData.length)];
   const randomColor = colors[Math.floor(Math.random() * colors.length)];
   const randomFinancier = financiers[Math.floor(Math.random() * financiers.length)];
   const randomInsurer = insurers[Math.floor(Math.random() * insurers.length)];
@@ -94,25 +130,26 @@ function getMockVahanData(registrationNumber: string): VahanResponse {
   const pucExpiry = new Date(currentYear + (Math.random() > 0.4 ? 1 : 0), Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1);
   const fitnessExpiry = new Date(currentYear + 5, registrationDate.getMonth(), registrationDate.getDate());
   
-  // RTO mapping
   const rtoNames: Record<string, string> = {
-    "KA": "Karnataka",
-    "MH": "Maharashtra",
-    "DL": "Delhi",
-    "TN": "Tamil Nadu",
-    "UP": "Uttar Pradesh",
-    "GJ": "Gujarat",
-    "RJ": "Rajasthan",
-    "WB": "West Bengal",
-    "AP": "Andhra Pradesh",
-    "TS": "Telangana",
+    "KA": "Karnataka RTO",
+    "MH": "Maharashtra RTO",
+    "DL": "Delhi RTO",
+    "TN": "Tamil Nadu RTO",
+    "UP": "Uttar Pradesh RTO",
+    "GJ": "Gujarat RTO",
+    "RJ": "Rajasthan RTO",
+    "WB": "West Bengal RTO",
+    "AP": "Andhra Pradesh RTO",
+    "TS": "Telangana RTO",
+    "KL": "Kerala RTO",
+    "PB": "Punjab RTO",
+    "HR": "Haryana RTO",
+    "MP": "Madhya Pradesh RTO",
+    "BR": "Bihar RTO",
   };
   
-  const engineCCs = [110, 125, 150, 160, 200, 350, 400];
-  const randomEngineCC = engineCCs[Math.floor(Math.random() * engineCCs.length)];
-  
-  // Generate owner name (first name for privacy)
-  const ownerNames = ["Rahul", "Amit", "Priya", "Vikram", "Sneha", "Arjun", "Neha", "Karthik", "Ananya", "Suresh"];
+  // Generate owner name (common Indian first names)
+  const ownerNames = ["Rajesh", "Suresh", "Amit", "Vikram", "Arun", "Karthik", "Pradeep", "Manoj", "Ravi", "Sanjay", "Deepak", "Rahul", "Ankit", "Nitin", "Vivek"];
   const randomOwnerName = ownerNames[Math.floor(Math.random() * ownerNames.length)];
   
   return {
@@ -127,18 +164,18 @@ function getMockVahanData(registrationNumber: string): VahanResponse {
       financier: randomFinancier,
       
       // Vehicle Specs
-      make: randomMake,
-      model: randomModel,
-      variant: null,
-      vehicleClass: randomEngineCC <= 125 ? "Motor Cycle/Scooter (up to 125cc)" : "Motor Cycle (above 125cc)",
-      fuelType: randomMake === "TVS" && randomModel === "iQube" ? "Electric" : "Petrol",
-      engineCC: randomMake === "TVS" && randomModel === "iQube" ? 0 : randomEngineCC,
-      chassisNumber: `${randomMake.substring(0, 2).toUpperCase()}${Math.random().toString(36).substring(2, 12).toUpperCase()}`,
-      engineNumber: `${Math.random().toString(36).substring(2, 14).toUpperCase()}`,
+      make: randomVehicle.make,
+      model: randomVehicle.model,
+      variant: randomVehicle.category,
+      vehicleClass: randomVehicle.engineCC === 0 ? "Electric Two Wheeler" : randomVehicle.engineCC <= 125 ? "Motor Cycle/Scooter (up to 125cc)" : "Motor Cycle (above 125cc)",
+      fuelType: randomVehicle.engineCC === 0 ? "Electric" : "Petrol",
+      engineCC: randomVehicle.engineCC,
+      chassisNumber: `${randomVehicle.make.substring(0, 2).toUpperCase()}${manufacturingYear.toString().substring(2)}${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+      engineNumber: `${randomVehicle.make.substring(0, 3).toUpperCase()}${Math.random().toString(36).substring(2, 12).toUpperCase()}`,
       manufacturingYear: manufacturingYear,
       color: randomColor,
       seatingCapacity: 2,
-      unladenWeight: 100 + Math.floor(Math.random() * 80),
+      unladenWeight: randomVehicle.engineCC === 0 ? 118 : 100 + Math.floor(randomVehicle.engineCC / 3),
       
       // Insurance & PUC
       insuranceCompany: randomInsurer,
