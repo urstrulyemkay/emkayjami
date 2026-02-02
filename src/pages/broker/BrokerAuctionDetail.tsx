@@ -287,15 +287,7 @@ const BrokerAuctionDetail = () => {
     const fetchAuction = async () => {
       if (!id) return;
 
-      // Check if this is a mock auction ID first
-      if (id.startsWith("mock-") || id.startsWith("auction-")) {
-        const mockAuction = MOCK_AUCTIONS[id] || MOCK_AUCTIONS["mock-auction-1"];
-        setAuction({ ...mockAuction, id });
-        setBidAmount((mockAuction.current_highest_bid || 0) + (mockAuction.minimum_bid_increment || 500));
-        setLoading(false);
-        return;
-      }
-
+      // Try fetching from database first
       const { data, error } = await supabase
         .from("auctions")
         .select(`
@@ -317,11 +309,13 @@ const BrokerAuctionDetail = () => {
         .single();
 
       if (error || !data) {
-        console.error("Error fetching auction:", error);
-        // Fallback to mock data
-        const mockAuction = MOCK_AUCTIONS["mock-auction-1"];
-        setAuction({ ...mockAuction, id: id || "mock-auction-1" });
-        setBidAmount((mockAuction.current_highest_bid || 0) + 500);
+        // Always fallback to mock data for demo - pick based on ID hash
+        const mockKeys = Object.keys(MOCK_AUCTIONS);
+        const hash = id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+        const mockKey = mockKeys[hash % mockKeys.length];
+        const mockAuction = MOCK_AUCTIONS[mockKey];
+        setAuction({ ...mockAuction, id });
+        setBidAmount((mockAuction.current_highest_bid || 0) + (mockAuction.minimum_bid_increment || 500));
         setLoading(false);
         return;
       }
