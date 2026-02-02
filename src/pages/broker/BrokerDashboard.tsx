@@ -27,7 +27,7 @@ import {
   LEVELS,
   getProgressToNextLevel,
 } from "@/data/brokerMockData";
-import { MOCK_AUCTIONS, getVehicleImage } from "@/data/mockAuctions";
+import { MOCK_AUCTIONS, getVehicleImage, getAuctionById } from "@/data/mockAuctions";
 
 // 20 upcoming auctions
 const MOCK_UPCOMING_AUCTIONS = [
@@ -128,14 +128,14 @@ const BrokerDashboard = () => {
       if (!broker) return;
 
       try {
-        // Fetch live auctions - use !inner to ensure inspections exist
+        // Fetch live auctions - use LEFT JOIN (no !inner) to get auctions even if inspections are blocked by RLS
         const { data: liveData, error: liveError } = await supabase
           .from("auctions")
           .select(`
             id, auction_type, status, start_time, end_time,
             current_highest_bid, current_highest_commission, bid_count,
             geo_targeting_city,
-            inspections!inner (
+            inspections (
               id, vehicle_make, vehicle_model, vehicle_year,
               odometer_reading, vehicle_color, condition_score
             )
@@ -157,7 +157,7 @@ const BrokerDashboard = () => {
             id, auction_type, status, start_time, end_time,
             current_highest_bid, current_highest_commission, bid_count,
             geo_targeting_city,
-            inspections!inner (
+            inspections (
               id, vehicle_make, vehicle_model, vehicle_year,
               odometer_reading, vehicle_color, condition_score
             )
@@ -252,33 +252,43 @@ const BrokerDashboard = () => {
     };
   };
 
-  // Transform DB auctions for the card component
+  // Transform DB auctions for the card component - hydrate from centralized mock if inspection is null/blocked
   const transformAuctionForCard = (auction: AuctionWithInspection) => {
     const endTime = new Date(auction.end_time);
     const timeRemaining = Math.max(0, endTime.getTime() - Date.now());
-    const grade = getGradeFromScore(auction.inspections?.condition_score);
-    const make = auction.inspections?.vehicle_make || "Honda";
-    const model = auction.inspections?.vehicle_model || "Activa 6G";
+    
+    // Get centralized mock data for this auction ID to fill in missing inspection data
+    // getAuctionById handles ID-based hashing for consistent mock data even for unknown UUIDs
+    const mockAuction = getAuctionById(auction.id) || MOCK_AUCTIONS[0];
+    
+    // Use inspection data if available, otherwise fall back to centralized mock
+    const hasInspection = auction.inspections && auction.inspections.vehicle_make;
+    const make = hasInspection ? auction.inspections.vehicle_make : mockAuction.vehicle.make;
+    const model = hasInspection ? auction.inspections.vehicle_model : mockAuction.vehicle.model;
+    const year = hasInspection && auction.inspections.vehicle_year ? auction.inspections.vehicle_year : mockAuction.vehicle.year;
+    const kms = hasInspection && auction.inspections.odometer_reading ? auction.inspections.odometer_reading : mockAuction.vehicle.kms;
+    const conditionScore = hasInspection && auction.inspections.condition_score ? auction.inspections.condition_score : mockAuction.conditionScore;
+    const grade = getGradeFromScore(conditionScore);
 
     return {
       id: auction.id,
       vehicle: {
         make: make,
         model: model,
-        variant: "",
-        year: auction.inspections?.vehicle_year || 2023,
-        kms: auction.inspections?.odometer_reading || 12500,
-        city: auction.geo_targeting_city || "Bangalore",
+        variant: mockAuction.vehicle.variant,
+        year: year,
+        kms: kms,
+        city: auction.geo_targeting_city || mockAuction.vehicle.city,
         grade: grade,
         thumbnail: getVehicleImage(make, auction.id),
       },
       auctionType: auction.auction_type,
       timeRemaining: timeRemaining,
       endTime: endTime,
-      currentHighestBid: auction.current_highest_bid || 35000,
-      bidCount: auction.bid_count || 4,
-      matchScore: 80,
-      documents: { rc: true, insurance: true, puc: true, challans: 0, loan: false },
+      currentHighestBid: auction.current_highest_bid || mockAuction.currentHighestBid,
+      bidCount: auction.bid_count || mockAuction.bidCount,
+      matchScore: mockAuction.matchScore,
+      documents: mockAuction.documents,
       oemTrust: "high" as const,
     };
   };
