@@ -125,19 +125,33 @@ const NewInspection = () => {
 
     setIsSearching(true);
     
-    // Fetch from Vahan API
-    const vahanData = await lookupVehicle(registration);
+    // Simulate API delay
+    await new Promise((resolve) => setTimeout(resolve, 800));
     
-    if (vahanData) {
-      autoFillFromVahan(vahanData);
-      
-      // Check for duplicate (mock 20% chance)
-      if (Math.random() < 0.2) {
-        setShowDuplicateWarning(true);
-      }
+    // Auto-fill with realistic mock data
+    const testMakes = ["Honda", "TVS", "Bajaj", "Yamaha", "Royal Enfield", "Hero", "Suzuki"];
+    const randomMake = testMakes[Math.floor(Math.random() * testMakes.length)];
+    const modelsForMake = getModelsByMake(randomMake);
+    const randomModel = modelsForMake.length > 0 ? modelsForMake[Math.floor(Math.random() * modelsForMake.length)] : null;
+    const ownerNames = ["Rajesh", "Suresh", "Amit", "Vikram", "Arun", "Karthik", "Pradeep", "Manoj", "Ravi", "Sanjay"];
+    
+    setSelectedMake(randomMake);
+    setSelectedModel(randomModel?.model || "");
+    setSelectedYear((2019 + Math.floor(Math.random() * 6)).toString());
+    setSelectedColor(VEHICLE_COLORS[Math.floor(Math.random() * VEHICLE_COLORS.length)]);
+    setOdometerReading((5000 + Math.floor(Math.random() * 45000)).toString());
+    
+    if (!customerName.trim()) {
+      setCustomerName(ownerNames[Math.floor(Math.random() * ownerNames.length)]);
     }
     
+    setVehicleFound(true);
     setIsSearching(false);
+    
+    toast({
+      title: "Vehicle found",
+      description: `${randomMake} ${randomModel?.model || ""} - Auto-filled`,
+    });
   };
 
   // Auto-fill all fields for testing
