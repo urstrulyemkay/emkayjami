@@ -101,9 +101,23 @@ const BrokerAuctionDetail = () => {
     bids,
     myBid,
     isWinning,
+    wasOutbid,
     placeBid,
+    clearOutbid,
     loading: bidsLoading,
   } = useRealtimeBids(id || "", broker?.id);
+
+  // Show toast when outbid
+  useEffect(() => {
+    if (wasOutbid) {
+      toast({
+        title: "⚠️ You've been outbid!",
+        description: `Current highest bid is now ₹${currentHighestBid.toLocaleString()}. Place a higher bid to win.`,
+        variant: "destructive",
+      });
+      clearOutbid();
+    }
+  }, [wasOutbid, currentHighestBid, toast, clearOutbid]);
 
   // Fetch auction details
   useEffect(() => {
