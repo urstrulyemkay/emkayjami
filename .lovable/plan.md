@@ -1,251 +1,159 @@
 
-# Post-Sale Services Flow for Won Vehicles
+# Sound Notifications Implementation Plan
 
 ## Overview
 
-You're right - the services flow for won vehicles is completely missing. While the app mentions RC transfer obligations, tracks mock data for delivery/RC status, and warns about penalties, there's no actual functional flow for brokers to:
-
-1. View their won vehicles with service tracking
-2. Track vehicle pickup and delivery status
-3. Upload RC transfer proof
-4. Request name transfer and other services
-5. See deadline reminders and status updates
-
-## Current State
-
-| Component | Status |
-|-----------|--------|
-| Won bids list in BrokerBids | Basic view only - cards not clickable |
-| RC Transfer Warning | Shows in auction detail (before purchase) |
-| Service status tracking | Only in mock data, not in database |
-| Service upload/proof flow | Does not exist |
-| Deadline tracking | Not implemented |
-
-## Proposed Solution
-
-Create a complete post-sale services journey with the following components:
+Adding subtle, professional sound notifications that align with the app's "Truth Terminal" aesthetic - forensic and banking-like rather than playful consumer sounds. The sounds will provide immediate audio feedback for key actions without being intrusive.
 
 ---
 
-## Phase 1: Database Schema
+## Sound Design Philosophy
 
-### New Table: `broker_won_vehicles`
-Tracks the post-sale journey for each won auction:
-
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│  broker_won_vehicles                                            │
-├─────────────────────────────────────────────────────────────────┤
-│  id                    UUID (PK)                                │
-│  broker_id             UUID (FK → brokers)                      │
-│  auction_id            UUID (FK → auctions)                     │
-│  bid_id                UUID (FK → broker_bids)                  │
-│  won_at                TIMESTAMP                                │
-│  payment_status        TEXT (pending/completed/failed)          │
-│  payment_completed_at  TIMESTAMP                                │
-│  pickup_status         TEXT (pending/scheduled/completed)       │
-│  pickup_scheduled_at   TIMESTAMP                                │
-│  pickup_completed_at   TIMESTAMP                                │
-│  delivery_status       TEXT (pending/in_transit/delivered)      │
-│  delivered_at          TIMESTAMP                                │
-│  rc_transfer_status    TEXT (pending/in_progress/completed)     │
-│  rc_transfer_deadline  DATE (6 months from won_at)              │
-│  rc_transfer_proof_uri TEXT                                     │
-│  rc_transferred_at     TIMESTAMP                                │
-│  name_transfer_status  TEXT (pending/in_progress/completed)     │
-│  name_transferred_at   TIMESTAMP                                │
-│  insurance_status      TEXT (pending/transferred/new)           │
-│  notes                 TEXT                                     │
-│  created_at            TIMESTAMP                                │
-│  updated_at            TIMESTAMP                                │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### New Table: `service_documents`
-Stores proof uploads for various services:
-
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│  service_documents                                              │
-├─────────────────────────────────────────────────────────────────┤
-│  id                    UUID (PK)                                │
-│  won_vehicle_id        UUID (FK → broker_won_vehicles)          │
-│  service_type          TEXT (rc_transfer/name_transfer/etc)     │
-│  file_name             TEXT                                     │
-│  file_uri              TEXT                                     │
-│  file_type             TEXT                                     │
-│  uploaded_at           TIMESTAMP                                │
-│  verified_at           TIMESTAMP                                │
-│  verification_status   TEXT (pending/verified/rejected)         │
-│  rejection_reason      TEXT                                     │
-└─────────────────────────────────────────────────────────────────┘
-```
+Based on the app's personality guidelines from memory:
+- **Subtle and professional** - soft ticks, gentle chimes, understated alerts
+- **Forensic/banking app feel** - no playful sounds like confetti or game-like effects
+- **Contextual feedback** - different tones for positive, negative, and neutral actions
 
 ---
 
-## Phase 2: New Pages & Components
+## Sound Categories & Triggers
 
-### 1. Won Vehicle Detail Page (`/broker/won/:id`)
-
-A comprehensive service tracking page with:
-
-**Header Section:**
-- Vehicle image and details
-- Purchase date and winning bid amount
-- Overall completion progress bar
-
-**Service Stages (Stepper/Timeline View):**
-```text
-[Payment] → [Pickup] → [Delivery] → [RC Transfer] → [Name Transfer]
-    ✓          ✓         🔄            ⏳              ⏳
-```
-
-**Each Stage Card Contains:**
-- Status indicator (pending/in-progress/completed)
-- Action buttons (e.g., "Upload Proof", "Schedule Pickup")
-- Deadline warning if applicable
-- Uploaded documents preview
-
-**RC Transfer Section (Critical):**
-- Large countdown timer showing days remaining (out of 180)
-- Progress bar visual
-- Upload proof button with camera/file options
-- Verification status after upload
-- Warning banner when < 30 days remaining
-- Penalty info (-500 coins, -10 trust score)
-
-**Documents Collected:**
-- List of all uploaded service proofs
-- Status badges (pending verification, verified, rejected)
-
-### 2. Enhanced BrokerBids "Won" Tab
-
-Update the existing Won tab to:
-- Make cards clickable → navigate to `/broker/won/:id`
-- Show mini service progress indicators
-- Display upcoming deadlines
-- Add RC deadline warning badge for urgent items
-
-### 3. Service Upload Sheet Component
-
-Reusable bottom sheet for uploading service proofs:
-- Camera capture option
-- File picker option
-- Preview before upload
-- Service type selection
-- Optional notes field
+| Category | Sound Type | Events |
+|----------|------------|--------|
+| **Positive** | Soft ascending chime | Bid placed, auction won, payment confirmed, document verified, login success |
+| **Negative** | Low subtle tone | Outbid, strike received, bid failed, insufficient coins, deadline warning |
+| **Neutral** | Soft tick/click | Navigation, toggle, file selected, status update |
+| **Alert** | Gentle pulse | New bid on watched auction, deadline reminder, important notification |
+| **Coin** | Soft coin tick | Coins earned, coins spent |
 
 ---
 
-## Phase 3: Hooks & Business Logic
+## Technical Implementation
 
-### `useBrokerWonVehicles` Hook
+### Phase 1: Sound System Hook
+
+Create a centralized `useSoundNotifications` hook:
 
 ```text
-Returns:
-- wonVehicles: list of all won vehicles with service status
-- loading: boolean
-- refetch: function
+src/hooks/useSoundNotifications.ts
 
 Features:
-- Fetches from broker_won_vehicles joined with auctions/inspections
-- Sorts by urgency (RC deadline approaching first)
-- Filters by status (all/active/completed)
+- Preloads audio files for instant playback
+- Provides playSound(type) function
+- Respects user's sound preference (stored in localStorage)
+- Handles browser autoplay restrictions gracefully
+- Volume control (subtle default, adjustable)
 ```
 
-### `useServiceTracking` Hook
+### Phase 2: Sound Assets
 
-```text
-Params: wonVehicleId
+Create audio files in `public/sounds/`:
 
-Returns:
-- vehicle: full vehicle details with all service statuses
-- documents: uploaded proofs
-- loading/saving states
+| File | Duration | Use Case |
+|------|----------|----------|
+| `success.mp3` | ~200ms | Bid placed, win, verification success |
+| `coin-earn.mp3` | ~150ms | Coins earned |
+| `coin-spend.mp3` | ~150ms | Coins spent |
+| `outbid.mp3` | ~300ms | Outbid notification |
+| `alert.mp3` | ~250ms | Important alerts, deadline warnings |
+| `error.mp3` | ~200ms | Errors, failures |
+| `tick.mp3` | ~100ms | UI interactions, toggles |
+| `notification.mp3` | ~200ms | New activity, incoming bids |
 
-Actions:
-- updateServiceStatus(serviceType, status)
-- uploadProof(serviceType, file)
-- getRemainingDays(deadline)
-```
+Note: Will use base64-encoded minimal audio or generate via Web Audio API to avoid file dependencies initially.
+
+### Phase 3: Integration Points
+
+**Auction & Bidding (useRealtimeBids.ts, BrokerAuctionDetail.tsx):**
+- Play "success" when bid is placed
+- Play "outbid" when user is outbid
+- Play "notification" when new bid arrives (if watching)
+
+**Wallet (useBrokerWallet.ts):**
+- Play "coin-earn" for earned/bonus transactions
+- Play "coin-spend" for spent/penalty transactions
+
+**Service Tracking (useServiceTracking.ts, BrokerWonVehicleDetail.tsx):**
+- Play "success" when service status updated to completed
+- Play "tick" when document uploaded
+
+**Authentication (BrokerLogin.tsx):**
+- Play "success" on successful login
+
+**Strikes (useBrokerStrikes.ts):**
+- Play "error" when new strike is detected
+
+**Help & Support (BrokerHelp.tsx):**
+- Play "success" when ticket submitted
+
+**General UI:**
+- Play "tick" on bottom nav tab changes (optional, may skip for subtlety)
 
 ---
 
-## Phase 4: Services Provided by DriveX
+## User Preference Control
 
-Based on the context of 2-wheeler transactions, implement tracking for:
-
-| Service | Description | Deadline |
-|---------|-------------|----------|
-| **Payment** | Confirm payment to DriveX | 24-48 hours |
-| **Pickup** | Schedule/confirm vehicle pickup | 3-5 days |
-| **Delivery** | Track transit to broker | Varies |
-| **RC Transfer** | Transfer Registration Certificate | 6 months |
-| **Name Transfer** | Change ownership in RTO records | 6 months |
-| **Insurance** | Transfer or new policy | 30 days |
-| **NOC** | No Objection Certificate (if interstate) | As needed |
-
----
-
-## Phase 5: Notifications & Reminders
-
-Create reminder system for:
-- Payment due (24 hours before deadline)
-- RC transfer reminders at 30, 15, 7 days remaining
-- Overdue warnings with penalty information
-- Document verification status updates
+Add sound toggle in BrokerProfile.tsx:
+- "Sound Notifications" switch (on/off)
+- Persisted to localStorage
+- Default: ON
 
 ---
 
 ## File Changes Summary
 
 ### New Files:
-1. `src/pages/broker/BrokerWonVehicleDetail.tsx` - Main service tracking page
-2. `src/components/broker/ServiceStageCard.tsx` - Individual service stage component
-3. `src/components/broker/ServiceProgressStepper.tsx` - Visual stepper for stages
-4. `src/components/broker/ServiceUploadSheet.tsx` - Upload proof bottom sheet
-5. `src/components/broker/RCTransferCountdown.tsx` - RC deadline countdown widget
-6. `src/hooks/useBrokerWonVehicles.ts` - Fetch won vehicles
-7. `src/hooks/useServiceTracking.ts` - Individual vehicle service tracking
-8. `supabase/migrations/xxx_create_broker_services.sql` - Database tables
+1. `src/hooks/useSoundNotifications.ts` - Central sound management hook
+2. `src/lib/sounds.ts` - Sound definitions and base64 audio data (or Web Audio synthesis)
 
 ### Modified Files:
-1. `src/App.tsx` - Add route `/broker/won/:id`
-2. `src/pages/broker/BrokerBids.tsx` - Make won cards clickable, add status badges
-3. `src/components/broker/BrokerBottomNav.tsx` - Optional: Add services tab
+1. `src/hooks/useRealtimeBids.ts` - Add outbid and new bid sounds
+2. `src/hooks/useBrokerWallet.ts` - Add coin transaction sounds
+3. `src/hooks/useServiceTracking.ts` - Add service completion sounds
+4. `src/pages/broker/BrokerAuctionDetail.tsx` - Add bid placement sound
+5. `src/pages/broker/BrokerLogin.tsx` - Add login success sound
+6. `src/pages/broker/BrokerProfile.tsx` - Add sound preference toggle
+7. `src/pages/broker/BrokerHelp.tsx` - Add ticket submission sound
+8. `src/pages/broker/BrokerWonVehicleDetail.tsx` - Add service update sounds
 
 ---
 
-## User Flow Diagram
+## Technical Details
 
-```text
-Broker wins auction
-       ↓
-System creates entry in broker_won_vehicles
-       ↓
-Broker sees won vehicle in "My Bids → Won" tab
-       ↓
-Clicks on won vehicle card
-       ↓
-Opens /broker/won/:id with service stages
-       ↓
-Completes each stage:
-   • Payment → Confirm
-   • Pickup → Schedule & confirm
-   • Delivery → Track & confirm receipt
-   • RC Transfer → Upload proof → Await verification
-   • Name Transfer → Upload proof → Await verification
-       ↓
-All complete → Vehicle marked as "Completed"
+### Sound Hook API:
+
+```typescript
+const { playSound, soundEnabled, toggleSound } = useSoundNotifications();
+
+// Usage
+playSound('success');  // Bid placed
+playSound('outbid');   // Got outbid
+playSound('coin-earn'); // Earned coins
+playSound('tick');     // UI interaction
 ```
 
+### Web Audio API Approach (No External Files):
+
+To avoid file dependencies, generate sounds programmatically:
+- Success: Short ascending two-tone (C5 -> E5)
+- Error: Short descending tone (E4 -> C4)
+- Coin: Quick metallic tick
+- Alert: Gentle pulse wave
+- Tick: Brief click
+
+### Browser Considerations:
+- Sounds only play after user interaction (browser autoplay policy)
+- Graceful degradation if Audio API unavailable
+- No sounds during initial page load
+
 ---
 
-## Technical Considerations
+## Implementation Order
 
-1. **RLS Policies**: Brokers can only view/update their own won vehicles
-2. **Storage Bucket**: New `service-documents` private bucket for proofs
-3. **Realtime**: Enable for `broker_won_vehicles` for status updates
-4. **Deadline Enforcement**: Database trigger to auto-apply penalties after 6 months
-5. **Verification Flow**: Initially manual (admin marks verified), can automate later
-
+1. Create `useSoundNotifications` hook with Web Audio API synthesis
+2. Add sound preference toggle to BrokerProfile
+3. Integrate into bidding flow (highest impact)
+4. Add wallet transaction sounds
+5. Add service tracking sounds
+6. Add authentication sounds
+7. Add remaining interaction sounds
