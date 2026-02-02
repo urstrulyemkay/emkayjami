@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useBrokerAuth } from "@/contexts/BrokerAuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
@@ -29,102 +30,35 @@ import {
 } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import {
-  ArrowLeft, Star, MapPin, Clock, Zap, Check, AlertTriangle,
-  ChevronRight, Play, Image as ImageIcon, Info, Heart,
-  Bell, Share2, TrendingUp, Scale
+  ArrowLeft, MapPin, Clock, Zap, Check, AlertTriangle,
+  Play, Image as ImageIcon, Info, Heart,
+  Share2, TrendingUp, Scale, Calendar, Target
 } from "lucide-react";
-import {
-  LIVE_AUCTIONS,
-  calculateEffectiveScore,
-  formatTimeRemaining,
-  getAuctionTypeConfig,
-  getGradeColor,
-} from "@/data/brokerMockData";
+import { useRealtimeBids } from "@/hooks/useRealtimeBids";
+import LiveBidFeed from "@/components/broker/LiveBidFeed";
+import { calculateEffectiveScore } from "@/data/brokerMockData";
 
-// Mock auction detail data
-const MOCK_AUCTION_DETAIL = {
-  id: "auction-1",
-  vehicle: {
-    make: "TVS",
-    model: "Apache RTR 160",
-    variant: "4V BS6",
-    year: 2023,
-    kms: 12450,
-    city: "Bangalore",
-    grade: "B",
-    gradeDescription: "Good condition, minor wear",
-    thumbnail: "/placeholder.svg",
-    images: ["/placeholder.svg", "/placeholder.svg", "/placeholder.svg", "/placeholder.svg"],
-    videoUrl: null,
-  },
-  auctionType: "quick",
-  timeRemaining: 18 * 60 * 1000,
-  endTime: new Date(Date.now() + 18 * 60 * 1000),
-  currentHighestBid: 36500,
-  currentHighestCommission: 800, // Added for accurate effective score calculation
-  bidCount: 4,
-  minimumBidIncrement: 500,
-  documents: { rc: true, insurance: true, puc: true, challans: 0, loan: false },
-  oemTrust: "high",
-  inspection: {
-    highlights: [
-      { type: "positive", text: "Single owner, well-maintained" },
-      { type: "positive", text: "No major accidents" },
-      { type: "negative", text: "Brake pads 60% worn, needs replacement soon" },
-      { type: "negative", text: "Minor rust on frame" },
-    ],
-    sections: {
-      engine: {
-        title: "Engine & Powertrain",
-        items: [
-          { label: "Engine starts", status: "good", note: "Easy start" },
-          { label: "Oil condition", status: "good", note: "Clean" },
-          { label: "Coolant level", status: "warning", note: "Low (needs top-up)" },
-          { label: "Air filter", status: "good", note: "Clean" },
-        ],
-        notes: "Engine starts on first kick. Oil is clean but level slightly low.",
-      },
-      body: {
-        title: "Body & Paint",
-        items: [
-          { label: "Paint condition", status: "warning", note: "Minor scratches" },
-          { label: "Rust spots", status: "warning", note: "Minor rust on frame" },
-          { label: "Dents/damage", status: "good", note: "No major dents" },
-        ],
-        notes: "Body solid. Few cosmetic scratches typical for 2-year bike.",
-      },
-      electrical: {
-        title: "Electronics & Electrics",
-        items: [
-          { label: "Headlight", status: "good", note: "Working" },
-          { label: "Tail light", status: "good", note: "Working" },
-          { label: "Battery", status: "good", note: "Strong" },
-        ],
-        notes: "All electrical components tested and working.",
-      },
-      suspension: {
-        title: "Suspension & Handling",
-        items: [
-          { label: "Front suspension", status: "good", note: "Smooth" },
-          { label: "Rear suspension", status: "good", note: "Smooth" },
-          { label: "Brakes", status: "warning", note: "Pads 60% worn" },
-        ],
-        notes: "Braking responsive but pads nearing end of life.",
-      },
-      tyres: {
-        title: "Tyres & Wheels",
-        items: [
-          { label: "Front tyre tread", status: "warning", note: "3mm (replace soon)" },
-          { label: "Rear tyre tread", status: "good", note: "5mm (good)" },
-          { label: "Rim condition", status: "good", note: "No damage" },
-        ],
-        notes: "Rear tyre good. Front tyre tread low.",
-      },
-    },
-  },
-  rcTransferDeadline: "Within 6 months of purchase",
-  penaltiesInfo: "Failure to transfer on time: -500 coins, -10 trust score",
-};
+interface AuctionData {
+  id: string;
+  auction_type: string;
+  status: string;
+  start_time: string;
+  end_time: string;
+  current_highest_bid: number | null;
+  current_highest_commission: number | null;
+  bid_count: number | null;
+  minimum_bid_increment: number | null;
+  geo_targeting_city: string | null;
+  inspections: {
+    id: string;
+    vehicle_make: string;
+    vehicle_model: string;
+    vehicle_year: number | null;
+    odometer_reading: number | null;
+    vehicle_color: string | null;
+    condition_score: number | null;
+  } | null;
+}
 
 const BrokerAuctionDetail = () => {
   const navigate = useNavigate();
@@ -132,25 +66,81 @@ const BrokerAuctionDetail = () => {
   const { broker, isAuthenticated } = useBrokerAuth();
   const { toast } = useToast();
 
-  const [timeLeft, setTimeLeft] = useState(MOCK_AUCTION_DETAIL.timeRemaining);
+  const [auction, setAuction] = useState<AuctionData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [timeLeft, setTimeLeft] = useState(0);
   const [bidSheetOpen, setBidSheetOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [bidAmount, setBidAmount] = useState(
-    MOCK_AUCTION_DETAIL.currentHighestBid + MOCK_AUCTION_DETAIL.minimumBidIncrement
-  );
+  const [bidAmount, setBidAmount] = useState(0);
   const [commission, setCommission] = useState(0);
   const [isWatchlisted, setIsWatchlisted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Real-time bids hook
+  const {
+    currentHighestBid,
+    currentHighestCommission,
+    bidCount,
+    bids,
+    myBid,
+    isWinning,
+    placeBid,
+    loading: bidsLoading,
+  } = useRealtimeBids(id || "", broker?.id);
+
+  // Fetch auction details
   useEffect(() => {
-    if (MOCK_AUCTION_DETAIL.auctionType === "one_click") return;
+    const fetchAuction = async () => {
+      if (!id) return;
+
+      const { data, error } = await supabase
+        .from("auctions")
+        .select(`
+          id, auction_type, status, start_time, end_time,
+          current_highest_bid, current_highest_commission, bid_count,
+          minimum_bid_increment, geo_targeting_city,
+          inspections (
+            id, vehicle_make, vehicle_model, vehicle_year,
+            odometer_reading, vehicle_color, condition_score
+          )
+        `)
+        .eq("id", id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching auction:", error);
+        // Fall back to mock for demo if not found
+        setLoading(false);
+        return;
+      }
+
+      setAuction(data as unknown as AuctionData);
+      setBidAmount((data.current_highest_bid || 0) + (data.minimum_bid_increment || 500));
+      setLoading(false);
+    };
+
+    fetchAuction();
+  }, [id]);
+
+  // Update timer
+  useEffect(() => {
+    if (!auction || auction.auction_type === "one_click") return;
 
     const interval = setInterval(() => {
-      const remaining = MOCK_AUCTION_DETAIL.endTime.getTime() - Date.now();
+      const endTime = new Date(auction.end_time);
+      const remaining = endTime.getTime() - Date.now();
       setTimeLeft(Math.max(0, remaining));
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [auction]);
+
+  // Update bid amount when highest bid changes
+  useEffect(() => {
+    if (currentHighestBid > 0 && !myBid) {
+      setBidAmount(currentHighestBid + 500);
+    }
+  }, [currentHighestBid, myBid]);
 
   const formatTime = (ms: number) => {
     if (ms <= 0) return "00:00:00";
@@ -158,6 +148,15 @@ const BrokerAuctionDetail = () => {
     const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((ms % (1000 * 60)) / 1000);
     return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  const getGradeFromScore = (score: number | null): string => {
+    if (!score) return "C";
+    if (score >= 85) return "A";
+    if (score >= 70) return "B";
+    if (score >= 55) return "C";
+    if (score >= 40) return "D";
+    return "E";
   };
 
   const getGradeColor = (grade: string) => {
@@ -171,25 +170,37 @@ const BrokerAuctionDetail = () => {
     return colors[grade] || "bg-gray-500";
   };
 
-  const getStatusIcon = (status: string) => {
-    if (status === "good") return <Check className="w-4 h-4 text-green-500" />;
-    if (status === "warning") return <AlertTriangle className="w-4 h-4 text-amber-500" />;
-    return <AlertTriangle className="w-4 h-4 text-red-500" />;
+  const getAuctionTypeIcon = (type: string) => {
+    switch (type) {
+      case "quick": return <Zap className="w-3 h-3" />;
+      case "flexible": return <Scale className="w-3 h-3" />;
+      case "extended": return <Calendar className="w-3 h-3" />;
+      case "one_click": return <Target className="w-3 h-3" />;
+      default: return <Zap className="w-3 h-3" />;
+    }
   };
 
-  // Use consistent effective score calculation from centralized data
+  const getAuctionTypeName = (type: string) => {
+    const names: Record<string, string> = {
+      quick: "Quick Auction",
+      flexible: "Flexible Auction",
+      extended: "Extended Auction",
+      one_click: "One-Click Buy",
+    };
+    return names[type] || "Auction";
+  };
+
+  // Calculate effective score and ranking
   const effectiveScore = calculateEffectiveScore(bidAmount, commission);
-  const currentHighestEffective = calculateEffectiveScore(
-    MOCK_AUCTION_DETAIL.currentHighestBid, 
-    MOCK_AUCTION_DETAIL.currentHighestCommission || 0
-  );
-  const bidRanking = effectiveScore > currentHighestEffective ? "HIGH" : effectiveScore > currentHighestEffective * 0.95 ? "MEDIUM" : "LOW";
+  const currentHighestEffective = calculateEffectiveScore(currentHighestBid, currentHighestCommission);
+  const bidRanking = effectiveScore > currentHighestEffective ? "HIGH" : 
+                     effectiveScore > currentHighestEffective * 0.95 ? "MEDIUM" : "LOW";
 
   const handlePlaceBid = () => {
-    if (bidAmount <= MOCK_AUCTION_DETAIL.currentHighestBid) {
+    if (bidAmount <= currentHighestBid) {
       toast({
         title: "Invalid bid",
-        description: `Bid must be higher than ₹${MOCK_AUCTION_DETAIL.currentHighestBid.toLocaleString()}`,
+        description: `Bid must be higher than ₹${currentHighestBid.toLocaleString()}`,
         variant: "destructive",
       });
       return;
@@ -197,16 +208,47 @@ const BrokerAuctionDetail = () => {
     setConfirmDialogOpen(true);
   };
 
-  const confirmBid = () => {
-    setConfirmDialogOpen(false);
-    setBidSheetOpen(false);
-    toast({
-      title: "✓ Bid placed!",
-      description: `₹${bidAmount.toLocaleString()} + ₹${commission.toLocaleString()} commission`,
-    });
+  const confirmBid = async () => {
+    setIsSubmitting(true);
+    try {
+      await placeBid(bidAmount, commission);
+      setConfirmDialogOpen(false);
+      setBidSheetOpen(false);
+      toast({
+        title: "✓ Bid placed successfully!",
+        description: `₹${bidAmount.toLocaleString()} + ₹${commission.toLocaleString()} commission`,
+      });
+    } catch (error) {
+      console.error("Error placing bid:", error);
+      toast({
+        title: "Failed to place bid",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const auction = MOCK_AUCTION_DETAIL;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!auction) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <p className="text-muted-foreground mb-4">Auction not found</p>
+        <Button onClick={() => navigate("/broker")}>Back to Dashboard</Button>
+      </div>
+    );
+  }
+
+  const grade = getGradeFromScore(auction.inspections?.condition_score);
+  const minBidIncrement = auction.minimum_bid_increment || 500;
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -217,10 +259,12 @@ const BrokerAuctionDetail = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1">
-            <h1 className="font-semibold">{auction.vehicle.make} {auction.vehicle.model}</h1>
+            <h1 className="font-semibold">
+              {auction.inspections?.vehicle_make} {auction.inspections?.vehicle_model}
+            </h1>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <MapPin className="w-3 h-3" />
-              {auction.vehicle.city}
+              {auction.geo_targeting_city || "Bangalore"}
             </div>
           </div>
           <Button
@@ -239,21 +283,15 @@ const BrokerAuctionDetail = () => {
       {/* Main Image */}
       <div className="relative aspect-video bg-muted">
         <img
-          src={auction.vehicle.thumbnail}
-          alt={auction.vehicle.model}
+          src="/placeholder.svg"
+          alt={auction.inspections?.vehicle_model || "Vehicle"}
           className="w-full h-full object-cover"
         />
         <div className="absolute bottom-3 right-3 flex gap-2">
           <Badge className="bg-black/70 text-white gap-1">
             <ImageIcon className="w-3 h-3" />
-            {auction.vehicle.images.length}
+            4
           </Badge>
-          {auction.vehicle.videoUrl && (
-            <Badge className="bg-black/70 text-white gap-1">
-              <Play className="w-3 h-3" />
-              Video
-            </Badge>
-          )}
         </div>
       </div>
 
@@ -262,94 +300,77 @@ const BrokerAuctionDetail = () => {
         <div className="flex items-start justify-between mb-3">
           <div>
             <h2 className="text-xl font-bold">
-              {auction.vehicle.make} {auction.vehicle.model}
+              {auction.inspections?.vehicle_make} {auction.inspections?.vehicle_model}
             </h2>
             <p className="text-muted-foreground">
-              {auction.vehicle.variant} • {auction.vehicle.year}
+              {auction.inspections?.vehicle_year}
             </p>
             <p className="text-sm text-muted-foreground mt-1">
-              {auction.vehicle.kms.toLocaleString()} km
+              {(auction.inspections?.odometer_reading || 0).toLocaleString()} km
             </p>
           </div>
-          <div className={`${getGradeColor(auction.vehicle.grade)} text-white px-4 py-2 rounded-lg text-center`}>
-            <span className="text-2xl font-bold">{auction.vehicle.grade}</span>
-            <p className="text-xs">{auction.vehicle.gradeDescription}</p>
+          <div className={`${getGradeColor(grade)} text-white px-4 py-2 rounded-lg text-center`}>
+            <span className="text-2xl font-bold">{grade}</span>
           </div>
         </div>
 
-        {/* Quick Highlights */}
-        <div className="space-y-2 mt-4">
-          {auction.inspection.highlights.map((highlight, index) => (
-            <div key={index} className="flex items-start gap-2">
-              {highlight.type === "positive" ? (
-                <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
-              ) : (
-                <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
-              )}
-              <span className="text-sm">{highlight.text}</span>
+        {/* My Bid Status */}
+        {myBid && (
+          <div className={`rounded-xl p-4 mb-4 ${isWinning ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800" : "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800"}`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">Your Bid</p>
+                <p className="text-xl font-bold">
+                  ₹{myBid.bid_amount.toLocaleString()}
+                  {myBid.commission_amount > 0 && (
+                    <span className="text-amber-600 text-sm"> + ₹{myBid.commission_amount.toLocaleString()}</span>
+                  )}
+                </p>
+              </div>
+              <Badge className={isWinning ? "bg-green-500 text-white" : "bg-amber-500 text-white"}>
+                {isWinning ? "WINNING" : "OUTBID"}
+              </Badge>
             </div>
-          ))}
-        </div>
-
-        {/* OEM Trust Badge */}
-        {auction.oemTrust === "high" && (
-          <Badge className="mt-3 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-            ✓ High-trust OEM
-          </Badge>
+          </div>
         )}
       </div>
 
-      {/* Inspection Details */}
+      {/* Live Bid Feed */}
       <div className="p-4 border-b">
-        <h3 className="font-semibold mb-3">Inspection Report</h3>
-        <Accordion type="single" collapsible className="space-y-2">
-          {Object.entries(auction.inspection.sections).map(([key, section]) => (
-            <AccordionItem key={key} value={key} className="border rounded-lg px-3">
-              <AccordionTrigger className="text-sm font-medium py-3">
-                {section.title}
-              </AccordionTrigger>
-              <AccordionContent className="pb-3">
-                <div className="space-y-2">
-                  {section.items.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">{item.label}</span>
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(item.status)}
-                        <span>{item.note}</span>
-                      </div>
-                    </div>
-                  ))}
-                  {section.notes && (
-                    <p className="text-xs text-muted-foreground mt-2 italic">
-                      "{section.notes}"
-                    </p>
-                  )}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+        <LiveBidFeed
+          bids={bids}
+          currentHighestBid={currentHighestBid}
+          bidCount={bidCount}
+          myBrokerId={broker?.id}
+        />
       </div>
 
-      {/* Documents Status */}
+      {/* Auction Status */}
       <div className="p-4 border-b">
-        <h3 className="font-semibold mb-3">Documents</h3>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-            <Check className="w-4 h-4 text-green-500" />
-            <span className="text-sm">RC Present</span>
+        <h3 className="font-semibold mb-3">Auction Details</h3>
+        <div className="bg-muted rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <Badge variant="secondary" className="gap-1">
+              {getAuctionTypeIcon(auction.auction_type)}
+              {getAuctionTypeName(auction.auction_type)}
+            </Badge>
+            {auction.auction_type !== "one_click" && (
+              <span className={`text-lg font-mono font-bold ${timeLeft < 5 * 60 * 1000 ? "text-red-500" : ""}`}>
+                {formatTime(timeLeft)}
+              </span>
+            )}
           </div>
-          <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-            <Check className="w-4 h-4 text-green-500" />
-            <span className="text-sm">Insurance Valid</span>
-          </div>
-          <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-            <Check className="w-4 h-4 text-green-500" />
-            <span className="text-sm">PUC Valid</span>
-          </div>
-          <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-            <Check className="w-4 h-4 text-green-500" />
-            <span className="text-sm">Loan Clear</span>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Current Highest</p>
+              <p className="text-2xl font-bold text-primary">
+                ₹{currentHighestBid.toLocaleString()}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Bids</p>
+              <p className="text-lg font-semibold">{bidCount} brokers</p>
+            </div>
           </div>
         </div>
       </div>
@@ -363,36 +384,8 @@ const BrokerAuctionDetail = () => {
               RC Transfer Obligation
             </p>
             <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-              {auction.rcTransferDeadline}. {auction.penaltiesInfo}
+              Within 6 months of purchase. Failure: -500 coins, -10 trust score
             </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Auction Status */}
-      <div className="p-4 border-b">
-        <h3 className="font-semibold mb-3">Auction Details</h3>
-        <div className="bg-muted rounded-xl p-4">
-          <div className="flex items-center justify-between mb-3">
-            <Badge variant="secondary" className="gap-1">
-              <Zap className="w-3 h-3" />
-              Quick Auction
-            </Badge>
-            <span className={`text-lg font-mono font-bold ${timeLeft < 5 * 60 * 1000 ? "text-red-500" : ""}`}>
-              {formatTime(timeLeft)}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Current Highest</p>
-              <p className="text-2xl font-bold text-primary">
-                ₹{auction.currentHighestBid.toLocaleString()}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-muted-foreground">Bids</p>
-              <p className="text-lg font-semibold">{auction.bidCount} brokers</p>
-            </div>
           </div>
         </div>
       </div>
@@ -404,17 +397,17 @@ const BrokerAuctionDetail = () => {
           onClick={() => setBidSheetOpen(true)}
         >
           <TrendingUp className="w-5 h-5 mr-2" />
-          Place Bid
+          {myBid ? "Increase Bid" : "Place Bid"}
         </Button>
       </div>
 
       {/* Bid Sheet */}
       <Sheet open={bidSheetOpen} onOpenChange={setBidSheetOpen}>
-        <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl">
+        <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl overflow-y-auto">
           <SheetHeader className="text-left">
-            <SheetTitle>Place Your Bid</SheetTitle>
+            <SheetTitle>{myBid ? "Increase Your Bid" : "Place Your Bid"}</SheetTitle>
             <SheetDescription>
-              Current highest: ₹{auction.currentHighestBid.toLocaleString()} • Min: ₹{(auction.currentHighestBid + auction.minimumBidIncrement).toLocaleString()}
+              Current highest: ₹{currentHighestBid.toLocaleString()} • Min: ₹{(currentHighestBid + minBidIncrement).toLocaleString()}
             </SheetDescription>
           </SheetHeader>
 
@@ -430,7 +423,7 @@ const BrokerAuctionDetail = () => {
                 className="h-12 text-lg font-semibold"
               />
               <p className="text-xs text-muted-foreground">
-                Must be at least ₹{(auction.currentHighestBid + auction.minimumBidIncrement).toLocaleString()}
+                Must be at least ₹{(currentHighestBid + minBidIncrement).toLocaleString()}
               </p>
             </div>
 
@@ -493,8 +486,9 @@ const BrokerAuctionDetail = () => {
             <Button
               className="w-full h-12 bg-amber-500 hover:bg-amber-600 text-white font-semibold"
               onClick={handlePlaceBid}
+              disabled={isSubmitting}
             >
-              Place Bid ₹{bidAmount.toLocaleString()}
+              {isSubmitting ? "Placing..." : `Place Bid ₹${bidAmount.toLocaleString()}`}
             </Button>
           </div>
         </SheetContent>
@@ -520,6 +514,10 @@ const BrokerAuctionDetail = () => {
                 <span className="font-semibold">₹{commission.toLocaleString()}</span>
               </div>
             )}
+            <div className="flex justify-between font-medium pt-2 border-t">
+              <span>Total</span>
+              <span>₹{(bidAmount + commission).toLocaleString()}</span>
+            </div>
             <div className="border-t pt-2 mt-2">
               <p className="text-sm text-muted-foreground">
                 ⚠️ This bid cannot be edited, but you can place higher bids later.
@@ -527,14 +525,15 @@ const BrokerAuctionDetail = () => {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setConfirmDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setConfirmDialogOpen(false)} disabled={isSubmitting}>
               Cancel
             </Button>
             <Button
               className="bg-amber-500 hover:bg-amber-600"
               onClick={confirmBid}
+              disabled={isSubmitting}
             >
-              Confirm Bid
+              {isSubmitting ? "Confirming..." : "Confirm Bid"}
             </Button>
           </DialogFooter>
         </DialogContent>
