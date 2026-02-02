@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { 
-  Clock, ChevronRight, MapPin, Trophy, AlertTriangle, 
+  Clock, ChevronRight, Trophy, AlertTriangle, 
   TrendingUp, Zap, Scale, Calendar, Target 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
 // Shared bike thumbnails
 export const BIKE_THUMBNAILS: Record<string, string> = {
   "Honda": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop",
@@ -50,6 +51,39 @@ interface VehicleCardProps {
   className?: string;
 }
 
+// Format price to compact form
+const formatPrice = (amount: number) => {
+  if (amount >= 100000) {
+    return `₹${(amount / 100000).toFixed(1)}L`;
+  }
+  return `₹${(amount / 1000).toFixed(0)}k`;
+};
+
+// Get auction type config
+const getAuctionConfig = (type?: string) => {
+  const configs: Record<string, { icon: React.ReactNode; name: string }> = {
+    quick: { icon: <Zap className="w-3 h-3" />, name: "Quick" },
+    flexible: { icon: <Scale className="w-3 h-3" />, name: "Flex" },
+    extended: { icon: <Calendar className="w-3 h-3" />, name: "Extended" },
+    one_click: { icon: <Target className="w-3 h-3" />, name: "1-Click" },
+    standard: { icon: <Zap className="w-3 h-3" />, name: "Standard" },
+  };
+  return type ? configs[type] || configs.standard : null;
+};
+
+// Get grade color config
+const getGradeConfig = (grade?: string) => {
+  if (!grade) return null;
+  const configs: Record<string, string> = {
+    A: "bg-accent text-accent-foreground",
+    B: "bg-info text-info-foreground",
+    C: "bg-warning text-warning-foreground",
+    D: "bg-muted text-foreground",
+    E: "bg-destructive text-destructive-foreground",
+  };
+  return configs[grade] || "bg-muted text-foreground";
+};
+
 const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) => {
   const thumbnail = BIKE_THUMBNAILS[vehicle.make] || BIKE_THUMBNAILS["default"];
   
@@ -70,7 +104,7 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
   }, [status.type, status.timeRemaining]);
   
   const formatTime = (ms: number) => {
-    if (ms <= 0) return "00:00";
+    if (ms <= 0) return "Ended";
     const hours = Math.floor(ms / (1000 * 60 * 60));
     const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((ms % (1000 * 60)) / 1000);
@@ -83,84 +117,24 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
     return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   };
 
-  const getAuctionTypeConfig = (type: string) => {
-    const configs: Record<string, { icon: React.ReactNode; name: string }> = {
-      quick: { icon: <Zap className="w-3 h-3" />, name: "Quick" },
-      flexible: { icon: <Scale className="w-3 h-3" />, name: "Flex" },
-      extended: { icon: <Calendar className="w-3 h-3" />, name: "Extended" },
-      one_click: { icon: <Target className="w-3 h-3" />, name: "1-Click" },
-      standard: { icon: <Zap className="w-3 h-3" />, name: "Standard" },
-    };
-    return configs[type] || configs.standard;
-  };
-
-  const getGradeConfig = (grade?: string) => {
-    if (!grade) return null;
-    const configs: Record<string, { bg: string; text: string }> = {
-      A: { bg: "bg-accent", text: "text-accent-foreground" },
-      B: { bg: "bg-info", text: "text-info-foreground" },
-      C: { bg: "bg-warning", text: "text-warning-foreground" },
-      D: { bg: "bg-muted", text: "text-foreground" },
-      E: { bg: "bg-destructive", text: "text-destructive-foreground" },
-    };
-    return configs[grade];
-  };
-
   const isUrgentTime = timeLeft < 5 * 60 * 1000 && timeLeft > 0;
   const gradeConfig = getGradeConfig(vehicle.grade);
-  const auctionConfig = status.auctionType ? getAuctionTypeConfig(status.auctionType) : null;
-
-  const getStatusBadge = () => {
-    switch (status.type) {
-      case "live":
-        return status.bidAmount && status.bidAmount > 0 ? (
-          <Badge className={`text-[10px] px-1.5 py-0 h-4 ${
-            status.bidDifference && status.bidDifference >= 0 
-              ? "bg-accent text-accent-foreground" 
-              : "bg-destructive text-destructive-foreground"
-          }`}>
-            {status.bidDifference && status.bidDifference >= 0 ? "WIN" : "OUT"}
-          </Badge>
-        ) : null;
-      case "won":
-        return (
-          <Badge className="text-[10px] px-1.5 py-0 h-4 bg-accent text-accent-foreground">
-            <Trophy className="w-3 h-3 mr-0.5" />
-            WON
-          </Badge>
-        );
-      case "lost":
-        return (
-          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
-            LOST
-          </Badge>
-        );
-      case "upcoming":
-        return (
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
-            <Clock className="w-3 h-3 mr-0.5" />
-            SOON
-          </Badge>
-        );
-      default:
-        return null;
-    }
-  };
+  const auctionConfig = getAuctionConfig(status.auctionType);
 
   return (
     <div
       className={cn(
-        "bg-card border rounded-lg overflow-hidden transition-colors",
-        onClick && "cursor-pointer hover:border-primary/50",
-        status.type === "lost" && "opacity-75",
+        "bg-card border rounded-xl overflow-hidden transition-all",
+        onClick && "cursor-pointer hover:border-primary/30 hover:shadow-md",
+        status.type === "lost" && "opacity-60",
         className
       )}
       onClick={onClick}
     >
       <div className="flex gap-4 p-4">
-        {/* Thumbnail - taller */}
+        {/* Thumbnail */}
         <div className={cn(
-          "relative w-24 h-24 bg-muted rounded-lg overflow-hidden shrink-0",
+          "relative w-[88px] h-[88px] bg-muted rounded-xl overflow-hidden shrink-0",
           status.type === "lost" && "grayscale"
         )}>
           <img
@@ -170,104 +144,157 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
           />
           {/* Grade Badge */}
           {gradeConfig && (
-            <div className={`absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold ${gradeConfig.bg} ${gradeConfig.text}`}>
+            <div className={`absolute bottom-2 left-2 text-[11px] px-2 py-0.5 rounded-md font-bold ${gradeConfig}`}>
               {vehicle.grade}
             </div>
           )}
-          {/* Status Badge */}
-          <div className="absolute top-1.5 right-1.5">
-            {getStatusBadge()}
-          </div>
         </div>
 
-        {/* Vehicle Info - vertically centered */}
-        <div className="flex-1 min-w-0 flex flex-col justify-center gap-2">
-          {/* Title & Specs */}
-          <div>
-            <div className="flex items-start justify-between gap-2">
-              <h3 className="font-semibold text-base text-foreground leading-tight">
+        {/* Content */}
+        <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+          {/* Top Row: Title + Status/Timer */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="font-semibold text-[15px] text-foreground leading-snug truncate">
                 {vehicle.make} {vehicle.model}
               </h3>
-              {/* Timer for live */}
+              <p className="text-[13px] text-muted-foreground mt-0.5">
+                {vehicle.year || "2023"} · {((vehicle.kms || 0) / 1000).toFixed(0)}k km
+              </p>
+            </div>
+            
+            {/* Right side - Timer or Status Badge */}
+            <div className="shrink-0">
               {status.type === "live" && status.timeRemaining !== undefined && (
-                <div className={`flex items-center gap-1 shrink-0 text-xs font-medium ${isUrgentTime ? "text-destructive" : "text-muted-foreground"}`}>
-                  <Clock className="w-3 h-3" />
-                  {formatTime(timeLeft)}
+                <div className={cn(
+                  "flex items-center gap-1.5 px-2 py-1 rounded-lg",
+                  isUrgentTime ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"
+                )}>
+                  <Clock className={cn("w-3.5 h-3.5", isUrgentTime && "animate-pulse")} />
+                  <span className="text-sm font-mono font-medium">{formatTime(timeLeft)}</span>
                 </div>
               )}
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              {vehicle.year || "2023"} · {((vehicle.kms || 0) / 1000).toFixed(0)}k km{vehicle.city && ` · ${vehicle.city}`}
-            </p>
-          </div>
-          
-          {/* Bottom row - price & actions */}
-          <div className="flex items-center justify-between">
-            {/* Bid amount */}
-            {status.bidAmount !== undefined && status.bidAmount > 0 && status.type !== "lost" && (
-              <div className="flex items-center gap-2">
-                <span className={`font-semibold text-base ${status.type === "won" ? "text-accent" : "text-foreground"}`}>
-                  ₹{(status.bidAmount / 1000).toFixed(0)}k
-                </span>
-                {status.commission !== undefined && status.commission > 0 && (
-                  <span className="text-warning text-xs">+₹{(status.commission / 1000).toFixed(1)}k</span>
-                )}
-              </div>
-            )}
-
-            {/* Lost comparison - simplified */}
-            {status.type === "lost" && (
-              <div className="flex items-center gap-3 text-sm">
-                <span className="text-muted-foreground">
-                  You: <span className="font-medium text-foreground">₹{((status.bidAmount || 0) / 1000).toFixed(0)}k</span>
-                </span>
-                <span className="text-muted-foreground">
-                  Won: <span className="font-medium text-accent">₹{((status.winningBid || 0) / 1000).toFixed(0)}k</span>
-                </span>
-              </div>
-            )}
-
-            {/* Right side actions/info */}
-            <div className="flex items-center gap-2 shrink-0">
-              {/* Auction type badge for live */}
-              {status.type === "live" && auctionConfig && (
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 h-5 gap-0.5">
-                  {auctionConfig.icon} {auctionConfig.name}
+              
+              {status.type === "won" && (
+                <Badge className="bg-accent/10 text-accent border-0 gap-1">
+                  <Trophy className="w-3 h-3" />
+                  Won
                 </Badge>
               )}
               
-              {/* Raise button for outbid */}
-              {status.type === "live" && status.bidDifference !== undefined && status.bidDifference < 0 && (
-                <button className="h-6 px-2.5 text-xs bg-warning text-warning-foreground hover:bg-warning/90 rounded-md flex items-center gap-1 font-medium">
-                  <TrendingUp className="w-3 h-3" />
-                  Raise
-                </button>
-              )}
-
-              {/* Urgent days for won */}
-              {status.type === "won" && status.isUrgent && status.remainingDays !== undefined && (
-                <Badge variant="destructive" className="text-[10px] px-1.5 py-0.5 h-5 shrink-0">
-                  <AlertTriangle className="w-3 h-3 mr-0.5" />
-                  {status.remainingDays}d left
+              {status.type === "lost" && (
+                <Badge variant="secondary" className="text-muted-foreground">
+                  Lost
                 </Badge>
               )}
-
-              {/* Service progress for won */}
-              {status.type === "won" && status.serviceProgress !== undefined && (
-                <div className="flex items-center gap-2">
-                  <div className="w-14">
-                    <Progress value={status.serviceProgress} className="h-1.5" />
-                  </div>
-                  <span className={`text-xs ${status.serviceProgress === 100 ? "text-accent font-medium" : "text-muted-foreground"}`}>
-                    {status.serviceProgress}%
+            </div>
+          </div>
+          
+          {/* Bottom Row: Price + Actions */}
+          <div className="flex items-center justify-between mt-3">
+            {/* Left: Price info */}
+            <div className="flex items-baseline gap-2">
+              {status.type === "live" && status.bidAmount !== undefined && status.bidAmount > 0 && (
+                <>
+                  <span className={cn(
+                    "font-bold text-xl",
+                    status.bidDifference !== undefined && status.bidDifference >= 0 
+                      ? "text-accent" 
+                      : "text-foreground"
+                  )}>
+                    {formatPrice(status.bidAmount)}
                   </span>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  {status.commission !== undefined && status.commission > 0 && (
+                    <span className="text-xs text-warning font-medium">
+                      +{formatPrice(status.commission)}
+                    </span>
+                  )}
+                </>
+              )}
+              
+              {status.type === "won" && status.bidAmount !== undefined && (
+                <>
+                  <span className="font-bold text-xl text-foreground">
+                    {formatPrice(status.bidAmount)}
+                  </span>
+                  {status.commission !== undefined && status.commission > 0 && (
+                    <span className="text-xs text-warning font-medium">
+                      +{formatPrice(status.commission)}
+                    </span>
+                  )}
+                </>
+              )}
+              
+              {status.type === "lost" && (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-muted-foreground">
+                    Your bid: <span className="font-medium text-foreground">{formatPrice(status.bidAmount || 0)}</span>
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    Winner: <span className="font-medium text-accent">{formatPrice(status.winningBid || 0)}</span>
+                  </span>
                 </div>
               )}
+            </div>
 
-              {/* Lost difference */}
+            {/* Right: Actions */}
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Live: Show bid status or raise button */}
+              {status.type === "live" && (
+                <>
+                  {status.bidDifference !== undefined && status.bidDifference >= 0 ? (
+                    <Badge className="bg-accent/10 text-accent border-0 text-xs">
+                      Winning
+                    </Badge>
+                  ) : status.bidDifference !== undefined && status.bidDifference < 0 ? (
+                    <button className="h-7 px-3 text-xs bg-warning text-warning-foreground hover:bg-warning/90 rounded-lg flex items-center gap-1 font-medium transition-colors">
+                      <TrendingUp className="w-3 h-3" />
+                      Raise Bid
+                    </button>
+                  ) : null}
+                  
+                  {auctionConfig && (
+                    <Badge variant="outline" className="text-xs gap-1 px-2">
+                      {auctionConfig.icon}
+                      {auctionConfig.name}
+                    </Badge>
+                  )}
+                </>
+              )}
+
+              {/* Won: Show progress or urgent warning */}
+              {status.type === "won" && (
+                <>
+                  {status.isUrgent && status.remainingDays !== undefined && (
+                    <Badge variant="destructive" className="text-xs gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      {status.remainingDays}d left
+                    </Badge>
+                  )}
+                  
+                  {status.serviceProgress !== undefined && (
+                    <div className="flex items-center gap-2">
+                      <div className="w-16">
+                        <Progress value={status.serviceProgress} className="h-1.5" />
+                      </div>
+                      <span className={cn(
+                        "text-xs font-medium",
+                        status.serviceProgress === 100 ? "text-accent" : "text-muted-foreground"
+                      )}>
+                        {status.serviceProgress}%
+                      </span>
+                    </div>
+                  )}
+                  
+                  <ChevronRight className="w-4 h-4 text-muted-foreground/60" />
+                </>
+              )}
+
+              {/* Lost: Show difference */}
               {status.type === "lost" && status.bidDifference !== undefined && (
-                <span className="text-xs text-destructive font-medium">-₹{(Math.abs(status.bidDifference) / 1000).toFixed(0)}k</span>
+                <span className="text-xs text-destructive font-medium">
+                  -{formatPrice(Math.abs(status.bidDifference))}
+                </span>
               )}
             </div>
           </div>
