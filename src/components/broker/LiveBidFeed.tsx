@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Clock, Users } from "lucide-react";
+import { TrendingUp, Clock, Users, Bell } from "lucide-react";
 import { RealtimeBid } from "@/hooks/useRealtimeBids";
 import { formatDistanceToNow } from "date-fns";
 
@@ -13,20 +13,32 @@ interface LiveBidFeedProps {
 
 const LiveBidFeed = ({ bids, currentHighestBid, bidCount, myBrokerId }: LiveBidFeedProps) => {
   const [animatedBids, setAnimatedBids] = useState<string[]>([]);
+  const [newBidFlash, setNewBidFlash] = useState(false);
+  const previousBidCountRef = useRef(bidCount);
+  const previousHighestBidRef = useRef(currentHighestBid);
 
-  // Animate new bids
+  // Animate new bids and flash on new activity
   useEffect(() => {
     if (bids.length > 0) {
       const latestBid = bids[0];
       if (!animatedBids.includes(latestBid.id)) {
         setAnimatedBids(prev => [...prev, latestBid.id]);
+        
+        // Flash effect for new bid
+        if (previousBidCountRef.current < bidCount) {
+          setNewBidFlash(true);
+          setTimeout(() => setNewBidFlash(false), 500);
+        }
+        
         // Remove animation after 2 seconds
         setTimeout(() => {
           setAnimatedBids(prev => prev.filter(id => id !== latestBid.id));
         }, 2000);
       }
     }
-  }, [bids]);
+    previousBidCountRef.current = bidCount;
+    previousHighestBidRef.current = currentHighestBid;
+  }, [bids, bidCount, currentHighestBid]);
 
   const formatBidTime = (timestamp: string) => {
     try {
@@ -45,8 +57,13 @@ const LiveBidFeed = ({ bids, currentHighestBid, bidCount, myBrokerId }: LiveBidF
       {/* Header Stats */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+          <div className={`w-2 h-2 rounded-full animate-pulse ${newBidFlash ? "bg-amber-500" : "bg-green-500"}`}></div>
           <span className="text-sm font-medium">Live Bidding</span>
+          {newBidFlash && (
+            <Badge variant="secondary" className="animate-pulse text-xs">
+              New bid!
+            </Badge>
+          )}
         </div>
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
@@ -57,16 +74,16 @@ const LiveBidFeed = ({ bids, currentHighestBid, bidCount, myBrokerId }: LiveBidF
       </div>
 
       {/* Current Highest Bid */}
-      <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-xl p-4">
+      <div className={`bg-gradient-to-r from-green-500/10 to-emerald-500/10 border rounded-xl p-4 transition-all ${newBidFlash ? "border-amber-500 ring-2 ring-amber-500/30" : "border-green-500/20"}`}>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">Current Highest Bid</p>
-            <p className="text-2xl font-bold text-green-600">
+            <p className={`text-2xl font-bold transition-all ${newBidFlash ? "text-amber-600 scale-105" : "text-green-600"}`}>
               ₹{currentHighestBid.toLocaleString()}
             </p>
           </div>
-          <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center">
-            <TrendingUp className="w-6 h-6 text-green-600" />
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${newBidFlash ? "bg-amber-500/20" : "bg-green-500/20"}`}>
+            <TrendingUp className={`w-6 h-6 ${newBidFlash ? "text-amber-600" : "text-green-600"}`} />
           </div>
         </div>
       </div>

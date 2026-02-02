@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateEffectiveScore } from "@/data/brokerMockData";
 
@@ -21,6 +21,8 @@ export interface AuctionState {
   bids: RealtimeBid[];
   myBid: RealtimeBid | null;
   isWinning: boolean;
+  lastBidTimestamp: string | null;
+  wasOutbid: boolean;
 }
 
 export const useRealtimeBids = (auctionId: string, brokerId: string | undefined) => {
@@ -31,8 +33,11 @@ export const useRealtimeBids = (auctionId: string, brokerId: string | undefined)
     bids: [],
     myBid: null,
     isWinning: false,
+    lastBidTimestamp: null,
+    wasOutbid: false,
   });
   const [loading, setLoading] = useState(true);
+  const previousWinningRef = useRef<boolean | null>(null);
 
   // Fetch initial bids
   const fetchBids = useCallback(async () => {
@@ -71,6 +76,12 @@ export const useRealtimeBids = (auctionId: string, brokerId: string | undefined)
       // Determine if user is winning (highest effective score)
       const highestBid = typedBids[0];
       const isWinning = myBid && highestBid ? myBid.id === highestBid.id : false;
+      
+      // Check if user was outbid (had a bid, was winning, now not winning)
+      const wasOutbid = previousWinningRef.current === true && !isWinning && myBid !== null;
+      previousWinningRef.current = isWinning;
+
+      const latestBidTime = typedBids.length > 0 ? typedBids[0].placed_at : null;
 
       setAuctionState({
         currentHighestBid: auction?.current_highest_bid || 0,
@@ -79,6 +90,8 @@ export const useRealtimeBids = (auctionId: string, brokerId: string | undefined)
         bids: typedBids,
         myBid,
         isWinning,
+        lastBidTimestamp: latestBidTime,
+        wasOutbid,
       });
     } catch (err) {
       console.error("Error in fetchBids:", err);
@@ -214,10 +227,16 @@ export const useRealtimeBids = (auctionId: string, brokerId: string | undefined)
     };
   }, [auctionId, fetchBids]);
 
+  // Clear the outbid flag after it's been handled
+  const clearOutbid = useCallback(() => {
+    setAuctionState(prev => ({ ...prev, wasOutbid: false }));
+  }, []);
+
   return {
     ...auctionState,
     loading,
     placeBid,
     refetch: fetchBids,
+    clearOutbid,
   };
 };
