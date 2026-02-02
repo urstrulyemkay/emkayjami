@@ -29,6 +29,9 @@ export interface BrokerBidWithAuction {
       odometer_reading: number | null;
       vehicle_color: string | null;
       condition_score: number | null;
+      vehicle_registration?: string | null;
+      engine_cc?: number | null;
+      vehicle_vin?: string | null;
     } | null;
   } | null;
 }
@@ -44,7 +47,7 @@ const MOCK_LIVE_BIDS: BrokerBidWithAuction[] = [
       start_time: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
       end_time: new Date(Date.now() + 18 * 60 * 1000).toISOString(),
       current_highest_bid: 48000, current_highest_commission: 2000, winning_broker_id: "mock-broker",
-      inspections: { id: "insp-1", vehicle_make: "Honda", vehicle_model: "Activa 6G", vehicle_year: 2023, odometer_reading: 12450, vehicle_color: "White", condition_score: 85 }
+      inspections: { id: "insp-1", vehicle_make: "Honda", vehicle_model: "Activa 6G", vehicle_year: 2023, odometer_reading: 12450, vehicle_color: "Pearl White", condition_score: 85, vehicle_registration: "KA-01-AB-1234", engine_cc: 110, vehicle_vin: "ME4JF502LNM123456" }
     }
   },
   {
@@ -56,7 +59,7 @@ const MOCK_LIVE_BIDS: BrokerBidWithAuction[] = [
       start_time: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
       end_time: new Date(Date.now() + 95 * 60 * 1000).toISOString(),
       current_highest_bid: 55000, current_highest_commission: 2500, winning_broker_id: null,
-      inspections: { id: "insp-2", vehicle_make: "TVS", vehicle_model: "Apache RTR 160", vehicle_year: 2022, odometer_reading: 18200, vehicle_color: "Black", condition_score: 78 }
+      inspections: { id: "insp-2", vehicle_make: "TVS", vehicle_model: "Apache RTR 160", vehicle_year: 2022, odometer_reading: 18200, vehicle_color: "Racing Red", condition_score: 78, vehicle_registration: "MH-02-CD-5678", engine_cc: 160, vehicle_vin: "MD2A19ED8NWC45678" }
     }
   },
   {
@@ -68,7 +71,31 @@ const MOCK_LIVE_BIDS: BrokerBidWithAuction[] = [
       start_time: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
       end_time: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
       current_highest_bid: 125000, current_highest_commission: 5000, winning_broker_id: "mock-broker",
-      inspections: { id: "insp-3", vehicle_make: "Royal Enfield", vehicle_model: "Classic 350", vehicle_year: 2021, odometer_reading: 24500, vehicle_color: "Gunmetal Grey", condition_score: 72 }
+      inspections: { id: "insp-3", vehicle_make: "Royal Enfield", vehicle_model: "Classic 350", vehicle_year: 2021, odometer_reading: 24500, vehicle_color: "Gunmetal Grey", condition_score: 72, vehicle_registration: "DL-03-EF-9012", engine_cc: 350, vehicle_vin: "ME3RC4CA6LC789012" }
+    }
+  },
+  {
+    id: "mock-live-4", auction_id: "mock-auction-4", broker_id: "mock-broker",
+    bid_amount: 185000, commission_amount: 7500, effective_score: 186125, placed_at: new Date().toISOString(),
+    status: "winning", bid_type: "aggressive",
+    auction: {
+      id: "mock-auction-4", auction_type: "quick", status: "live",
+      start_time: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
+      end_time: new Date(Date.now() + 25 * 60 * 1000).toISOString(),
+      current_highest_bid: 185000, current_highest_commission: 7500, winning_broker_id: "mock-broker",
+      inspections: { id: "insp-4", vehicle_make: "KTM", vehicle_model: "Duke 390", vehicle_year: 2023, odometer_reading: 8500, vehicle_color: "Orange", condition_score: 92, vehicle_registration: "MH-12-GH-3456", engine_cc: 390, vehicle_vin: "VBKJFD4078M345678" }
+    }
+  },
+  {
+    id: "mock-live-5", auction_id: "mock-auction-5", broker_id: "mock-broker",
+    bid_amount: 42000, commission_amount: 1800, effective_score: 42270, placed_at: new Date().toISOString(),
+    status: "outbid", bid_type: "initial",
+    auction: {
+      id: "mock-auction-5", auction_type: "flexible", status: "live",
+      start_time: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+      end_time: new Date(Date.now() + 120 * 60 * 1000).toISOString(),
+      current_highest_bid: 45000, current_highest_commission: 2000, winning_broker_id: null,
+      inspections: { id: "insp-5", vehicle_make: "Bajaj", vehicle_model: "Pulsar NS200", vehicle_year: 2022, odometer_reading: 22000, vehicle_color: "Neon Green", condition_score: 75, vehicle_registration: "TN-04-IJ-7890", engine_cc: 200, vehicle_vin: "MD2A27EYDNWB56789" }
     }
   },
 ];
@@ -83,7 +110,7 @@ const MOCK_WON_BIDS: BrokerBidWithAuction[] = [
       start_time: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
       end_time: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
       current_highest_bid: 45000, current_highest_commission: 1800, winning_broker_id: "mock-broker",
-      inspections: { id: "insp-won-1", vehicle_make: "Bajaj", vehicle_model: "Pulsar NS200", vehicle_year: 2023, odometer_reading: 8500, vehicle_color: "Red", condition_score: 88 }
+      inspections: { id: "insp-won-1", vehicle_make: "Bajaj", vehicle_model: "Pulsar NS200", vehicle_year: 2023, odometer_reading: 8500, vehicle_color: "Red", condition_score: 88, vehicle_registration: "KA-01-MN-5678", engine_cc: 200, vehicle_vin: "MD2A27EYDNWC67890" }
     }
   },
   {
@@ -95,7 +122,7 @@ const MOCK_WON_BIDS: BrokerBidWithAuction[] = [
       start_time: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
       end_time: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
       current_highest_bid: 38000, current_highest_commission: 1500, winning_broker_id: "mock-broker",
-      inspections: { id: "insp-won-2", vehicle_make: "Yamaha", vehicle_model: "FZ-S V3", vehicle_year: 2022, odometer_reading: 15800, vehicle_color: "Blue", condition_score: 75 }
+      inspections: { id: "insp-won-2", vehicle_make: "Yamaha", vehicle_model: "FZ-S V3", vehicle_year: 2022, odometer_reading: 15800, vehicle_color: "Cyan Blue", condition_score: 75, vehicle_registration: "KA-03-XY-9012", engine_cc: 149, vehicle_vin: "ME1RG4717NC234567" }
     }
   },
   {
@@ -107,7 +134,7 @@ const MOCK_WON_BIDS: BrokerBidWithAuction[] = [
       start_time: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
       end_time: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
       current_highest_bid: 28000, current_highest_commission: 1200, winning_broker_id: "mock-broker",
-      inspections: { id: "insp-won-3", vehicle_make: "Hero", vehicle_model: "Splendor Plus", vehicle_year: 2021, odometer_reading: 32000, vehicle_color: "Black", condition_score: 68 }
+      inspections: { id: "insp-won-3", vehicle_make: "Hero", vehicle_model: "Splendor Plus", vehicle_year: 2021, odometer_reading: 32000, vehicle_color: "Black Silver", condition_score: 68, vehicle_registration: "MH-12-AB-3456", engine_cc: 100, vehicle_vin: "MBLJK10EMHC345678" }
     }
   },
   {
@@ -119,7 +146,7 @@ const MOCK_WON_BIDS: BrokerBidWithAuction[] = [
       start_time: new Date(Date.now() - 50 * 24 * 60 * 60 * 1000).toISOString(),
       end_time: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
       current_highest_bid: 42000, current_highest_commission: 2000, winning_broker_id: "mock-broker",
-      inspections: { id: "insp-won-4", vehicle_make: "Suzuki", vehicle_model: "Access 125", vehicle_year: 2023, odometer_reading: 5200, vehicle_color: "Pearl White", condition_score: 90 }
+      inspections: { id: "insp-won-4", vehicle_make: "Suzuki", vehicle_model: "Access 125", vehicle_year: 2023, odometer_reading: 5200, vehicle_color: "Pearl Mirage White", condition_score: 90, vehicle_registration: "DL-05-CD-7890", engine_cc: 125, vehicle_vin: "MB8FS48Z3NC456789" }
     }
   },
 ];
@@ -134,7 +161,7 @@ const MOCK_LOST_BIDS: BrokerBidWithAuction[] = [
       start_time: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
       end_time: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
       current_highest_bid: 44000, current_highest_commission: 2000, winning_broker_id: "other-broker",
-      inspections: { id: "insp-lost-1", vehicle_make: "TVS", vehicle_model: "Jupiter", vehicle_year: 2022, odometer_reading: 18900, vehicle_color: "Grey", condition_score: 76 }
+      inspections: { id: "insp-lost-1", vehicle_make: "TVS", vehicle_model: "Jupiter", vehicle_year: 2022, odometer_reading: 18900, vehicle_color: "Titanium Grey", condition_score: 76, vehicle_registration: "TN-07-EF-2345", engine_cc: 110, vehicle_vin: "MD2A17EYANWC12345" }
     }
   },
   {
@@ -146,7 +173,7 @@ const MOCK_LOST_BIDS: BrokerBidWithAuction[] = [
       start_time: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
       end_time: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
       current_highest_bid: 58000, current_highest_commission: 3000, winning_broker_id: "other-broker",
-      inspections: { id: "insp-lost-2", vehicle_make: "Honda", vehicle_model: "Shine", vehicle_year: 2023, odometer_reading: 9800, vehicle_color: "Silver", condition_score: 82 }
+      inspections: { id: "insp-lost-2", vehicle_make: "Honda", vehicle_model: "Shine", vehicle_year: 2023, odometer_reading: 9800, vehicle_color: "Matte Axis Grey", condition_score: 82, vehicle_registration: "KA-05-GH-6789", engine_cc: 125, vehicle_vin: "ME4JC652LNWC56789" }
     }
   },
   {
@@ -158,7 +185,7 @@ const MOCK_LOST_BIDS: BrokerBidWithAuction[] = [
       start_time: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
       end_time: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
       current_highest_bid: 78000, current_highest_commission: 4000, winning_broker_id: "other-broker",
-      inspections: { id: "insp-lost-3", vehicle_make: "Bajaj", vehicle_model: "Dominar 400", vehicle_year: 2021, odometer_reading: 22000, vehicle_color: "Black", condition_score: 70 }
+      inspections: { id: "insp-lost-3", vehicle_make: "Bajaj", vehicle_model: "Dominar 400", vehicle_year: 2021, odometer_reading: 22000, vehicle_color: "Aurora Green", condition_score: 70, vehicle_registration: "MH-04-IJ-0123", engine_cc: 400, vehicle_vin: "MD2A39AZDNWC67890" }
     }
   },
 ];

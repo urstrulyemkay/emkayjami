@@ -102,6 +102,116 @@ interface AuctionData {
   } | null;
 }
 
+// Mock auctions with complete data for demo mode
+const MOCK_AUCTIONS: Record<string, AuctionData> = {
+  "mock-auction-1": {
+    id: "mock-auction-1", auction_type: "quick", status: "live",
+    start_time: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+    end_time: new Date(Date.now() + 18 * 60 * 1000).toISOString(),
+    current_highest_bid: 48000, current_highest_commission: 2000, bid_count: 8, minimum_bid_increment: 500,
+    geo_targeting_city: "Bangalore",
+    inspections: {
+      id: "insp-1", vehicle_make: "Honda", vehicle_model: "Activa 6G", vehicle_year: 2023, odometer_reading: 12450,
+      vehicle_color: "Pearl White", condition_score: 85, vehicle_registration: "KA-01-AB-1234", engine_cc: 110,
+      vehicle_vin: "ME4JF502LNM123456", ai_confidence: 92, created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      consented_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      captured_images: [
+        { id: "img-1", uri: "/vehicles/activa1.jpg", angle: "front_right", captured_at: new Date().toISOString() },
+        { id: "img-2", uri: "/vehicles/activa2.jpg", angle: "rear_left", captured_at: new Date().toISOString() },
+        { id: "img-3", uri: "/vehicles/activa3.jpg", angle: "dashboard", captured_at: new Date().toISOString() },
+        { id: "img-4", uri: "/vehicles/activa4.jpg", angle: "engine", captured_at: new Date().toISOString() },
+      ],
+      captured_videos: [{ id: "vid-1", uri: "/mock/walkaround.mp4", video_type: "walkaround", duration: 45, captured_at: new Date().toISOString() }],
+      defects: [{ id: "def-1", category: "Body", severity: "minor", description: "Small scratch on front panel", extracted_from: "visual", confidence: 85 }],
+      voice_recordings: [{ id: "vr-1", category: "overall", transcript: "Vehicle in good condition, minor wear on front panel", duration: 15 }]
+    }
+  },
+  "mock-auction-2": {
+    id: "mock-auction-2", auction_type: "flexible", status: "live",
+    start_time: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+    end_time: new Date(Date.now() + 95 * 60 * 1000).toISOString(),
+    current_highest_bid: 55000, current_highest_commission: 2500, bid_count: 12, minimum_bid_increment: 500,
+    geo_targeting_city: "Mumbai",
+    inspections: {
+      id: "insp-2", vehicle_make: "TVS", vehicle_model: "Apache RTR 160", vehicle_year: 2022, odometer_reading: 18200,
+      vehicle_color: "Racing Red", condition_score: 78, vehicle_registration: "MH-02-CD-5678", engine_cc: 160,
+      vehicle_vin: "MD2A19ED8NWC45678", ai_confidence: 88, created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      consented_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      captured_images: [
+        { id: "img-5", uri: "/vehicles/pulsar2.jpg", angle: "front_right", captured_at: new Date().toISOString() },
+        { id: "img-6", uri: "/vehicles/pulsar4.jpg", angle: "rear_left", captured_at: new Date().toISOString() },
+        { id: "img-7", uri: "/vehicles/pulsar5.jpg", angle: "side_profile", captured_at: new Date().toISOString() },
+      ],
+      captured_videos: [], defects: [], voice_recordings: []
+    }
+  },
+  "mock-auction-3": {
+    id: "mock-auction-3", auction_type: "extended", status: "live",
+    start_time: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    end_time: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+    current_highest_bid: 125000, current_highest_commission: 5000, bid_count: 24, minimum_bid_increment: 1000,
+    geo_targeting_city: "Delhi",
+    inspections: {
+      id: "insp-3", vehicle_make: "Royal Enfield", vehicle_model: "Classic 350", vehicle_year: 2021, odometer_reading: 24500,
+      vehicle_color: "Gunmetal Grey", condition_score: 72, vehicle_registration: "DL-03-EF-9012", engine_cc: 350,
+      vehicle_vin: "ME3RC4CA6LC789012", ai_confidence: 85, created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      consented_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+      captured_images: [
+        { id: "img-8", uri: "/vehicles/royalenfield1.jpg", angle: "front_right", captured_at: new Date().toISOString() },
+        { id: "img-9", uri: "/vehicles/royalenfield2.jpg", angle: "rear_left", captured_at: new Date().toISOString() },
+        { id: "img-10", uri: "/vehicles/royalenfield3.jpg", angle: "engine", captured_at: new Date().toISOString() },
+        { id: "img-11", uri: "/vehicles/royalenfield4.jpg", angle: "dashboard", captured_at: new Date().toISOString() },
+        { id: "img-12", uri: "/vehicles/royalenfield5.jpg", angle: "side_profile", captured_at: new Date().toISOString() },
+      ],
+      captured_videos: [], defects: [
+        { id: "def-2", category: "Engine", severity: "minor", description: "Slight oil seepage near gasket", extracted_from: "visual", confidence: 78 },
+        { id: "def-3", category: "Electrical", severity: "info", description: "Battery replaced 6 months ago", extracted_from: "voice", confidence: 95 }
+      ], voice_recordings: []
+    }
+  },
+  "mock-auction-4": {
+    id: "mock-auction-4", auction_type: "quick", status: "live",
+    start_time: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
+    end_time: new Date(Date.now() + 25 * 60 * 1000).toISOString(),
+    current_highest_bid: 185000, current_highest_commission: 7500, bid_count: 15, minimum_bid_increment: 1000,
+    geo_targeting_city: "Pune",
+    inspections: {
+      id: "insp-4", vehicle_make: "KTM", vehicle_model: "Duke 390", vehicle_year: 2023, odometer_reading: 8500,
+      vehicle_color: "Orange", condition_score: 92, vehicle_registration: "MH-12-GH-3456", engine_cc: 390,
+      vehicle_vin: "VBKJFD4078M345678", ai_confidence: 95, created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      consented_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
+      captured_images: [
+        { id: "img-13", uri: "/vehicles/duke390.jpg", angle: "front_right", captured_at: new Date().toISOString() },
+        { id: "img-14", uri: "/vehicles/duke390_1.jpg", angle: "rear_left", captured_at: new Date().toISOString() },
+        { id: "img-15", uri: "/vehicles/duke390_2.jpg", angle: "engine", captured_at: new Date().toISOString() },
+        { id: "img-16", uri: "/vehicles/duke390_3.jpg", angle: "dashboard", captured_at: new Date().toISOString() },
+        { id: "img-17", uri: "/vehicles/duke390_4.jpg", angle: "side_profile", captured_at: new Date().toISOString() },
+        { id: "img-18", uri: "/vehicles/duke390_5.jpg", angle: "exhaust", captured_at: new Date().toISOString() },
+      ],
+      captured_videos: [], defects: [], voice_recordings: []
+    }
+  },
+  "mock-auction-5": {
+    id: "mock-auction-5", auction_type: "flexible", status: "live",
+    start_time: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+    end_time: new Date(Date.now() + 120 * 60 * 1000).toISOString(),
+    current_highest_bid: 42000, current_highest_commission: 1800, bid_count: 6, minimum_bid_increment: 500,
+    geo_targeting_city: "Chennai",
+    inspections: {
+      id: "insp-5", vehicle_make: "Bajaj", vehicle_model: "Pulsar NS200", vehicle_year: 2022, odometer_reading: 22000,
+      vehicle_color: "Neon Green", condition_score: 75, vehicle_registration: "TN-04-IJ-7890", engine_cc: 200,
+      vehicle_vin: "MD2A27EYDNWB56789", ai_confidence: 82, created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+      consented_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      captured_images: [
+        { id: "img-19", uri: "/vehicles/pulsar2.jpg", angle: "front_right", captured_at: new Date().toISOString() },
+        { id: "img-20", uri: "/vehicles/pulsar4.jpg", angle: "rear_left", captured_at: new Date().toISOString() },
+        { id: "img-21", uri: "/vehicles/pulsar5.jpg", angle: "side_profile", captured_at: new Date().toISOString() },
+      ],
+      captured_videos: [], defects: [], voice_recordings: []
+    }
+  },
+};
+
 const BrokerAuctionDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -155,6 +265,15 @@ const BrokerAuctionDetail = () => {
     const fetchAuction = async () => {
       if (!id) return;
 
+      // Check if this is a mock auction ID first
+      if (id.startsWith("mock-") || id.startsWith("auction-")) {
+        const mockAuction = MOCK_AUCTIONS[id] || MOCK_AUCTIONS["mock-auction-1"];
+        setAuction({ ...mockAuction, id });
+        setBidAmount((mockAuction.current_highest_bid || 0) + (mockAuction.minimum_bid_increment || 500));
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from("auctions")
         .select(`
@@ -175,8 +294,12 @@ const BrokerAuctionDetail = () => {
         .eq("id", id)
         .single();
 
-      if (error) {
+      if (error || !data) {
         console.error("Error fetching auction:", error);
+        // Fallback to mock data
+        const mockAuction = MOCK_AUCTIONS["mock-auction-1"];
+        setAuction({ ...mockAuction, id: id || "mock-auction-1" });
+        setBidAmount((mockAuction.current_highest_bid || 0) + 500);
         setLoading(false);
         return;
       }

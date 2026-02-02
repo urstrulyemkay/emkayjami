@@ -30,7 +30,7 @@ const MOCK_VEHICLES: Record<string, WonVehicle> = {
     name_transfer_status: "pending", name_transferred_at: null,
     insurance_status: "pending", notes: null,
     created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date().toISOString(),
-    auction: { id: "mock-auction-won-1", status: "ended", current_highest_bid: 45000, inspections: { vehicle_make: "Bajaj", vehicle_model: "Pulsar NS200", vehicle_year: 2023, vehicle_registration: "KA-01-MN-5678", vehicle_color: "Red", odometer_reading: 8500 } },
+    auction: { id: "mock-auction-won-1", status: "ended", current_highest_bid: 45000, inspections: { vehicle_make: "Bajaj", vehicle_model: "Pulsar NS200", vehicle_year: 2023, vehicle_registration: "KA-01-MN-5678", vehicle_color: "Racing Red", odometer_reading: 8500, engine_cc: 200, vehicle_vin: "MD2A27EYDNWC67890" } },
     bid: { bid_amount: 45000, commission_amount: 1800 }
   },
   "mock-wv-2": {
@@ -43,7 +43,7 @@ const MOCK_VEHICLES: Record<string, WonVehicle> = {
     name_transfer_status: "pending", name_transferred_at: null,
     insurance_status: "completed", notes: "Customer very happy",
     created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date().toISOString(),
-    auction: { id: "mock-auction-won-2", status: "ended", current_highest_bid: 38000, inspections: { vehicle_make: "Yamaha", vehicle_model: "FZ-S V3", vehicle_year: 2022, vehicle_registration: "KA-03-XY-9012", vehicle_color: "Blue", odometer_reading: 15800 } },
+    auction: { id: "mock-auction-won-2", status: "ended", current_highest_bid: 38000, inspections: { vehicle_make: "Yamaha", vehicle_model: "FZ-S V3", vehicle_year: 2022, vehicle_registration: "KA-03-XY-9012", vehicle_color: "Cyan Blue", odometer_reading: 15800, engine_cc: 149, vehicle_vin: "ME1RG4717NC234567" } },
     bid: { bid_amount: 38000, commission_amount: 1500 }
   },
   "mock-wv-3": {
@@ -56,7 +56,7 @@ const MOCK_VEHICLES: Record<string, WonVehicle> = {
     name_transfer_status: "completed", name_transferred_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
     insurance_status: "completed", notes: "Completed all formalities",
     created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date().toISOString(),
-    auction: { id: "mock-auction-won-3", status: "ended", current_highest_bid: 28000, inspections: { vehicle_make: "Hero", vehicle_model: "Splendor Plus", vehicle_year: 2021, vehicle_registration: "MH-12-AB-3456", vehicle_color: "Black", odometer_reading: 32000 } },
+    auction: { id: "mock-auction-won-3", status: "ended", current_highest_bid: 28000, inspections: { vehicle_make: "Hero", vehicle_model: "Splendor Plus", vehicle_year: 2021, vehicle_registration: "MH-12-AB-3456", vehicle_color: "Black Silver", odometer_reading: 32000, engine_cc: 100, vehicle_vin: "MBLJK10EMHC345678" } },
     bid: { bid_amount: 28000, commission_amount: 1200 }
   },
   "mock-wv-4": {
@@ -69,7 +69,7 @@ const MOCK_VEHICLES: Record<string, WonVehicle> = {
     name_transfer_status: "completed", name_transferred_at: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString(),
     insurance_status: "completed", notes: "Smooth transaction",
     created_at: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date().toISOString(),
-    auction: { id: "mock-auction-won-4", status: "ended", current_highest_bid: 42000, inspections: { vehicle_make: "Suzuki", vehicle_model: "Access 125", vehicle_year: 2023, vehicle_registration: "DL-05-CD-7890", vehicle_color: "Pearl White", odometer_reading: 5200 } },
+    auction: { id: "mock-auction-won-4", status: "ended", current_highest_bid: 42000, inspections: { vehicle_make: "Suzuki", vehicle_model: "Access 125", vehicle_year: 2023, vehicle_registration: "DL-05-CD-7890", vehicle_color: "Pearl Mirage White", odometer_reading: 5200, engine_cc: 125, vehicle_vin: "MB8FS48Z3NC456789" } },
     bid: { bid_amount: 42000, commission_amount: 2000 }
   },
 };
