@@ -148,16 +148,16 @@ export interface MockVehicle {
 
 // Real vehicle inspection images from database
 const BIKE_IMAGES: Record<string, string[]> = {
-  "Honda": ["/vehicles/activa1.jpg", "/vehicles/activa2.jpg", "/vehicles/activa4.jpg"],
-  "TVS": ["/vehicles/pulsar5.jpg"],
+  "Honda": ["/vehicles/activa1.jpg", "/vehicles/activa2.jpg", "/vehicles/activa3.jpg", "/vehicles/activa4.jpg", "/vehicles/activa6.jpg", "/vehicles/activa7.jpg"],
+  "TVS": ["/vehicles/pulsar5.jpg", "/vehicles/activa7.jpg"],
   "Bajaj": ["/vehicles/pulsar2.jpg", "/vehicles/pulsar4.jpg", "/vehicles/pulsar5.jpg"],
-  "Royal Enfield": ["/vehicles/royalenfield3.jpg", "/vehicles/royalenfield4.jpg"],
-  "Yamaha": ["/vehicles/pulsar5.jpg"],
-  "Hero": ["/vehicles/activa2.jpg"],
-  "Suzuki": ["/vehicles/pulsar5.jpg"],
-  "KTM": ["/vehicles/duke390_1.jpg", "/vehicles/duke390_5.jpg"],
-  "Kawasaki": ["/vehicles/duke390_1.jpg"],
-  "default": ["/vehicles/activa1.jpg", "/vehicles/royalenfield3.jpg", "/vehicles/pulsar2.jpg"],
+  "Royal Enfield": ["/vehicles/royalenfield1.jpg", "/vehicles/royalenfield2.jpg", "/vehicles/royalenfield3.jpg", "/vehicles/royalenfield4.jpg", "/vehicles/royalenfield5.jpg"],
+  "Yamaha": ["/vehicles/pulsar5.jpg", "/vehicles/duke390.jpg"],
+  "Hero": ["/vehicles/activa2.jpg", "/vehicles/activa7.jpg"],
+  "Suzuki": ["/vehicles/pulsar5.jpg", "/vehicles/activa7.jpg"],
+  "KTM": ["/vehicles/duke390.jpg", "/vehicles/duke390_1.jpg", "/vehicles/duke390_2.jpg", "/vehicles/duke390_3.jpg", "/vehicles/duke390_4.jpg", "/vehicles/duke390_5.jpg"],
+  "Kawasaki": ["/vehicles/duke390.jpg", "/vehicles/duke390_2.jpg"],
+  "default": ["/vehicles/activa1.jpg", "/vehicles/royalenfield1.jpg", "/vehicles/duke390.jpg", "/vehicles/pulsar2.jpg"],
 };
 
 // Helper to get random image for a make
