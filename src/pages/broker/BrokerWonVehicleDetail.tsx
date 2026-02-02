@@ -37,6 +37,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { maskRegistration } from "@/lib/maskRegistration";
 
 // Image mapping by vehicle make
 const VEHICLE_IMAGES: Record<string, string> = {
@@ -363,7 +364,7 @@ const BrokerWonVehicleDetail = () => {
                 {inspection?.vehicle_make} {inspection?.vehicle_model}
               </h2>
               <p className="text-sm text-muted-foreground">
-                {inspection?.vehicle_year} • {inspection?.vehicle_registration}
+                {inspection?.vehicle_year} • {maskRegistration(inspection?.vehicle_registration)}
               </p>
               <div className="flex items-center gap-2 mt-2">
                 <Badge variant="secondary" className="text-green-600 bg-green-50">

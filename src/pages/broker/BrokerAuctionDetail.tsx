@@ -39,6 +39,7 @@ import LiveBidFeed from "@/components/broker/LiveBidFeed";
 import { calculateEffectiveScore } from "@/data/brokerMockData";
 import { useSoundNotifications } from "@/hooks/useSoundNotifications";
 import { getAuctionById, getVehicleGallery, generateMockDefects } from "@/data/mockAuctions";
+import { maskRegistration } from "@/lib/maskRegistration";
 
 interface CapturedImage {
   id: string;
@@ -690,7 +691,7 @@ const BrokerAuctionDetail = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-muted rounded-lg p-3">
                   <p className="text-xs text-muted-foreground">Registration</p>
-                  <p className="font-medium text-foreground">{auction.inspections?.vehicle_registration || "N/A"}</p>
+                  <p className="font-medium text-foreground">{maskRegistration(auction.inspections?.vehicle_registration)}</p>
                 </div>
                 <div className="bg-muted rounded-lg p-3">
                   <p className="text-xs text-muted-foreground">Year</p>
