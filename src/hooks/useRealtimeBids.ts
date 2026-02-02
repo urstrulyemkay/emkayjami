@@ -115,12 +115,16 @@ export const useRealtimeBids = (auctionId: string, brokerId: string | undefined)
       const highestBid = typedBids[0];
       const isWinning = myBid && highestBid ? myBid.id === highestBid.id : false;
       
+      // Derive highest bid from actual bids data (source of truth)
+      const actualHighestBid = highestBid?.bid_amount || 0;
+      const actualHighestCommission = highestBid?.commission_amount || 0;
+      
       // Check if user was outbid (had a bid, was winning, now not winning)
       const wasOutbid = previousWinningRef.current === true && !isWinning && myBid !== null;
       
       // Trigger outbid notification
       if (wasOutbid && brokerId) {
-        triggerOutbidNotification(brokerId, auctionId, highestBid?.bid_amount || 0);
+        triggerOutbidNotification(brokerId, auctionId, actualHighestBid);
       }
       
       previousWinningRef.current = isWinning;
@@ -128,8 +132,8 @@ export const useRealtimeBids = (auctionId: string, brokerId: string | undefined)
       const latestBidTime = typedBids.length > 0 ? typedBids[0].placed_at : null;
 
       setAuctionState({
-        currentHighestBid: auction?.current_highest_bid || 0,
-        currentHighestCommission: auction?.current_highest_commission || 0,
+        currentHighestBid: actualHighestBid,
+        currentHighestCommission: actualHighestCommission,
         bidCount: auction?.bid_count || typedBids.length,
         bids: typedBids,
         myBid,
@@ -178,37 +182,32 @@ export const useRealtimeBids = (auctionId: string, brokerId: string | undefined)
         .eq("id", auctionState.myBid.id);
     }
 
-    // Update auction highest bid if this is the new highest
+    // Get current bid count
     const { data: currentAuction } = await supabase
       .from("auctions")
-      .select("current_highest_bid, current_highest_commission, bid_count")
+      .select("bid_count")
       .eq("id", auctionId)
       .single();
 
-    // Calculate effective score for comparison
-    const effectiveScore = calculateEffectiveScore(bidAmount, commission);
-    const currentHighestEffective = calculateEffectiveScore(
-      currentAuction?.current_highest_bid || 0,
-      currentAuction?.current_highest_commission || 0
-    );
+    // Query actual highest bid by effective_score after insert
+    const { data: actualHighest } = await supabase
+      .from("broker_bids")
+      .select("bid_amount, commission_amount")
+      .eq("auction_id", auctionId)
+      .eq("status", "active")
+      .order("effective_score", { ascending: false })
+      .limit(1)
+      .single();
 
-    if (effectiveScore > currentHighestEffective) {
-      await supabase
-        .from("auctions")
-        .update({
-          current_highest_bid: bidAmount,
-          current_highest_commission: commission,
-          bid_count: (currentAuction?.bid_count || 0) + 1,
-        })
-        .eq("id", auctionId);
-    } else {
-      await supabase
-        .from("auctions")
-        .update({
-          bid_count: (currentAuction?.bid_count || 0) + 1,
-        })
-        .eq("id", auctionId);
-    }
+    // Update auctions table with actual highest values
+    await supabase
+      .from("auctions")
+      .update({
+        current_highest_bid: actualHighest?.bid_amount || bidAmount,
+        current_highest_commission: actualHighest?.commission_amount || commission,
+        bid_count: (currentAuction?.bid_count || 0) + 1,
+      })
+      .eq("id", auctionId);
 
     return data;
   }, [auctionId, brokerId, auctionState.myBid]);
