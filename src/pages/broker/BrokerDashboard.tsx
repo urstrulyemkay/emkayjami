@@ -17,6 +17,30 @@ import {
   formatTimeRemaining,
 } from "@/data/brokerMockData";
 
+// Bike thumbnail URLs by make (using placeholder bike images)
+const BIKE_THUMBNAILS: Record<string, string> = {
+  "TVS": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop",
+  "Bajaj": "https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=400&h=300&fit=crop",
+  "Hero": "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400&h=300&fit=crop",
+  "Yamaha": "https://images.unsplash.com/photo-1547549082-6bc09f2049ae?w=400&h=300&fit=crop",
+  "Royal Enfield": "https://images.unsplash.com/photo-1558980664-769d59546b3d?w=400&h=300&fit=crop",
+  "Honda": "https://images.unsplash.com/photo-1571646750667-720cacc6a570?w=400&h=300&fit=crop",
+  "Suzuki": "https://images.unsplash.com/photo-1571646750667-720cacc6a570?w=400&h=300&fit=crop",
+  "default": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop",
+};
+
+// Model variants for common bikes
+const BIKE_VARIANTS: Record<string, string> = {
+  "Apache RTR 160": "4V BS6",
+  "Pulsar NS200": "ABS",
+  "Splendor Plus": "i3S",
+  "FZ-S V3": "FI",
+  "Classic 350": "Signals",
+  "Activa 6G": "DLX",
+  "Access 125": "SE",
+  "Jupiter": "ZX",
+};
+
 interface AuctionWithInspection {
   id: string;
   auction_type: string;
@@ -182,18 +206,20 @@ const BrokerDashboard = () => {
     const endTime = new Date(auction.end_time);
     const timeRemaining = Math.max(0, endTime.getTime() - Date.now());
     const grade = getGradeFromScore(auction.inspections?.condition_score);
+    const make = auction.inspections?.vehicle_make || "Unknown";
+    const model = auction.inspections?.vehicle_model || "Vehicle";
 
     return {
       id: auction.id,
       vehicle: {
-        make: auction.inspections?.vehicle_make || "Unknown",
-        model: auction.inspections?.vehicle_model || "Vehicle",
-        variant: "",
+        make: make,
+        model: model,
+        variant: BIKE_VARIANTS[model] || "",
         year: auction.inspections?.vehicle_year || 2023,
         kms: auction.inspections?.odometer_reading || 0,
         city: auction.geo_targeting_city || "Bangalore",
         grade: grade,
-        thumbnail: "/placeholder.svg",
+        thumbnail: BIKE_THUMBNAILS[make] || BIKE_THUMBNAILS["default"],
       },
       auctionType: auction.auction_type,
       timeRemaining: timeRemaining,
