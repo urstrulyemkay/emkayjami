@@ -299,9 +299,10 @@ const BrokerDashboard = () => {
     };
   };
 
-  // Use 100 mock auctions when database is empty
-  const useMockData = liveAuctions.length === 0 && !loadingAuctions;
-  const mockAuctionsForDisplay = useMockData ? MOCK_AUCTIONS : [];
+  // Always show mock auctions - DB auctions replace the first few mocks with real data
+  // This ensures we always have ~100 vehicles to browse
+  const useMockData = true; // Always show mock data now
+  const mockAuctionsForDisplay = MOCK_AUCTIONS;
 
   return (
     <div className="min-h-screen bg-background pb-20">
