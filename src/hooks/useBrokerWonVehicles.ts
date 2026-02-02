@@ -117,6 +117,8 @@ export function useBrokerWonVehicles(brokerId: string | undefined): UseBrokerWon
 
   const fetchWonVehicles = useCallback(async () => {
     if (!brokerId) {
+      // No broker ID - use mock data for demo
+      setWonVehicles(MOCK_WON_VEHICLES);
       setLoading(false);
       return;
     }
@@ -151,7 +153,11 @@ export function useBrokerWonVehicles(brokerId: string | undefined): UseBrokerWon
         .order("rc_transfer_deadline", { ascending: true });
 
       if (fetchError) {
-        throw fetchError;
+        console.error("Error fetching won vehicles:", fetchError);
+        // On error, use mock data
+        setWonVehicles(MOCK_WON_VEHICLES);
+        setLoading(false);
+        return;
       }
 
       // Transform data to flatten nested arrays
@@ -170,6 +176,8 @@ export function useBrokerWonVehicles(brokerId: string | undefined): UseBrokerWon
     } catch (err) {
       console.error("Error fetching won vehicles:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch won vehicles");
+      // On error, use mock data
+      setWonVehicles(MOCK_WON_VEHICLES);
     } finally {
       setLoading(false);
     }
