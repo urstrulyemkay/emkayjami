@@ -104,9 +104,9 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
   return (
     <div
       className={cn(
-        "bg-card border rounded-xl overflow-hidden transition-all",
+        "group bg-card border rounded-xl overflow-hidden transition-all duration-200",
         onClick && "cursor-pointer hover:border-primary/30 hover:shadow-lg active:scale-[0.99]",
-        status.type === "lost" && "opacity-60",
+        status.type === "lost" && "opacity-70 hover:opacity-100",
         className
       )}
       onClick={onClick}
@@ -114,8 +114,8 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
       <div className="flex gap-3 p-3">
         {/* Thumbnail */}
         <div className={cn(
-          "relative w-[72px] h-[72px] bg-muted rounded-lg overflow-hidden shrink-0",
-          status.type === "lost" && "grayscale"
+          "relative w-[72px] h-[72px] bg-muted rounded-lg overflow-hidden shrink-0 transition-all duration-200",
+          status.type === "lost" && "grayscale group-hover:grayscale-0"
         )}>
           <img
             src={thumbnail}
