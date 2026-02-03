@@ -8,11 +8,9 @@ import {
   Target,
   Clock,
   Zap,
-  Heart,
   ChevronRight,
   Sparkles,
   Brain,
-  ThumbsUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -227,13 +225,6 @@ const LostBidFeedback = ({ stats, onTipClick }: LostBidFeedbackProps) => {
             </CardContent>
           </Card>
         ))}
-      </div>
-
-      {/* Encouragement Footer */}
-      <div className="flex items-center justify-center gap-2 py-2 text-xs text-muted-foreground">
-        <ThumbsUp className="w-3.5 h-3.5" />
-        <span>Every bid teaches you something new</span>
-        <Heart className="w-3.5 h-3.5 text-destructive/50" />
       </div>
     </div>
   );
