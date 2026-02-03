@@ -5,11 +5,22 @@ import {
   Target,
   Zap,
   Lightbulb,
-  AlertCircle,
+  UserX,
+  Building2,
+  Ban,
+  ShieldX,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type LossReason = "outbid_late" | "price_gap" | "close_call" | "no_commission";
+export type LossReason = 
+  | "outbid_late" 
+  | "price_gap" 
+  | "close_call" 
+  | "no_commission"
+  | "customer_backed_out"
+  | "oem_counter_rejected"
+  | "deal_cancelled"
+  | "documents_issue";
 
 interface LostBidInsightProps {
   bidAmount: number;
@@ -17,6 +28,7 @@ interface LostBidInsightProps {
   bidDifference: number;
   auctionType?: string;
   commissionAmount?: number;
+  lossReason?: LossReason; // Allow external reason override
   className?: string;
 }
 
@@ -24,10 +36,37 @@ interface LostBidInsightProps {
 export const analyzeLoss = (
   bidAmount: number,
   winningBid: number,
-  commissionAmount?: number
+  commissionAmount?: number,
+  externalReason?: LossReason
 ): { reason: LossReason; severity: "low" | "medium" | "high" } => {
+  // If external reason provided, use it
+  if (externalReason) {
+    const severityMap: Record<LossReason, "low" | "medium" | "high"> = {
+      close_call: "low",
+      outbid_late: "medium",
+      no_commission: "medium",
+      price_gap: "high",
+      customer_backed_out: "low",
+      oem_counter_rejected: "medium",
+      deal_cancelled: "low",
+      documents_issue: "medium",
+    };
+    return { reason: externalReason, severity: severityMap[externalReason] };
+  }
+
   const difference = winningBid - bidAmount;
   const percentageDiff = (difference / bidAmount) * 100;
+
+  // Simulate some variety in reasons (in real app, this would come from backend)
+  const randomFactor = Math.random();
+  
+  // 15% chance it was customer/OEM related
+  if (randomFactor < 0.08) {
+    return { reason: "customer_backed_out", severity: "low" };
+  }
+  if (randomFactor < 0.15) {
+    return { reason: "oem_counter_rejected", severity: "medium" };
+  }
 
   // Close call - lost by less than 5%
   if (percentageDiff < 5) {
@@ -55,6 +94,7 @@ const getInsightConfig = (reason: LossReason) => {
     tip: string;
     color: string;
     bgColor: string;
+    isExternalFactor: boolean;
   }> = {
     close_call: {
       icon: <Target className="w-3 h-3" />,
@@ -62,6 +102,7 @@ const getInsightConfig = (reason: LossReason) => {
       tip: "Add ₹2-5k commission next time",
       color: "text-warning",
       bgColor: "bg-warning/10",
+      isExternalFactor: false,
     },
     outbid_late: {
       icon: <Clock className="w-3 h-3" />,
@@ -69,13 +110,15 @@ const getInsightConfig = (reason: LossReason) => {
       tip: "Stay active in final minutes",
       color: "text-info",
       bgColor: "bg-info/10",
+      isExternalFactor: false,
     },
     price_gap: {
       icon: <TrendingDown className="w-3 h-3" />,
       label: "Below Market",
-      tip: "Research similar vehicles",
+      tip: "Research similar vehicles first",
       color: "text-destructive",
       bgColor: "bg-destructive/10",
+      isExternalFactor: false,
     },
     no_commission: {
       icon: <Zap className="w-3 h-3" />,
@@ -83,14 +126,42 @@ const getInsightConfig = (reason: LossReason) => {
       tip: "Commission boosts Effective Score",
       color: "text-primary",
       bgColor: "bg-primary/10",
+      isExternalFactor: false,
+    },
+    customer_backed_out: {
+      icon: <UserX className="w-3 h-3" />,
+      label: "Customer Backed Out",
+      tip: "Not your fault - deal fell through",
+      color: "text-muted-foreground",
+      bgColor: "bg-muted",
+      isExternalFactor: true,
+    },
+    oem_counter_rejected: {
+      icon: <Building2 className="w-3 h-3" />,
+      label: "OEM Rejected",
+      tip: "OEM accepted a different offer",
+      color: "text-muted-foreground",
+      bgColor: "bg-muted",
+      isExternalFactor: true,
+    },
+    deal_cancelled: {
+      icon: <Ban className="w-3 h-3" />,
+      label: "Deal Cancelled",
+      tip: "Auction was cancelled by admin",
+      color: "text-muted-foreground",
+      bgColor: "bg-muted",
+      isExternalFactor: true,
+    },
+    documents_issue: {
+      icon: <ShieldX className="w-3 h-3" />,
+      label: "Document Issues",
+      tip: "Vehicle had documentation problems",
+      color: "text-muted-foreground",
+      bgColor: "bg-muted",
+      isExternalFactor: true,
     },
   };
   return configs[reason];
-};
-
-const formatPrice = (amount: number) => {
-  if (amount >= 100000) return `₹${(amount / 100000).toFixed(1)}L`;
-  return `₹${(amount / 1000).toFixed(0)}k`;
 };
 
 const LostBidInsight = ({
@@ -98,54 +169,38 @@ const LostBidInsight = ({
   winningBid,
   bidDifference,
   commissionAmount,
+  lossReason,
   className,
 }: LostBidInsightProps) => {
-  const { reason, severity } = analyzeLoss(bidAmount, winningBid, commissionAmount);
+  const { reason } = analyzeLoss(bidAmount, winningBid, commissionAmount, lossReason);
   const config = getInsightConfig(reason);
-  const percentageDiff = ((bidDifference) / bidAmount * 100).toFixed(0);
 
   return (
     <div className={cn("mt-2 pt-2 border-t border-dashed", className)}>
       {/* Insight Row */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <div className={cn("p-1 rounded", config.bgColor, config.color)}>
-            {config.icon}
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className={cn("text-xs font-medium", config.color)}>
-                {config.label}
-              </span>
-              <Badge 
-                variant="outline" 
-                className={cn(
-                  "text-[9px] px-1 py-0 h-3.5",
-                  severity === "low" && "border-warning/50 text-warning",
-                  severity === "medium" && "border-info/50 text-info",
-                  severity === "high" && "border-destructive/50 text-destructive"
-                )}
-              >
-                -{percentageDiff}%
+      <div className="flex items-center gap-2">
+        <div className={cn("p-1.5 rounded", config.bgColor, config.color)}>
+          {config.icon}
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center gap-1.5">
+            <span className={cn("text-xs font-medium", config.color)}>
+              {config.label}
+            </span>
+            {config.isExternalFactor && (
+              <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 text-muted-foreground">
+                External
               </Badge>
-            </div>
+            )}
+          </div>
+          {/* Smart Tip */}
+          <div className="flex items-center gap-1 mt-0.5">
+            <Lightbulb className="w-2.5 h-2.5 text-warning shrink-0" />
+            <p className="text-[10px] text-muted-foreground">
+              {config.tip}
+            </p>
           </div>
         </div>
-        
-        {/* Quick comparison */}
-        <div className="text-right">
-          <p className="text-[10px] text-muted-foreground">
-            Gap: <span className="font-medium text-destructive">{formatPrice(bidDifference)}</span>
-          </p>
-        </div>
-      </div>
-
-      {/* Smart Tip */}
-      <div className="flex items-center gap-1.5 mt-1.5 pl-7">
-        <Lightbulb className="w-3 h-3 text-warning shrink-0" />
-        <p className="text-[10px] text-muted-foreground italic">
-          {config.tip}
-        </p>
       </div>
     </div>
   );
