@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { 
   Clock, ChevronRight, Trophy, AlertTriangle, 
-  TrendingUp, Zap, Scale, Calendar, Target
+  TrendingUp, Zap, Scale, Calendar, Target, Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getVehicleImage, VEHICLE_IMAGES } from "@/data/mockAuctions";
@@ -34,7 +35,9 @@ export interface CardStatus {
   isUrgent?: boolean;
   winningBid?: number;
   bidDifference?: number;
-  showInsight?: boolean; // For lost bids - show detailed insight
+  showInsight?: boolean;
+  showServicesCTA?: boolean; // Show "Get Services" CTA for won vehicles
+  onServicesClick?: () => void; // Callback when services CTA is clicked
 }
 
 interface VehicleCardProps {
@@ -237,7 +240,24 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
         </div>
       </div>
 
-      {/* Lost Bid Insight - Vehicle Level Feedback */}
+      {/* Services CTA for Won Vehicles */}
+      {status.type === "won" && status.showServicesCTA && (
+        <div className="px-3 pb-3 pt-0">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full h-8 text-xs bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20 hover:border-primary/40 hover:bg-primary/10"
+            onClick={(e) => {
+              e.stopPropagation();
+              status.onServicesClick?.();
+            }}
+          >
+            <Sparkles className="w-3.5 h-3.5 mr-1.5 text-primary" />
+            Get DriveX Services
+            <ChevronRight className="w-3.5 h-3.5 ml-auto text-muted-foreground" />
+          </Button>
+        </div>
+      )}
       {status.type === "lost" && status.showInsight !== false && status.bidAmount && status.winningBid && (
         <div className="px-3 pb-3">
           <LostBidInsight
