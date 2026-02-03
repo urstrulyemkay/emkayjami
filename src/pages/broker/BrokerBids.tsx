@@ -127,10 +127,10 @@ const BrokerBids = () => {
     return Math.max(0, end - Date.now());
   };
 
-  // Helper to get vehicle info - prioritize DB, fallback to centralized mock
+  // Helper to get vehicle info - prioritize DB, fallback to won vehicle or mock
   const getVehicleInfo = (auctionId: string, inspections: any) => {
     // Check if DB has complete data
-    if (inspections?.vehicle_make && inspections?.vehicle_model && inspections?.vehicle_registration) {
+    if (inspections?.vehicle_make && inspections?.vehicle_model) {
       return {
         make: inspections.vehicle_make,
         model: inspections.vehicle_model,
@@ -140,7 +140,20 @@ const BrokerBids = () => {
         city: "Bangalore",
       };
     }
-    // Fallback to centralized mock data
+    // Fallback to won vehicle data (for consistency with detail page)
+    const wv = wonVehicles.find((v) => v.auction_id === auctionId);
+    if (wv?.auction?.inspections) {
+      const insp = wv.auction.inspections;
+      return {
+        make: insp.vehicle_make,
+        model: insp.vehicle_model,
+        year: insp.vehicle_year || 2023,
+        kms: insp.odometer_reading || 12000,
+        color: insp.vehicle_color,
+        city: "Bangalore",
+      };
+    }
+    // Final fallback to centralized mock data
     const mockAuction = getAuctionById(auctionId);
     return {
       make: mockAuction.vehicle.make,
