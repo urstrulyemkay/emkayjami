@@ -231,6 +231,7 @@ const BrokerDashboard = () => {
   const transformMockAuction = (mock: typeof MOCK_AUCTIONS[0]) => {
     return {
       id: mock.id,
+      slug: mock.slug,
       vehicle: {
         make: mock.vehicle.make,
         model: mock.vehicle.model,
@@ -278,6 +279,7 @@ const BrokerDashboard = () => {
 
     return {
       id: auction.id,
+      slug: mockAuction.slug, // Use slug from mock for consistent navigation
       vehicle: {
         make: make,
         model: model,
@@ -452,7 +454,7 @@ const BrokerDashboard = () => {
                   <BrokerAuctionCard
                     key={mock.id}
                     auction={transformMockAuction(mock)}
-                    onClick={() => navigate(`/broker/auction/${mock.id}`)}
+                    onClick={() => navigate(`/broker/auction/${mock.slug}`)}
                   />
                 ))}
             </div>
@@ -465,13 +467,16 @@ const BrokerDashboard = () => {
           ) : activeTypeFilter ? (
             // Filtered view - flat list
             <div className="space-y-3">
-              {getFilteredAuctions(liveAuctions).map((auction) => (
-                <BrokerAuctionCard
-                  key={auction.id}
-                  auction={transformAuctionForCard(auction)}
-                  onClick={() => navigate(`/broker/auction/${auction.id}`)}
-                />
-              ))}
+              {getFilteredAuctions(liveAuctions).map((auction) => {
+                const transformed = transformAuctionForCard(auction);
+                return (
+                  <BrokerAuctionCard
+                    key={auction.id}
+                    auction={transformed}
+                    onClick={() => navigate(`/broker/auction/${transformed.slug}`)}
+                  />
+                );
+              })}
             </div>
           ) : (
             // Grouped view by auction type
@@ -487,13 +492,16 @@ const BrokerDashboard = () => {
                     <Badge variant="secondary" className="text-xs">{group.auctions.length}</Badge>
                   </div>
                   <div className="space-y-3">
-                    {group.auctions.map((auction) => (
-                      <BrokerAuctionCard
-                        key={auction.id}
-                        auction={transformAuctionForCard(auction)}
-                        onClick={() => navigate(`/broker/auction/${auction.id}`)}
-                      />
-                    ))}
+                    {group.auctions.map((auction) => {
+                      const transformed = transformAuctionForCard(auction);
+                      return (
+                        <BrokerAuctionCard
+                          key={auction.id}
+                          auction={transformed}
+                          onClick={() => navigate(`/broker/auction/${transformed.slug}`)}
+                        />
+                      );
+                    })}
                   </div>
                 </div>
               );
@@ -517,7 +525,7 @@ const BrokerDashboard = () => {
                     <div
                       key={mock.id}
                       className="broker-card p-4"
-                      onClick={() => navigate(`/broker/auction/${mock.id}`)}
+                      onClick={() => navigate(`/broker/auction/${mock.slug}`)}
                     >
                       <div className="flex gap-4">
                         <div className="w-24 h-20 bg-muted rounded-xl overflow-hidden">
@@ -566,12 +574,13 @@ const BrokerDashboard = () => {
                 const timeUntilStart = startTime.getTime() - Date.now();
                 const make = auction.inspections?.vehicle_make || "Honda";
                 const model = auction.inspections?.vehicle_model || "Activa 6G";
+                const mockAuction = getAuctionById(auction.id);
                 
                 return (
                   <div
                     key={auction.id}
                     className="broker-card p-4"
-                    onClick={() => navigate(`/broker/auction/${auction.id}`)}
+                    onClick={() => navigate(`/broker/auction/${mockAuction?.slug || auction.id}`)}
                   >
                     <div className="flex gap-4">
                       <div className="w-24 h-20 bg-muted rounded-xl overflow-hidden">
@@ -631,12 +640,13 @@ const BrokerDashboard = () => {
                       const timeUntilStart = startTime.getTime() - Date.now();
                       const make = auction.inspections?.vehicle_make || "Honda";
                       const model = auction.inspections?.vehicle_model || "Activa 6G";
+                      const mockAuction = getAuctionById(auction.id);
                       
                       return (
                         <div
                           key={auction.id}
                           className="broker-card p-4"
-                          onClick={() => navigate(`/broker/auction/${auction.id}`)}
+                          onClick={() => navigate(`/broker/auction/${mockAuction?.slug || auction.id}`)}
                         >
                           <div className="flex gap-4">
                             <div className="w-24 h-20 bg-muted rounded-xl overflow-hidden">

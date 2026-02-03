@@ -214,7 +214,7 @@ const AppRoutes = () => {
       {/* Broker Routes - wrapped in BrokerAuthProvider */}
       <Route path="/broker/login" element={<BrokerLogin />} />
       <Route path="/broker" element={<BrokerDashboard />} />
-      <Route path="/broker/auction/:id" element={<BrokerAuctionDetail />} />
+      <Route path="/broker/auction/:slug" element={<BrokerAuctionDetail />} />
       <Route path="/broker/bids" element={<BrokerBids />} />
       <Route path="/broker/wallet" element={<BrokerWallet />} />
       <Route path="/broker/profile" element={<BrokerProfile />} />

@@ -132,11 +132,16 @@ export const generateMockAuctions = (): MockAuction[] => {
     const { config, variantIndex } = shuffled[i];
     const variant = config.variants[variantIndex];
     const year = config.yearRange[i % config.yearRange.length];
-    const id = `auction-${String(i + 1).padStart(3, '0')}`;
     const city = CITIES[i % CITIES.length];
     const color = COLORS[i % COLORS.length];
     const grade = GRADES[i % GRADES.length];
     const auctionType = AUCTION_TYPES[i % AUCTION_TYPES.length];
+    
+    // Generate clean slug: honda-activa-6g-2022-kol-001
+    const cityCode = city.substring(0, 3).toLowerCase();
+    const modelSlug = `${config.make}-${config.model}`.toLowerCase().replace(/\s+/g, '-');
+    const slug = `${modelSlug}-${year}-${cityCode}-${String(i + 1).padStart(3, '0')}`;
+    const id = slug; // Use slug as ID for clean URLs
     
     const age = 2025 - year;
     const kms = age * 8000 + (i * 500) % 15000;
@@ -159,6 +164,7 @@ export const generateMockAuctions = (): MockAuction[] => {
     
     auctions.push({
       id,
+      slug,
       vehicle: {
         make: config.make,
         model: config.model,
@@ -199,6 +205,7 @@ export const generateMockAuctions = (): MockAuction[] => {
 
 export interface MockAuction {
   id: string;
+  slug: string;
   vehicle: {
     make: string;
     model: string;
@@ -236,16 +243,21 @@ export interface MockAuction {
 // Pre-generated auctions for consistent usage
 export const MOCK_AUCTIONS = generateMockAuctions();
 
-// Get auction by ID
-export const getAuctionById = (id: string): MockAuction | undefined => {
-  return MOCK_AUCTIONS.find(a => a.id === id) || 
+// Get auction by ID or slug
+export const getAuctionById = (idOrSlug: string): MockAuction | undefined => {
+  return MOCK_AUCTIONS.find(a => a.id === idOrSlug || a.slug === idOrSlug) || 
     // Fallback: generate consistent auction for any ID
-    generateAuctionForId(id);
+    generateAuctionForId(idOrSlug);
 };
 
-// Generate a consistent auction for any ID (for unknown IDs)
-const generateAuctionForId = (id: string): MockAuction => {
-  const hash = id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+// Get auction by slug only
+export const getAuctionBySlug = (slug: string): MockAuction | undefined => {
+  return MOCK_AUCTIONS.find(a => a.slug === slug);
+};
+
+// Generate a consistent auction for any ID (for unknown IDs/slugs)
+const generateAuctionForId = (idOrSlug: string): MockAuction => {
+  const hash = idOrSlug.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
   const configIndex = hash % VEHICLE_CONFIGS.length;
   const config = VEHICLE_CONFIGS[configIndex];
   const variant = config.variants[hash % config.variants.length];
@@ -255,6 +267,10 @@ const generateAuctionForId = (id: string): MockAuction => {
   const color = COLORS[hash % COLORS.length];
   const grade = GRADES[hash % GRADES.length];
   const auctionType = AUCTION_TYPES[hash % AUCTION_TYPES.length];
+  
+  const cityCode = city.substring(0, 3).toLowerCase();
+  const modelSlug = `${config.make}-${config.model}`.toLowerCase().replace(/\s+/g, '-');
+  const slug = `${modelSlug}-${year}-${cityCode}-${String(hash % 1000).padStart(3, '0')}`;
   
   const age = 2025 - year;
   const kms = age * 8000 + (hash * 500) % 15000;
@@ -272,7 +288,8 @@ const generateAuctionForId = (id: string): MockAuction => {
   const regSuffix = String(1000 + hash).substring(1, 5);
   
   return {
-    id,
+    id: slug,
+    slug,
     vehicle: {
       make: config.make,
       model: config.model,
@@ -304,7 +321,7 @@ const generateAuctionForId = (id: string): MockAuction => {
       challans: hash % 7,
       loan: hash % 10 === 0,
     },
-    thumbnail: getVehicleImage(config.make, id),
+    thumbnail: getVehicleImage(config.make, slug),
   };
 };
 

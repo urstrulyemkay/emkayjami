@@ -183,7 +183,7 @@ const convertMockToPDPFormat = (mock: ReturnType<typeof getAuctionById>, id: str
 
 const BrokerAuctionDetail = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { slug } = useParams();
   const { broker, isAuthenticated } = useBrokerAuth();
   const { toast } = useToast();
 
@@ -215,7 +215,7 @@ const BrokerAuctionDetail = () => {
     placeBid,
     clearOutbid,
     loading: bidsLoading,
-  } = useRealtimeBids(id || "", broker?.id);
+  } = useRealtimeBids(slug || "", broker?.id);
 
   // Show toast when outbid
   useEffect(() => {
@@ -232,7 +232,7 @@ const BrokerAuctionDetail = () => {
   // Fetch auction details
   useEffect(() => {
     const fetchAuction = async () => {
-      if (!id) return;
+      if (!slug) return;
 
       // Try fetching from database first
       const { data, error } = await supabase
@@ -252,21 +252,21 @@ const BrokerAuctionDetail = () => {
             voice_recordings (id, category, transcript, duration)
           )
         `)
-        .eq("id", id)
+        .eq("id", slug)
         .single();
 
       if (error || !data) {
         // Always fallback to mock data for demo using centralized mock data
-        const mockAuction = getAuctionById(id);
-        const auctionData = convertMockToPDPFormat(mockAuction, id);
+        const mockAuction = getAuctionById(slug);
+        const auctionData = convertMockToPDPFormat(mockAuction, slug);
         setAuction(auctionData);
         setBidAmount((auctionData.current_highest_bid || 0) + (auctionData.minimum_bid_increment || 500));
         setLoading(false);
         return;
       }
-      // Get consistent mock data for this auction ID - ensures PDP matches listing
-      const mockAuction = getAuctionById(id);
-      const mockPdp = convertMockToPDPFormat(mockAuction, id);
+      // Get consistent mock data for this auction slug - ensures PDP matches listing
+      const mockAuction = getAuctionById(slug);
+      const mockPdp = convertMockToPDPFormat(mockAuction, slug);
       
       const auctionData = data as unknown as AuctionData;
 
@@ -284,7 +284,7 @@ const BrokerAuctionDetail = () => {
       } else {
         // DB has complete data - use it but still fill images if missing
         if (!auctionData.inspections.captured_images || auctionData.inspections.captured_images.length === 0) {
-          auctionData.inspections.captured_images = getVehicleGallery(auctionData.inspections.vehicle_make, id);
+          auctionData.inspections.captured_images = getVehicleGallery(auctionData.inspections.vehicle_make, slug);
         }
         // Fill missing optional fields
         if (!auctionData.inspections.defects || auctionData.inspections.defects.length === 0) {
@@ -306,7 +306,7 @@ const BrokerAuctionDetail = () => {
     };
 
     fetchAuction();
-  }, [id]);
+  }, [slug]);
 
   // Update timer
   useEffect(() => {
@@ -588,7 +588,7 @@ const BrokerAuctionDetail = () => {
 
         {/* Documentation Status */}
         {(() => {
-          const mockAuction = getAuctionById(id || "");
+          const mockAuction = getAuctionById(slug || "");
           const docs = mockAuction?.documents;
           if (!docs) return null;
           return (
@@ -765,9 +765,9 @@ const BrokerAuctionDetail = () => {
                 </div>
                 {/* Location - vague locality */}
                 {(() => {
-                  const mockAuction = getAuctionById(id || "");
+                  const mockAuction = getAuctionById(slug || "");
                   const vehicleCity = auction.geo_targeting_city || mockAuction?.vehicle.city || "Bangalore";
-                  const vehicleLocality = mockAuction?.vehicle.locality || getLocalityForCity(vehicleCity, (id || "").split('').reduce((acc, c) => acc + c.charCodeAt(0), 0));
+                  const vehicleLocality = mockAuction?.vehicle.locality || getLocalityForCity(vehicleCity, (slug || "").split('').reduce((acc, c) => acc + c.charCodeAt(0), 0));
                   return (
                     <div className="bg-muted rounded-lg p-3">
                       <p className="text-xs text-muted-foreground">Location</p>
@@ -777,7 +777,7 @@ const BrokerAuctionDetail = () => {
                 })()}
                 {/* Distance from Broker */}
                 {(() => {
-                  const mockAuction = getAuctionById(id || "");
+                  const mockAuction = getAuctionById(slug || "");
                   const vehicleCity = auction.geo_targeting_city || mockAuction?.vehicle.city || "Bangalore";
                   const brokerCity = broker?.city || "Bangalore";
                   const distance = getDistanceBetweenCities(brokerCity, vehicleCity);
