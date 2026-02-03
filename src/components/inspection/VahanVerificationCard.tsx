@@ -5,7 +5,7 @@ import {
   HelpCircle,
   Shield,
   FileText,
-  Car,
+  Bike,
   Banknote,
   Leaf,
   Calendar
@@ -116,7 +116,7 @@ export function VahanVerificationCard({
         <div className="grid grid-cols-2 gap-3">
           <div className="p-3 rounded-lg bg-muted/50">
             <div className="flex items-center gap-2 mb-1">
-              <Car className="w-3.5 h-3.5 text-muted-foreground" />
+              <Bike className="w-3.5 h-3.5 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">Vehicle</span>
             </div>
             <p className="text-sm font-medium text-foreground">

@@ -29,7 +29,7 @@ import {
 import {
   ArrowLeft, HelpCircle, MessageSquare, Phone, Mail,
   FileText, AlertTriangle, Clock, CheckCircle, Send,
-  ChevronRight, Search, Shield, Coins, Gavel, Car
+  ChevronRight, Search, Shield, Coins, Gavel, Bike
 } from "lucide-react";
 import BrokerBottomNav from "@/components/broker/BrokerBottomNav";
 import { useToast } from "@/hooks/use-toast";
@@ -46,7 +46,7 @@ const GRIEVANCE_CATEGORIES = [
   {
     id: "vehicle_mismatch",
     label: "Vehicle Mismatch",
-    icon: Car,
+    icon: Bike,
     description: "Vehicle condition differs from inspection report",
     priority: "high",
   },
