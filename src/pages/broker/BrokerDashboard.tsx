@@ -408,8 +408,14 @@ const BrokerDashboard = () => {
           {auctionTypes.map((type) => {
             const Icon = type.icon;
             const isActive = activeTypeFilter === type.id;
-            const count = (activeTab === "live" ? liveAuctions : upcomingAuctions)
-              .filter(a => a.auction_type === type.id).length;
+            // Count from the actual data source being used
+            const count = useMockData 
+              ? mockAuctionsForDisplay.filter(m => 
+                  m.auctionType === type.id && 
+                  (activeTab === "live" ? m.auctionType !== "one_click" : m.auctionType === "one_click")
+                ).length
+              : (activeTab === "live" ? liveAuctions : upcomingAuctions)
+                  .filter(a => a.auction_type === type.id).length;
             
             return (
               <Button
