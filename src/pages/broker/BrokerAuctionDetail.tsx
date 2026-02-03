@@ -763,6 +763,18 @@ const BrokerAuctionDetail = () => {
                   <p className="text-xs text-muted-foreground">Odometer</p>
                   <p className="font-medium text-foreground">{auction.inspections?.odometer_reading ? `${auction.inspections.odometer_reading.toLocaleString()} km` : "N/A"}</p>
                 </div>
+                {/* Ownership */}
+                {(() => {
+                  const mockAuction = getAuctionById(slug || "");
+                  const ownership = mockAuction?.vehicle.ownership || 1;
+                  const ownershipText = ownership === 1 ? "1st Owner" : ownership === 2 ? "2nd Owner" : `${ownership}${ownership === 3 ? "rd" : "th"} Owner`;
+                  return (
+                    <div className="bg-muted rounded-lg p-3">
+                      <p className="text-xs text-muted-foreground">Ownership</p>
+                      <p className="font-medium text-foreground">{ownershipText}</p>
+                    </div>
+                  );
+                })()}
                 {/* Location - vague locality */}
                 {(() => {
                   const mockAuction = getAuctionById(slug || "");

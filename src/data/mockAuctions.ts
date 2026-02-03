@@ -64,6 +64,7 @@ const CITIES = ["Mumbai", "Delhi", "Bangalore", "Chennai", "Hyderabad", "Pune", 
 const COLORS = ["Black", "White", "Red", "Blue", "Grey", "Orange", "Green", "Matte Black", "Silver"];
 const GRADES = ["A", "A", "B", "B", "B", "C", "C", "D"];
 const AUCTION_TYPES = ["quick", "quick", "flexible", "extended", "one_click"];
+const OWNERSHIP = [1, 1, 1, 2, 2, 3]; // More 1st owners for realistic distribution
 
 // Localities for each city (vague area-level, not exact addresses)
 export const CITY_LOCALITIES: Record<string, string[]> = {
@@ -178,6 +179,7 @@ export const generateMockAuctions = (): MockAuction[] => {
         registration,
         engineCC: config.ccRange[0],
         vin: `VIN${config.make.substring(0, 3).toUpperCase()}${year}${String(i).padStart(6, '0')}`,
+        ownership: OWNERSHIP[i % OWNERSHIP.length],
       },
       auctionType,
       timeRemaining: hoursRemaining * 60 * 60 * 1000,
@@ -219,6 +221,7 @@ export interface MockAuction {
     registration: string;
     engineCC: number;
     vin: string;
+    ownership: number; // 1 = 1st owner, 2 = 2nd owner, etc.
   };
   auctionType: string;
   timeRemaining: number;
@@ -303,6 +306,7 @@ const generateAuctionForId = (idOrSlug: string): MockAuction => {
       registration: `${regPrefix} ${regYear} AB ${regSuffix}`,
       engineCC: config.ccRange[0],
       vin: `VIN${config.make.substring(0, 3).toUpperCase()}${year}${String(hash).padStart(6, '0')}`,
+      ownership: OWNERSHIP[hash % OWNERSHIP.length],
     },
     auctionType,
     timeRemaining: hoursRemaining * 60 * 60 * 1000,
