@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getVehicleImage, VEHICLE_IMAGES } from "@/data/mockAuctions";
+import LostBidInsight from "./LostBidInsight";
 
 // Export for backwards compatibility
 export const BIKE_THUMBNAILS = VEHICLE_IMAGES;
@@ -33,6 +34,7 @@ export interface CardStatus {
   isUrgent?: boolean;
   winningBid?: number;
   bidDifference?: number;
+  showInsight?: boolean; // For lost bids - show detailed insight
 }
 
 interface VehicleCardProps {
@@ -234,6 +236,18 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
           </div>
         </div>
       </div>
+
+      {/* Lost Bid Insight - Vehicle Level Feedback */}
+      {status.type === "lost" && status.showInsight !== false && status.bidAmount && status.winningBid && (
+        <div className="px-3 pb-3">
+          <LostBidInsight
+            bidAmount={status.bidAmount}
+            winningBid={status.winningBid}
+            bidDifference={status.bidDifference || 0}
+            commissionAmount={status.commission}
+          />
+        </div>
+      )}
     </div>
   );
 };
