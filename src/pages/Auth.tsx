@@ -67,8 +67,8 @@ const Auth = () => {
           <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-4">
             <Bike className="w-8 h-8 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">DriveX Truth</h1>
-          <p className="text-muted-foreground mt-1">2-Wheeler Inspection System</p>
+          <h1 className="text-2xl font-bold text-foreground">DriveX Super</h1>
+          <p className="text-muted-foreground mt-1">Smart Bhi, Fast Bhi</p>
         </div>
 
         {/* Form */}
