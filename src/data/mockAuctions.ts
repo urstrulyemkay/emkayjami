@@ -65,6 +65,50 @@ const COLORS = ["Black", "White", "Red", "Blue", "Grey", "Orange", "Green", "Mat
 const GRADES = ["A", "A", "B", "B", "B", "C", "C", "D"];
 const AUCTION_TYPES = ["quick", "quick", "flexible", "extended", "one_click"];
 
+// Localities for each city (vague area-level, not exact addresses)
+export const CITY_LOCALITIES: Record<string, string[]> = {
+  "Mumbai": ["Andheri West", "Bandra", "Malad", "Goregaon", "Borivali", "Powai"],
+  "Delhi": ["Karol Bagh", "Dwarka", "Rohini", "Janakpuri", "Pitampura", "Nehru Place"],
+  "Bangalore": ["Koramangala", "Whitefield", "Indiranagar", "HSR Layout", "Electronic City", "Jayanagar"],
+  "Chennai": ["T. Nagar", "Anna Nagar", "Velachery", "Adyar", "Porur", "Tambaram"],
+  "Hyderabad": ["Madhapur", "Banjara Hills", "Gachibowli", "Kukatpally", "Secunderabad", "Kondapur"],
+  "Pune": ["Kothrud", "Hinjewadi", "Baner", "Viman Nagar", "Wakad", "Aundh"],
+  "Kolkata": ["Salt Lake", "Park Street", "Tollygunge", "Howrah", "Dum Dum", "Rajarhat"],
+  "Ahmedabad": ["Satellite", "Prahlad Nagar", "Navrangpura", "Vastrapur", "Bopal", "SG Highway"],
+  "Jaipur": ["Malviya Nagar", "Vaishali Nagar", "C-Scheme", "Mansarovar", "Raja Park", "Tonk Road"],
+  "Lucknow": ["Hazratganj", "Gomti Nagar", "Aliganj", "Indira Nagar", "Alambagh", "Mahanagar"],
+};
+
+// Approximate distances between major cities (in km) for distance calculation
+const CITY_DISTANCES: Record<string, Record<string, number>> = {
+  "Mumbai": { "Mumbai": 0, "Delhi": 1400, "Bangalore": 980, "Chennai": 1330, "Hyderabad": 710, "Pune": 150, "Kolkata": 1870, "Ahmedabad": 530, "Jaipur": 1150, "Lucknow": 1350 },
+  "Delhi": { "Mumbai": 1400, "Delhi": 0, "Bangalore": 2150, "Chennai": 2180, "Hyderabad": 1550, "Pune": 1420, "Kolkata": 1530, "Ahmedabad": 940, "Jaipur": 280, "Lucknow": 550 },
+  "Bangalore": { "Mumbai": 980, "Delhi": 2150, "Bangalore": 0, "Chennai": 350, "Hyderabad": 570, "Pune": 840, "Kolkata": 1870, "Ahmedabad": 1500, "Jaipur": 1870, "Lucknow": 2000 },
+  "Chennai": { "Mumbai": 1330, "Delhi": 2180, "Bangalore": 350, "Chennai": 0, "Hyderabad": 630, "Pune": 1170, "Kolkata": 1670, "Ahmedabad": 1850, "Jaipur": 1930, "Lucknow": 2060 },
+  "Hyderabad": { "Mumbai": 710, "Delhi": 1550, "Bangalore": 570, "Chennai": 630, "Hyderabad": 0, "Pune": 560, "Kolkata": 1500, "Ahmedabad": 1180, "Jaipur": 1400, "Lucknow": 1300 },
+  "Pune": { "Mumbai": 150, "Delhi": 1420, "Bangalore": 840, "Chennai": 1170, "Hyderabad": 560, "Pune": 0, "Kolkata": 1880, "Ahmedabad": 660, "Jaipur": 1180, "Lucknow": 1370 },
+  "Kolkata": { "Mumbai": 1870, "Delhi": 1530, "Bangalore": 1870, "Chennai": 1670, "Hyderabad": 1500, "Pune": 1880, "Kolkata": 0, "Ahmedabad": 1930, "Jaipur": 1500, "Lucknow": 990 },
+  "Ahmedabad": { "Mumbai": 530, "Delhi": 940, "Bangalore": 1500, "Chennai": 1850, "Hyderabad": 1180, "Pune": 660, "Kolkata": 1930, "Ahmedabad": 0, "Jaipur": 670, "Lucknow": 850 },
+  "Jaipur": { "Mumbai": 1150, "Delhi": 280, "Bangalore": 1870, "Chennai": 1930, "Hyderabad": 1400, "Pune": 1180, "Kolkata": 1500, "Ahmedabad": 670, "Jaipur": 0, "Lucknow": 580 },
+  "Lucknow": { "Mumbai": 1350, "Delhi": 550, "Bangalore": 2000, "Chennai": 2060, "Hyderabad": 1300, "Pune": 1370, "Kolkata": 990, "Ahmedabad": 850, "Jaipur": 580, "Lucknow": 0 },
+};
+
+// Get distance between two cities
+export const getDistanceBetweenCities = (city1: string, city2: string): number => {
+  // Same city - return random local distance (5-25 km)
+  if (city1 === city2) {
+    const hash = city1.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    return 5 + (hash % 21);
+  }
+  return CITY_DISTANCES[city1]?.[city2] || CITY_DISTANCES[city2]?.[city1] || 500;
+};
+
+// Get locality for a city based on hash
+export const getLocalityForCity = (city: string, hash: number): string => {
+  const localities = CITY_LOCALITIES[city] || CITY_LOCALITIES["Bangalore"];
+  return localities[hash % localities.length];
+};
+
 // Generate 100 mock auctions with variety (interleaved makes)
 export const generateMockAuctions = (): MockAuction[] => {
   const auctions: MockAuction[] = [];
@@ -111,6 +155,8 @@ export const generateMockAuctions = (): MockAuction[] => {
     const regSuffix = String(1000 + i).substring(1);
     const registration = `${regPrefix} ${regYear} AB ${regSuffix}`;
     
+    const locality = getLocalityForCity(city, i);
+    
     auctions.push({
       id,
       vehicle: {
@@ -120,6 +166,7 @@ export const generateMockAuctions = (): MockAuction[] => {
         year,
         kms,
         city,
+        locality,
         grade,
         color,
         registration,
@@ -159,6 +206,7 @@ export interface MockAuction {
     year: number;
     kms: number;
     city: string;
+    locality: string;
     grade: string;
     color: string;
     registration: string;
@@ -203,6 +251,7 @@ const generateAuctionForId = (id: string): MockAuction => {
   const variant = config.variants[hash % config.variants.length];
   const year = config.yearRange[hash % config.yearRange.length];
   const city = CITIES[hash % CITIES.length];
+  const locality = getLocalityForCity(city, hash);
   const color = COLORS[hash % COLORS.length];
   const grade = GRADES[hash % GRADES.length];
   const auctionType = AUCTION_TYPES[hash % AUCTION_TYPES.length];
@@ -231,6 +280,7 @@ const generateAuctionForId = (id: string): MockAuction => {
       year,
       kms,
       city,
+      locality,
       grade,
       color,
       registration: `${regPrefix} ${regYear} AB ${regSuffix}`,
