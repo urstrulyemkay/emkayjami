@@ -771,7 +771,7 @@ const BrokerAuctionDetail = () => {
                   return (
                     <div className="bg-muted rounded-lg p-3">
                       <p className="text-xs text-muted-foreground">Location</p>
-                      <p className="font-medium text-foreground">{vehicleLocality}, {vehicleCity}</p>
+                      <p className="font-medium text-foreground">{vehicleLocality}</p>
                     </div>
                   );
                 })()}
