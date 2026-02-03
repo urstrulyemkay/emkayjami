@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBrokerAuth } from "@/contexts/BrokerAuthContext";
 import { Button } from "@/components/ui/button";
@@ -6,14 +6,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Trophy, XCircle, Clock, Gavel, AlertTriangle } from "lucide-react";
 import BrokerBottomNav from "@/components/broker/BrokerBottomNav";
 import VehicleCard from "@/components/broker/VehicleCard";
+import LostBidFeedback from "@/components/broker/LostBidFeedback";
 import { useBrokerBids } from "@/hooks/useBrokerBids";
 import { useBrokerWonVehicles } from "@/hooks/useBrokerWonVehicles";
 import { formatCurrency } from "@/data/brokerMockData";
 import { getAuctionById } from "@/data/mockAuctions";
+import { useToast } from "@/hooks/use-toast";
 
 const BrokerBids = () => {
   const navigate = useNavigate();
   const { broker, isAuthenticated, isLoading } = useBrokerAuth();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("live");
 
   // Real-time bids hook
@@ -21,6 +24,34 @@ const BrokerBids = () => {
   
   // Won vehicles with service tracking
   const { wonVehicles, loading: wonVehiclesLoading, urgentCount } = useBrokerWonVehicles(broker?.id);
+
+  // Calculate lost bid stats for educational feedback - must be before early return
+  const lostBidStats = useMemo(() => {
+    if (lostBids.length === 0) return { totalLost: 0, avgDifference: 0, closeCalls: 0, timingIssues: 0 };
+
+    let totalDifference = 0;
+    let closeCalls = 0;
+    // Simulate timing issues based on bid pattern
+    const timingIssues = Math.floor(lostBids.length * 0.2);
+
+    lostBids.forEach((bid) => {
+      const winningBid = bid.auction?.current_highest_bid || 0;
+      const difference = winningBid - bid.bid_amount;
+      totalDifference += Math.max(0, difference);
+
+      // Close call: lost by less than 5% of bid amount
+      if (difference > 0 && difference < bid.bid_amount * 0.05) {
+        closeCalls++;
+      }
+    });
+
+    return {
+      totalLost: lostBids.length,
+      avgDifference: lostBids.length > 0 ? Math.round(totalDifference / lostBids.length) : 0,
+      closeCalls,
+      timingIssues,
+    };
+  }, [lostBids]);
 
   // Helper to get won vehicle data for a bid
   const getWonVehicleForBid = (auctionId: string) => {
@@ -45,6 +76,30 @@ const BrokerBids = () => {
     const deadlineDate = new Date(deadline);
     const diffTime = deadlineDate.getTime() - today.getTime();
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  const handleTipClick = (tipId: string) => {
+    switch (tipId) {
+      case "close-calls":
+      case "commission-boost":
+        toast({
+          title: "💡 Effective Score",
+          description: "Your Effective Score = Bid Amount + (Commission × 2). Higher commission gives you an edge!",
+        });
+        break;
+      case "timing":
+        toast({
+          title: "🔔 Smart Alerts",
+          description: "Enable push notifications to get alerts when auctions are ending soon.",
+        });
+        break;
+      case "pricing-gap":
+      case "auction-types":
+        navigate("/broker/help");
+        break;
+      default:
+        break;
+    }
   };
 
   useEffect(() => {
@@ -248,24 +303,34 @@ const BrokerBids = () => {
               <p className="text-sm">Great job on your bidding strategy!</p>
             </div>
           ) : (
-            lostBids.map((bid) => {
-              const winningBid = bid.auction?.current_highest_bid || 0;
-              const difference = winningBid - bid.bid_amount;
-              const vehicleInfo = getVehicleInfo(bid.auction_id, bid.auction?.inspections);
+            <>
+              {/* Educational Feedback Section */}
+              <LostBidFeedback stats={lostBidStats} onTipClick={handleTipClick} />
               
-              return (
-                <VehicleCard
-                  key={bid.id}
-                  vehicle={vehicleInfo}
-                  status={{
-                    type: "lost",
-                    bidAmount: bid.bid_amount,
-                    winningBid,
-                    bidDifference: difference,
-                  }}
-                />
-              );
-            })
+              {/* Lost Bids List */}
+              <div className="pt-2 border-t mt-4">
+                <p className="text-xs text-muted-foreground mb-3 px-1">Your lost bids</p>
+                {lostBids.map((bid) => {
+                  const winningBid = bid.auction?.current_highest_bid || 0;
+                  const difference = winningBid - bid.bid_amount;
+                  const vehicleInfo = getVehicleInfo(bid.auction_id, bid.auction?.inspections);
+                  
+                  return (
+                    <VehicleCard
+                      key={bid.id}
+                      vehicle={vehicleInfo}
+                      status={{
+                        type: "lost",
+                        bidAmount: bid.bid_amount,
+                        winningBid,
+                        bidDifference: difference,
+                      }}
+                      className="mb-3"
+                    />
+                  );
+                })}
+              </div>
+            </>
           )}
         </TabsContent>
       </Tabs>
