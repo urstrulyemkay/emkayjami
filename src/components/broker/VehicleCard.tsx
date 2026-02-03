@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
 import { 
   Clock, ChevronRight, Trophy, AlertTriangle, 
   TrendingUp, Zap, Scale, Calendar, Target, Sparkles
@@ -243,19 +242,19 @@ const VehicleCard = ({ vehicle, status, onClick, className }: VehicleCardProps) 
       {/* Services CTA for Won Vehicles */}
       {status.type === "won" && status.showServicesCTA && (
         <div className="px-3 pb-3 pt-0">
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full h-8 text-xs bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20 hover:border-primary/40 hover:bg-primary/10"
+          <button
+            className="w-full h-9 flex items-center justify-between px-3 rounded-lg bg-muted/50 border border-border hover:border-primary/30 hover:bg-muted transition-colors"
             onClick={(e) => {
               e.stopPropagation();
               status.onServicesClick?.();
             }}
           >
-            <Sparkles className="w-3.5 h-3.5 mr-1.5 text-primary" />
-            Get DriveX Services
-            <ChevronRight className="w-3.5 h-3.5 ml-auto text-muted-foreground" />
-          </Button>
+            <span className="flex items-center gap-2 text-xs font-medium text-foreground">
+              <Sparkles className="w-3.5 h-3.5 text-warning" />
+              DriveX Services
+            </span>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </button>
         </div>
       )}
       {status.type === "lost" && status.showInsight !== false && status.bidAmount && status.winningBid && (

@@ -81,14 +81,6 @@ const SERVICES: Service[] = [
     estimatedDays: "1-2 days",
   },
   {
-    id: "fitness_renewal",
-    name: "Fitness Certificate",
-    description: "Renew vehicle fitness certificate",
-    icon: <Wrench className="w-5 h-5" />,
-    price: 2000,
-    estimatedDays: "5-7 days",
-  },
-  {
     id: "noc",
     name: "NOC Processing",
     description: "Get No Objection Certificate for inter-state",
