@@ -9,12 +9,11 @@ import { toast } from "sonner";
 import {
   ArrowLeft,
   CreditCard,
-  Truck,
+  Bike,
   Package,
   FileText,
   UserCheck,
   Shield,
-  Car,
   Phone,
   MapPin,
   Clock,
@@ -474,7 +473,7 @@ const BrokerWonVehicleDetail = () => {
                     vehicle.pickup_status === "scheduled" ? "bg-primary/10 text-primary" :
                     "bg-muted text-muted-foreground"
                   }`}>
-                    <Truck className="w-5 h-5" />
+                    <Bike className="w-5 h-5" />
                   </div>
                   <div className="text-left">
                     <p className="font-medium">Vehicle Pickup</p>
@@ -495,7 +494,7 @@ const BrokerWonVehicleDetail = () => {
                   title="Vehicle Pickup"
                   description="Schedule and confirm vehicle pickup"
                   status={vehicle.pickup_status as any}
-                  icon={<Truck className="w-5 h-5" />}
+                  icon={<Bike className="w-5 h-5" />}
                   completedAt={vehicle.pickup_completed_at}
                   actionLabel={
                     vehicle.pickup_status === "pending"

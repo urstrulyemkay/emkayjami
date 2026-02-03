@@ -31,7 +31,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, MapPin, Clock, Zap, Check, AlertTriangle,
-  Play, Image as ImageIcon, Info, Heart, Shield, Car, Mic,
+  Play, Image as ImageIcon, Info, Heart, Shield, Bike, Mic,
   Share2, TrendingUp, Scale, Calendar, Target, ChevronLeft, ChevronRight, X
 } from "lucide-react";
 import { useRealtimeBids } from "@/hooks/useRealtimeBids";
@@ -737,7 +737,7 @@ const BrokerAuctionDetail = () => {
           <AccordionItem value="specs" className="border rounded-xl px-4">
             <AccordionTrigger className="hover:no-underline py-3">
               <div className="flex items-center gap-2">
-                <Car className="w-4 h-4 text-muted-foreground" />
+                <Bike className="w-4 h-4 text-muted-foreground" />
                 <span className="font-medium">Vehicle Specifications</span>
               </div>
             </AccordionTrigger>
