@@ -7,6 +7,7 @@ import { ArrowLeft, Trophy, XCircle, Clock, Gavel, AlertTriangle } from "lucide-
 import BrokerBottomNav from "@/components/broker/BrokerBottomNav";
 import VehicleCard from "@/components/broker/VehicleCard";
 import LostBidFeedback from "@/components/broker/LostBidFeedback";
+import VehicleServicesSheet from "@/components/broker/VehicleServicesSheet";
 import { useBrokerBids } from "@/hooks/useBrokerBids";
 import { useBrokerWonVehicles } from "@/hooks/useBrokerWonVehicles";
 import { formatCurrency } from "@/data/brokerMockData";
@@ -18,6 +19,11 @@ const BrokerBids = () => {
   const { broker, isAuthenticated, isLoading } = useBrokerAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("live");
+  const [servicesSheetOpen, setServicesSheetOpen] = useState(false);
+  const [selectedVehicleForServices, setSelectedVehicleForServices] = useState<{
+    name: string;
+    auctionId: string;
+  } | null>(null);
 
   // Real-time bids hook
   const { liveBids, wonBids, lostBids, loading, stats } = useBrokerBids(broker?.id);
@@ -270,6 +276,7 @@ const BrokerBids = () => {
               const remainingDays = wonVehicle ? getRemainingDays(wonVehicle.rc_transfer_deadline) : 180;
               const isUrgent = remainingDays <= 30 && wonVehicle?.rc_transfer_status !== "completed";
               const vehicleInfo = getVehicleInfo(bid.auction_id, bid.auction?.inspections);
+              const vehicleName = `${vehicleInfo.make} ${vehicleInfo.model}`;
               
               return (
                 <VehicleCard
@@ -282,6 +289,11 @@ const BrokerBids = () => {
                     serviceProgress,
                     remainingDays,
                     isUrgent,
+                    showServicesCTA: true,
+                    onServicesClick: () => {
+                      setSelectedVehicleForServices({ name: vehicleName, auctionId: bid.auction_id });
+                      setServicesSheetOpen(true);
+                    },
                   }}
                   onClick={() => wonVehicle && navigate(`/broker/won/${wonVehicle.id}`)}
                 />
@@ -336,6 +348,21 @@ const BrokerBids = () => {
       </Tabs>
 
       <BrokerBottomNav activeTab="bids" />
+
+      {/* Services Sheet */}
+      <VehicleServicesSheet
+        open={servicesSheetOpen}
+        onOpenChange={setServicesSheetOpen}
+        vehicleName={selectedVehicleForServices?.name || "Vehicle"}
+        availableCoins={broker?.coins_balance || 0}
+        onServiceRequest={(services, coinsUsed, totalAmount) => {
+          toast({
+            title: "🎉 Services Requested!",
+            description: `${services.length} service(s) for ₹${totalAmount.toLocaleString()}${coinsUsed > 0 ? ` (saved ₹${coinsUsed} with coins)` : ""}`,
+          });
+          setServicesSheetOpen(false);
+        }}
+      />
     </div>
   );
 };
