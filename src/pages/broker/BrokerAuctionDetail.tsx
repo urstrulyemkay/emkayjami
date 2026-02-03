@@ -38,7 +38,7 @@ import { useRealtimeBids } from "@/hooks/useRealtimeBids";
 import LiveBidFeed from "@/components/broker/LiveBidFeed";
 import { calculateEffectiveScore } from "@/data/brokerMockData";
 import { useSoundNotifications } from "@/hooks/useSoundNotifications";
-import { getAuctionById, getVehicleGallery, generateMockDefects } from "@/data/mockAuctions";
+import { getAuctionById, getVehicleGallery, generateMockDefects, getDistanceBetweenCities, getLocalityForCity } from "@/data/mockAuctions";
 import { maskRegistration } from "@/lib/maskRegistration";
 
 interface CapturedImage {
@@ -763,6 +763,36 @@ const BrokerAuctionDetail = () => {
                   <p className="text-xs text-muted-foreground">Odometer</p>
                   <p className="font-medium text-foreground">{auction.inspections?.odometer_reading ? `${auction.inspections.odometer_reading.toLocaleString()} km` : "N/A"}</p>
                 </div>
+                {/* Location - vague locality */}
+                {(() => {
+                  const mockAuction = getAuctionById(id || "");
+                  const vehicleCity = auction.geo_targeting_city || mockAuction?.vehicle.city || "Bangalore";
+                  const vehicleLocality = mockAuction?.vehicle.locality || getLocalityForCity(vehicleCity, (id || "").split('').reduce((acc, c) => acc + c.charCodeAt(0), 0));
+                  return (
+                    <div className="bg-muted rounded-lg p-3">
+                      <p className="text-xs text-muted-foreground">Location</p>
+                      <p className="font-medium text-foreground">{vehicleLocality}, {vehicleCity}</p>
+                    </div>
+                  );
+                })()}
+                {/* Distance from Broker */}
+                {(() => {
+                  const mockAuction = getAuctionById(id || "");
+                  const vehicleCity = auction.geo_targeting_city || mockAuction?.vehicle.city || "Bangalore";
+                  const brokerCity = broker?.city || "Bangalore";
+                  const distance = getDistanceBetweenCities(brokerCity, vehicleCity);
+                  const distanceText = distance < 50 
+                    ? `~${distance} km` 
+                    : distance < 100 
+                      ? "Within 100 km" 
+                      : `~${Math.round(distance / 10) * 10} km`;
+                  return (
+                    <div className="bg-muted rounded-lg p-3">
+                      <p className="text-xs text-muted-foreground">Distance from You</p>
+                      <p className="font-medium text-foreground">{distanceText}</p>
+                    </div>
+                  );
+                })()}
               </div>
               {auction.inspections?.consented_at && (
                 <div className="mt-3 flex items-center gap-2 text-xs text-accent">
