@@ -10,6 +10,7 @@ import { getVehicleImage } from "@/data/mockAuctions";
 interface AuctionCardProps {
   auction: {
     id: string;
+    slug?: string;
     vehicle: {
       make: string;
       model: string;
