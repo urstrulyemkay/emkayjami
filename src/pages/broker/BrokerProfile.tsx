@@ -74,8 +74,8 @@ const BrokerProfile = () => {
   }
 
   const levelConfig = getLevelFromScore(broker.trust_score);
-  const nextLevel = LEVELS[broker.level] || LEVELS[LEVELS.length - 1];
-  const progressToNext = getProgressToNextLevel(broker.trust_score, broker.level);
+  const nextLevel = LEVELS[levelConfig.level] || LEVELS[LEVELS.length - 1];
+  const progressToNext = getProgressToNextLevel(broker.trust_score, levelConfig.level);
 
   const handleLogout = async () => {
     await logout();
@@ -142,7 +142,7 @@ const BrokerProfile = () => {
               <h3 className="font-semibold">Trust Score</h3>
             </div>
             <Badge className={`${levelConfig.bgColor} text-white`}>
-              Level {broker.level} – {levelConfig.name}
+              Level {levelConfig.level} – {levelConfig.name}
             </Badge>
           </div>
 
@@ -153,10 +153,10 @@ const BrokerProfile = () => {
           </div>
 
           {/* Progress to Next Level */}
-          {broker.level < 5 && (
+          {levelConfig.level < 5 && (
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Progress to Level {broker.level + 1} ({nextLevel.name})</span>
+                <span className="text-muted-foreground">Progress to Level {levelConfig.level + 1} ({nextLevel.name})</span>
                 <span className="font-medium">{Math.round(progressToNext)}%</span>
               </div>
               <Progress value={progressToNext} className="h-2" />
