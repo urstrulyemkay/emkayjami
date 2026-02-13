@@ -243,7 +243,7 @@ const NewInspection = () => {
 
     setIsCreating(false);
 
-    navigate("/inspection/stepper", {
+    navigate("/inspection/capture", {
       state: {
         ...inspectionData,
         inspectionId,
