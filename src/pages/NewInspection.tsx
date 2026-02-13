@@ -124,34 +124,23 @@ const NewInspection = () => {
     }
 
     setIsSearching(true);
-    
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    
-    // Auto-fill with realistic mock data
-    const testMakes = ["Honda", "TVS", "Bajaj", "Yamaha", "Royal Enfield", "Hero", "Suzuki"];
-    const randomMake = testMakes[Math.floor(Math.random() * testMakes.length)];
-    const modelsForMake = getModelsByMake(randomMake);
-    const randomModel = modelsForMake.length > 0 ? modelsForMake[Math.floor(Math.random() * modelsForMake.length)] : null;
-    const ownerNames = ["Rajesh", "Suresh", "Amit", "Vikram", "Arun", "Karthik", "Pradeep", "Manoj", "Ravi", "Sanjay"];
-    
-    setSelectedMake(randomMake);
-    setSelectedModel(randomModel?.model || "");
-    setSelectedYear((2019 + Math.floor(Math.random() * 6)).toString());
-    setSelectedColor(VEHICLE_COLORS[Math.floor(Math.random() * VEHICLE_COLORS.length)]);
-    setOdometerReading((5000 + Math.floor(Math.random() * 45000)).toString());
-    
-    if (!customerName.trim()) {
-      setCustomerName(ownerNames[Math.floor(Math.random() * ownerNames.length)]);
+
+    // Call the Vahan API via the hook
+    const result = await lookupVehicle(registration);
+
+    if (result) {
+      autoFillFromVahan(result);
+    } else {
+      // Vahan lookup failed - let user fill manually
+      setVehicleFound(true);
+      toast({
+        title: "Manual entry required",
+        description: "Could not fetch from Vahan. Please fill details manually.",
+        variant: "destructive",
+      });
     }
-    
-    setVehicleFound(true);
+
     setIsSearching(false);
-    
-    toast({
-      title: "Vehicle found",
-      description: `${randomMake} ${randomModel?.model || ""} - Auto-filled`,
-    });
   };
 
   // Auto-fill all fields for testing
