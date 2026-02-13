@@ -1,10 +1,11 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Check, Video, Mic } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Video, Mic, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StepperProgress } from "@/components/inspection/StepperProgress";
 import { SimpleCheckpointCard } from "@/components/inspection/SimpleCheckpointCard";
 import { SectionVoiceRecorder } from "@/components/inspection/SectionVoiceRecorder";
+import { Badge } from "@/components/ui/badge";
 import {
   INSPECTION_STEPS,
   calculateStepCompletion,
@@ -48,6 +49,12 @@ const InspectionStepper = () => {
   const stepCompletion = calculateStepCompletion(currentStep, responses);
   const overallCompletion = calculateOverallCompletion(responses);
 
+  // Collect ALL checkpoints across ALL steps for the global voice recorder
+  const allCheckpoints = useMemo(
+    () => INSPECTION_STEPS.flatMap((step) => step.checkpoints),
+    []
+  );
+
   const handleSelectOption = useCallback((checkpointId: string, value: string) => {
     setResponses((prev) => ({
       ...prev,
@@ -69,50 +76,52 @@ const InspectionStepper = () => {
     }));
   }, [currentStep]);
 
-  // Mark all checkpoints in current step as "OK/Good"
+  // Mark all checkpoints across ALL steps as "OK/Good"
   const handleMarkAllGood = useCallback(() => {
     const newResponses: Record<string, string> = {};
     
-    currentStepData.checkpoints.forEach((checkpoint) => {
-      // Find the "OK" or first option with severity "ok"
-      const okOption = checkpoint.options.find((opt) => opt.severity === "ok") || checkpoint.options[0];
-      if (okOption) {
-        newResponses[checkpoint.id] = okOption.value;
-      }
+    INSPECTION_STEPS.forEach((step) => {
+      step.checkpoints.forEach((checkpoint) => {
+        const okOption = checkpoint.options.find((opt) => opt.severity === "ok") || checkpoint.options[0];
+        if (okOption) {
+          newResponses[checkpoint.id] = okOption.value;
+        }
+      });
     });
 
     setResponses((prev) => ({ ...prev, ...newResponses }));
     toast({
       title: "All marked as Good",
-      description: `${currentStepData.checkpoints.length} fields filled`,
+      description: `${Object.keys(newResponses).length} fields filled across all steps`,
     });
-  }, [currentStepData.checkpoints, toast]);
+  }, [toast]);
 
-  // Auto-fill with random realistic values for testing
+  // Auto-fill with random realistic values for testing (all steps)
   const handleAutoFillTest = useCallback(() => {
     const newResponses: Record<string, string> = {};
     
-    currentStepData.checkpoints.forEach((checkpoint) => {
-      // 70% chance of OK, 20% minor, 8% major, 2% critical
-      const rand = Math.random();
-      let targetSeverity: "ok" | "minor" | "major" | "critical" = "ok";
-      
-      if (rand > 0.98) targetSeverity = "critical";
-      else if (rand > 0.90) targetSeverity = "major";
-      else if (rand > 0.70) targetSeverity = "minor";
-      
-      const matchingOption = checkpoint.options.find((opt) => opt.severity === targetSeverity);
-      const fallbackOption = checkpoint.options.find((opt) => opt.severity === "ok") || checkpoint.options[0];
-      
-      newResponses[checkpoint.id] = (matchingOption || fallbackOption).value;
+    INSPECTION_STEPS.forEach((step) => {
+      step.checkpoints.forEach((checkpoint) => {
+        const rand = Math.random();
+        let targetSeverity: "ok" | "minor" | "major" | "critical" = "ok";
+        
+        if (rand > 0.98) targetSeverity = "critical";
+        else if (rand > 0.90) targetSeverity = "major";
+        else if (rand > 0.70) targetSeverity = "minor";
+        
+        const matchingOption = checkpoint.options.find((opt) => opt.severity === targetSeverity);
+        const fallbackOption = checkpoint.options.find((opt) => opt.severity === "ok") || checkpoint.options[0];
+        
+        newResponses[checkpoint.id] = (matchingOption || fallbackOption).value;
+      });
     });
 
     setResponses((prev) => ({ ...prev, ...newResponses }));
     toast({
       title: "Test data filled",
-      description: `${currentStepData.checkpoints.length} fields auto-filled with realistic values`,
+      description: `${Object.keys(newResponses).length} fields auto-filled across all steps`,
     });
-  }, [currentStepData.checkpoints, toast]);
+  }, [toast]);
 
   const canProceed = () => {
     const requiredCheckpoints = currentStepData.checkpoints.filter((c) => c.required);
@@ -194,18 +203,38 @@ const InspectionStepper = () => {
         completedSteps={completedSteps}
       />
 
-      {/* Section Voice Recorder - At the top of checkpoints */}
-      <div className="px-4 pt-4">
-        <SectionVoiceRecorder
-          stepTitle={currentStepData.shortTitle}
-          checkpoints={currentStepData.checkpoints}
-          responses={responses}
-          onAutoFill={handleVoiceAutoFill}
-          onTranscriptReceived={handleTranscriptReceived}
-          onMarkAllGood={handleMarkAllGood}
-          onAutoFillTest={handleAutoFillTest}
-        />
-      </div>
+      {/* Voice Recorder - Only on Step 1, fills ALL steps */}
+      {currentStep === 1 && (
+        <div className="px-4 pt-4">
+          <SectionVoiceRecorder
+            stepTitle="All Sections"
+            checkpoints={allCheckpoints}
+            responses={responses}
+            onAutoFill={handleVoiceAutoFill}
+            onTranscriptReceived={handleTranscriptReceived}
+            onMarkAllGood={handleMarkAllGood}
+            onAutoFillTest={handleAutoFillTest}
+          />
+        </div>
+      )}
+
+      {/* Verification banner on steps 2-6 */}
+      {currentStep > 1 && (
+        <div className="px-4 pt-4">
+          <div className="flex items-center gap-2 p-3 rounded-lg border border-primary/20 bg-primary/5">
+            <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-foreground">Verification Mode</p>
+              <p className="text-xs text-muted-foreground">
+                Review voice-filled responses below. Tap any field to correct it.
+              </p>
+            </div>
+            <Badge variant="secondary" className="text-xs">
+              {stepCompletion}%
+            </Badge>
+          </div>
+        </div>
+      )}
 
       {/* Checkpoints */}
       <div className="flex-1 overflow-auto px-4 py-4">
