@@ -212,13 +212,12 @@ const VideoCapture = () => {
   };
 
   const handleComplete = () => {
-    // Go directly to consent flow, which leads to auction
-    navigate("/inspection/consent", {
+    // Go to inspection stepper for detailed checkpoint inspection
+    navigate("/inspection/stepper", {
       state: { 
         ...vehicleData, 
         videos: capturedVideos,
         images: vehicleData?.images || [],
-        defects: vehicleData?.defects || [],
       },
     });
   };

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Camera, Video, Mic } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Video, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StepperProgress } from "@/components/inspection/StepperProgress";
 import { SimpleCheckpointCard } from "@/components/inspection/SimpleCheckpointCard";
@@ -138,8 +138,8 @@ const InspectionStepper = () => {
       setCurrentStep((prev) => prev + 1);
       window.scrollTo(0, 0);
     } else {
-      // All steps completed - proceed to media capture
-      navigate("/inspection/capture", {
+      // All steps completed - proceed to consent flow
+      navigate("/inspection/consent", {
         state: {
           ...vehicleData,
           checkpointResponses: responses,
@@ -240,8 +240,8 @@ const InspectionStepper = () => {
           >
             {currentStep === INSPECTION_STEPS.length ? (
               <>
-                <Camera className="w-4 h-4 mr-2" />
-                Capture Photos
+                <Check className="w-4 h-4 mr-2" />
+                Complete
               </>
             ) : (
               <>
