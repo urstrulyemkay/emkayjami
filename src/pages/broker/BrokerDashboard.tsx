@@ -215,8 +215,9 @@ const BrokerDashboard = () => {
   }
 
   const levelConfig = getLevelFromScore(broker.trust_score);
-  const nextLevel = LEVELS[broker.level] || LEVELS[LEVELS.length - 1];
-  const progressToNext = getProgressToNextLevel(broker.trust_score, broker.level);
+  const derivedLevel = levelConfig.level;
+  const nextLevel = LEVELS[derivedLevel] || LEVELS[LEVELS.length - 1];
+  const progressToNext = getProgressToNextLevel(broker.trust_score, derivedLevel);
   // Helper to get grade from condition score
   const getGradeFromScore = (score: number | null): string => {
     if (!score) return "C";
@@ -346,7 +347,7 @@ const BrokerDashboard = () => {
               className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 py-2 hover:bg-white/20 transition-colors active:scale-95 shrink-0"
             >
               <Star className="w-4 h-4 text-amber-400 shrink-0" />
-              <span className="font-medium whitespace-nowrap">Lvl {broker.level}</span>
+              <span className="font-medium whitespace-nowrap">Lvl {derivedLevel}</span>
               <ChevronRight className="w-3 h-3 opacity-60 shrink-0" />
             </button>
             <button 
@@ -781,14 +782,14 @@ const BrokerDashboard = () => {
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <p className="text-sm opacity-80">Current Level</p>
-                  <p className="text-2xl font-bold">Level {broker.level} – {levelConfig.name}</p>
+                  <p className="text-2xl font-bold">Level {derivedLevel} – {levelConfig.name}</p>
                 </div>
                 <Award className="w-10 h-10 opacity-80" />
               </div>
-              {broker.level < 5 && (
+              {derivedLevel < 5 && (
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm opacity-80">
-                    <span>Progress to Level {broker.level + 1}</span>
+                    <span>Progress to Level {derivedLevel + 1}</span>
                     <span>{Math.round(progressToNext)}%</span>
                   </div>
                   <Progress value={progressToNext} className="h-2 bg-white/20" />
@@ -801,9 +802,9 @@ const BrokerDashboard = () => {
               <h4 className="font-semibold mb-3">Level Progression</h4>
               <div className="space-y-3">
                 {LEVELS.map((level, index) => {
-                  const isCurrentLevel = broker.level === level.level;
-                  const isNextLevel = broker.level + 1 === level.level;
-                  const isPastLevel = broker.level > level.level;
+                  const isCurrentLevel = derivedLevel === level.level;
+                  const isNextLevel = derivedLevel + 1 === level.level;
+                  const isPastLevel = derivedLevel > level.level;
                   
                   return (
                     <div 
