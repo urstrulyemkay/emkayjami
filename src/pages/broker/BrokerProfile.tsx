@@ -153,18 +153,21 @@ const BrokerProfile = () => {
           </div>
 
           {/* Progress to Next Level */}
-          {levelConfig.level < 5 && (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Progress to Level {levelConfig.level + 1} ({nextLevel.name})</span>
-                <span className="font-medium">{Math.round(progressToNext)}%</span>
+          {levelConfig.level < 5 && (() => {
+            const displayProgress = Math.max(progressToNext, 35);
+            return (
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Progress to Level {levelConfig.level + 1} ({nextLevel.name})</span>
+                  <span className="text-base font-bold text-amber-600">{Math.round(displayProgress)}%</span>
+                </div>
+                <Progress value={displayProgress} className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-amber-400 [&>div]:to-orange-500" />
+                <p className="text-xs text-muted-foreground">
+                  Need {nextLevel.minScore - broker.trust_score} more points
+                </p>
               </div>
-              <Progress value={progressToNext} className="h-2" />
-              <p className="text-xs text-muted-foreground">
-                Need {nextLevel.minScore - broker.trust_score} more points
-              </p>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Status */}
           <div className="mt-4 flex items-center gap-2 text-green-600">
