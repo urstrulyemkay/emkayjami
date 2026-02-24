@@ -217,7 +217,7 @@ const BrokerAuctionCard = ({ auction, onClick }: AuctionCardProps) => {
           )}
           {auction.documents.challans > 0 && (
             <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 text-destructive border-destructive/50">
-              {auction.documents.challans} Challan{auction.documents.challans > 1 ? "s" : ""}
+              Challans ₹{auction.documents.challans.toLocaleString("en-IN")}
             </Badge>
           )}
         </div>

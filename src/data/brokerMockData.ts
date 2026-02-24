@@ -357,7 +357,7 @@ export const LIVE_AUCTIONS: MockAuction[] = Array.from({ length: 40 }, (_, i) =>
       rc: Math.random() > 0.1, 
       insurance: Math.random() > 0.2, 
       puc: Math.random() > 0.15, 
-      challans: Math.floor(Math.random() * 3), 
+      challans: Math.floor(Math.random() * 3) * 500, 
       loan: Math.random() > 0.8 
     },
     oemTrust: ["high", "medium", "low"][Math.floor(Math.random() * 3)] as "high" | "medium" | "low",

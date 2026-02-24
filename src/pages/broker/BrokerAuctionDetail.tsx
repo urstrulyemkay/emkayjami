@@ -632,7 +632,7 @@ const BrokerAuctionDetail = () => {
                 )}
                 {docs.challans > 0 && (
                   <Badge variant="outline" className="text-xs text-destructive border-destructive/50">
-                    {docs.challans} Challan{docs.challans > 1 ? "s" : ""}
+                    Challans ₹{docs.challans.toLocaleString("en-IN")}
                   </Badge>
                 )}
               </div>
