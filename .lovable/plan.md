@@ -1,48 +1,28 @@
 
 
-## Fix Broker Level Consistency
+## Show Dummy Progress Value on Broker Profile
 
-### Problem
-The broker profile shows **"Level 1 - Preferred"** because it mixes two sources:
-- Level **number** comes from the database column `broker.level` (hardcoded to 1)
-- Level **name** comes from `getLevelFromScore(broker.trust_score)` which maps trust_score 50 to "Preferred" (level 3)
+### What's happening now
+The broker's `trust_score` is 50 in the database, which correctly maps to **Level 3 - Preferred** (range 41-60). The progress bar to Level 4 (Trusted) calculates to **45%**, which should already be visible.
 
-This creates a mismatch like "Level 1 - Preferred" when it should show "Level 3 - Preferred".
-
-### Solution
-Derive the level entirely from `trust_score` instead of using the stale `broker.level` database column. This ensures the level number and name are always in sync.
+However, the progress bar may appear subtle. To make it clearer that the broker is progressing, we'll ensure the display shows a meaningful filled state.
 
 ### Changes
 
 **File: `src/pages/broker/BrokerProfile.tsx`**
-- Replace `broker.level` references with `levelConfig.level` (derived from trust score)
-- Update the "Progress to Level" section to use the computed level instead of the DB column
-- Update the next-level lookup to use `levelConfig.level` instead of `broker.level`
+- Use a minimum dummy progress value of 45% (or the real calculated value, whichever is higher) so the bar always looks meaningfully filled
+- Alternatively, since the real calculation already yields 45% for the current data, just ensure the progress bar renders with a visible color indicator and the percentage text is prominent
 
-Specifically:
-- Line 77: Change `LEVELS[broker.level]` to `LEVELS[levelConfig.level]` for next level lookup
-- Line 78: Change `getProgressToNextLevel(broker.trust_score, broker.level)` to use `levelConfig.level`
-- Line 144: The badge already uses `levelConfig` so that's correct
-- Line 145: Change `broker.level` to `levelConfig.level` in the badge text
-- Line 156-165: Update the progress section to use `levelConfig.level` consistently
+Since the math already produces 45%, the bar should be visible. If it's not showing, the issue may be that `progressToNext` is computed with the wrong level. Let me verify: `getProgressToNextLevel(50, 3)` uses `LEVELS[2]` (minScore=41) and `LEVELS[3]` (minScore=61), so progress = `(50-41)/(61-41)*100 = 45%`. This is correct.
 
-**File: `src/contexts/BrokerAuthContext.tsx`** (signup function)
-- No changes needed -- new brokers start with `trust_score` default (50 in DB) and `level` doesn't need to be manually set since we'll derive it
+The fix is simply to ensure the progress bar is visually prominent -- no code change may even be needed if it's already rendering correctly. But to be safe and ensure the user sees meaningful progress:
 
-### Technical Detail
+- Add a fallback minimum display value (e.g., ensure at least 35% is shown)
+- Make the progress percentage text bolder/larger for visibility
 
-The `LEVELS` array in `brokerMockData.ts` is already correct:
+### Technical Details
 
-| Level | Name | Score Range |
-|-------|------|-------------|
-| 1 | New | 0 - 20 |
-| 2 | Active | 21 - 40 |
-| 3 | Preferred | 41 - 60 |
-| 4 | Trusted | 61 - 80 |
-| 5 | Elite | 81 - 100 |
-
-The fix is simply ensuring the UI reads from `getLevelFromScore()` everywhere instead of the database `level` column.
-
-### Files Modified
-- `src/pages/broker/BrokerProfile.tsx` -- use computed level consistently
-
+In `src/pages/broker/BrokerProfile.tsx` around line 162:
+- The `Progress` component already receives `value={progressToNext}` which should be ~45%
+- Ensure the progress bar has a visible color by adding a custom class if needed
+- The current data (trust_score=50) already produces a good progress value, so no dummy override is strictly needed -- but we can add a comment noting this is real calculated progress
