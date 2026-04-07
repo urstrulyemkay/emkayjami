@@ -804,6 +804,92 @@ export type Database = {
         }
         Relationships: []
       }
+      ops_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          ip_address: string | null
+          module: string
+          ops_user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          ip_address?: string | null
+          module: string
+          ops_user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          ip_address?: string | null
+          module?: string
+          ops_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ops_audit_log_ops_user_id_fkey"
+            columns: ["ops_user_id"]
+            isOneToOne: false
+            referencedRelation: "ops_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ops_users: {
+        Row: {
+          city_filter: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          last_login: string | null
+          phone: string | null
+          roles: Database["public"]["Enums"]["ops_role"][]
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          city_filter?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          last_login?: string | null
+          phone?: string | null
+          roles?: Database["public"]["Enums"]["ops_role"][]
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          city_filter?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          last_login?: string | null
+          phone?: string | null
+          roles?: Database["public"]["Enums"]["ops_role"][]
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       push_subscriptions: {
         Row: {
           auth_key: string
@@ -1008,6 +1094,18 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "executive" | "broker" | "customer"
+      ops_role:
+        | "super_admin"
+        | "ops_manager"
+        | "onboarding_ops"
+        | "kam"
+        | "auction_ops"
+        | "logistics_coordinator"
+        | "runner"
+        | "finance_ops"
+        | "doc_exec"
+        | "doc_lead"
+        | "qa_audit"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1136,6 +1234,19 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "executive", "broker", "customer"],
+      ops_role: [
+        "super_admin",
+        "ops_manager",
+        "onboarding_ops",
+        "kam",
+        "auction_ops",
+        "logistics_coordinator",
+        "runner",
+        "finance_ops",
+        "doc_exec",
+        "doc_lead",
+        "qa_audit",
+      ],
     },
   },
 } as const
