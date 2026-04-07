@@ -50,6 +50,8 @@ import OpsLiveAuctions from "./pages/ops/OpsLiveAuctions";
 import OpsDealTracker from "./pages/ops/OpsDealTracker";
 import OpsDeltaReview from "./pages/ops/OpsDeltaReview";
 import OpsCascadeMonitor from "./pages/ops/OpsCascadeMonitor";
+import OpsPickupQueue from "./pages/ops/OpsPickupQueue";
+import OpsRunnerDashboard from "./pages/ops/OpsRunnerDashboard";
 
 const queryClient = new QueryClient();
 
@@ -251,6 +253,8 @@ const AppRoutes = () => {
       <Route path="/ops/auctions/deals" element={<OpsDealTracker />} />
       <Route path="/ops/auctions/delta" element={<OpsDeltaReview />} />
       <Route path="/ops/auctions/cascade" element={<OpsCascadeMonitor />} />
+      <Route path="/ops/logistics/pickups" element={<OpsPickupQueue />} />
+      <Route path="/ops/logistics/runners" element={<OpsRunnerDashboard />} />
       <Route path="/ops/*" element={<OpsDashboard />} />
 
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
