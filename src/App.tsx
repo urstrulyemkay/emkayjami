@@ -50,6 +50,8 @@ import OpsLiveAuctions from "./pages/ops/OpsLiveAuctions";
 import OpsDealTracker from "./pages/ops/OpsDealTracker";
 import OpsDeltaReview from "./pages/ops/OpsDeltaReview";
 import OpsCascadeMonitor from "./pages/ops/OpsCascadeMonitor";
+import OpsPickupQueue from "./pages/ops/OpsPickupQueue";
+import OpsRunnerDashboard from "./pages/ops/OpsRunnerDashboard";
 
 const queryClient = new QueryClient();
 
