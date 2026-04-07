@@ -247,6 +247,10 @@ const AppRoutes = () => {
       <Route path="/ops/entities/brokers/:id" element={<OpsBrokerDetail />} />
       <Route path="/ops/entities/kyc" element={<OpsKycReview />} />
       <Route path="/ops/entities/onboarding" element={<OpsOnboardingPipeline />} />
+      <Route path="/ops/auctions/live" element={<OpsLiveAuctions />} />
+      <Route path="/ops/auctions/deals" element={<OpsDealTracker />} />
+      <Route path="/ops/auctions/delta" element={<OpsDeltaReview />} />
+      <Route path="/ops/auctions/cascade" element={<OpsCascadeMonitor />} />
       <Route path="/ops/*" element={<OpsDashboard />} />
 
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
