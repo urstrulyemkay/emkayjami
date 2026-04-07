@@ -46,6 +46,10 @@ import OpsBrokerDirectory from "./pages/ops/OpsBrokerDirectory";
 import OpsBrokerDetail from "./pages/ops/OpsBrokerDetail";
 import OpsKycReview from "./pages/ops/OpsKycReview";
 import OpsOnboardingPipeline from "./pages/ops/OpsOnboardingPipeline";
+import OpsLiveAuctions from "./pages/ops/OpsLiveAuctions";
+import OpsDealTracker from "./pages/ops/OpsDealTracker";
+import OpsDeltaReview from "./pages/ops/OpsDeltaReview";
+import OpsCascadeMonitor from "./pages/ops/OpsCascadeMonitor";
 
 const queryClient = new QueryClient();
 
@@ -243,6 +247,10 @@ const AppRoutes = () => {
       <Route path="/ops/entities/brokers/:id" element={<OpsBrokerDetail />} />
       <Route path="/ops/entities/kyc" element={<OpsKycReview />} />
       <Route path="/ops/entities/onboarding" element={<OpsOnboardingPipeline />} />
+      <Route path="/ops/auctions/live" element={<OpsLiveAuctions />} />
+      <Route path="/ops/auctions/deals" element={<OpsDealTracker />} />
+      <Route path="/ops/auctions/delta" element={<OpsDeltaReview />} />
+      <Route path="/ops/auctions/cascade" element={<OpsCascadeMonitor />} />
       <Route path="/ops/*" element={<OpsDashboard />} />
 
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
