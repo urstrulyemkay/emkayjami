@@ -54,6 +54,8 @@ import OpsPickupQueue from "./pages/ops/OpsPickupQueue";
 import OpsRunnerDashboard from "./pages/ops/OpsRunnerDashboard";
 import OpsSettlements from "./pages/ops/OpsSettlements";
 import OpsPaymentExceptions from "./pages/ops/OpsPaymentExceptions";
+import OpsServiceRequests from "./pages/ops/OpsServiceRequests";
+import OpsRtoTracking from "./pages/ops/OpsRtoTracking";
 
 const queryClient = new QueryClient();
 
