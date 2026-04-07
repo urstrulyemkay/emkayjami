@@ -59,6 +59,7 @@ import OpsRtoTracking from "./pages/ops/OpsRtoTracking";
 import OpsTrustCompliance from "./pages/ops/OpsTrustCompliance";
 import OpsDisputes from "./pages/ops/OpsDisputes";
 import OpsReports from "./pages/ops/OpsReports";
+import OpsSettings from "./pages/ops/OpsSettings";
 
 const queryClient = new QueryClient();
 
