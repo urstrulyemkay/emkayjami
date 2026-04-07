@@ -46,6 +46,10 @@ import OpsBrokerDirectory from "./pages/ops/OpsBrokerDirectory";
 import OpsBrokerDetail from "./pages/ops/OpsBrokerDetail";
 import OpsKycReview from "./pages/ops/OpsKycReview";
 import OpsOnboardingPipeline from "./pages/ops/OpsOnboardingPipeline";
+import OpsLiveAuctions from "./pages/ops/OpsLiveAuctions";
+import OpsDealTracker from "./pages/ops/OpsDealTracker";
+import OpsDeltaReview from "./pages/ops/OpsDeltaReview";
+import OpsCascadeMonitor from "./pages/ops/OpsCascadeMonitor";
 
 const queryClient = new QueryClient();
 
