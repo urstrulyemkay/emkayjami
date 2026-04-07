@@ -236,6 +236,13 @@ const AppRoutes = () => {
       {/* Ops Routes */}
       <Route path="/ops/login" element={<OpsLogin />} />
       <Route path="/ops/dashboard" element={<OpsDashboard />} />
+      <Route path="/ops/entities/oem" element={<OpsOemDirectory />} />
+      <Route path="/ops/entities/oem/new" element={<OpsOemNew />} />
+      <Route path="/ops/entities/oem/:id" element={<OpsOemDetail />} />
+      <Route path="/ops/entities/brokers" element={<OpsBrokerDirectory />} />
+      <Route path="/ops/entities/brokers/:id" element={<OpsBrokerDetail />} />
+      <Route path="/ops/entities/kyc" element={<OpsKycReview />} />
+      <Route path="/ops/entities/onboarding" element={<OpsOnboardingPipeline />} />
       <Route path="/ops/*" element={<OpsDashboard />} />
 
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
