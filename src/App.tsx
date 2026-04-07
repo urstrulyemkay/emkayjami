@@ -52,6 +52,8 @@ import OpsDeltaReview from "./pages/ops/OpsDeltaReview";
 import OpsCascadeMonitor from "./pages/ops/OpsCascadeMonitor";
 import OpsPickupQueue from "./pages/ops/OpsPickupQueue";
 import OpsRunnerDashboard from "./pages/ops/OpsRunnerDashboard";
+import OpsSettlements from "./pages/ops/OpsSettlements";
+import OpsPaymentExceptions from "./pages/ops/OpsPaymentExceptions";
 
 const queryClient = new QueryClient();
 
