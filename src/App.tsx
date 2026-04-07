@@ -59,6 +59,7 @@ import OpsRtoTracking from "./pages/ops/OpsRtoTracking";
 import OpsTrustCompliance from "./pages/ops/OpsTrustCompliance";
 import OpsDisputes from "./pages/ops/OpsDisputes";
 import OpsReports from "./pages/ops/OpsReports";
+import OpsSettings from "./pages/ops/OpsSettings";
 
 const queryClient = new QueryClient();
 
@@ -269,6 +270,7 @@ const AppRoutes = () => {
       <Route path="/ops/trust" element={<OpsTrustCompliance />} />
       <Route path="/ops/disputes" element={<OpsDisputes />} />
       <Route path="/ops/reports" element={<OpsReports />} />
+      <Route path="/ops/settings" element={<OpsSettings />} />
       <Route path="/ops/*" element={<OpsDashboard />} />
 
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
