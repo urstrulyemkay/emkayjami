@@ -804,6 +804,153 @@ export type Database = {
         }
         Relationships: []
       }
+      kyc_submissions: {
+        Row: {
+          assigned_to: string | null
+          broker_id: string
+          created_at: string
+          document_type: string
+          document_uri: string | null
+          flag_reason: string | null
+          id: string
+          ocr_confidence: number | null
+          ocr_extracted_data: Json | null
+          rejection_reason: string | null
+          review_notes: string | null
+          review_status: string
+          reviewed_at: string | null
+          submission_id: string
+          submitted_at: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          broker_id: string
+          created_at?: string
+          document_type?: string
+          document_uri?: string | null
+          flag_reason?: string | null
+          id?: string
+          ocr_confidence?: number | null
+          ocr_extracted_data?: Json | null
+          rejection_reason?: string | null
+          review_notes?: string | null
+          review_status?: string
+          reviewed_at?: string | null
+          submission_id?: string
+          submitted_at?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          broker_id?: string
+          created_at?: string
+          document_type?: string
+          document_uri?: string | null
+          flag_reason?: string | null
+          id?: string
+          ocr_confidence?: number | null
+          ocr_extracted_data?: Json | null
+          rejection_reason?: string | null
+          review_notes?: string | null
+          review_status?: string
+          reviewed_at?: string | null
+          submission_id?: string
+          submitted_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kyc_submissions_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "ops_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kyc_submissions_broker_id_fkey"
+            columns: ["broker_id"]
+            isOneToOne: false
+            referencedRelation: "brokers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oem_organizations: {
+        Row: {
+          activated_at: string | null
+          assigned_kam: string | null
+          brands: string[] | null
+          company_name: string
+          created_at: string
+          entity_status: string
+          estimated_monthly_volume: string | null
+          gst_number: string | null
+          id: string
+          legal_agreement_status: string
+          notes: string | null
+          org_id: string
+          pan_number: string | null
+          primary_city: string
+          registered_address: string | null
+          registration_doc_status: string
+          signatory_designation: string | null
+          signatory_email: string | null
+          signatory_name: string | null
+          signatory_phone: string | null
+          trade_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          assigned_kam?: string | null
+          brands?: string[] | null
+          company_name: string
+          created_at?: string
+          entity_status?: string
+          estimated_monthly_volume?: string | null
+          gst_number?: string | null
+          id?: string
+          legal_agreement_status?: string
+          notes?: string | null
+          org_id?: string
+          pan_number?: string | null
+          primary_city: string
+          registered_address?: string | null
+          registration_doc_status?: string
+          signatory_designation?: string | null
+          signatory_email?: string | null
+          signatory_name?: string | null
+          signatory_phone?: string | null
+          trade_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          assigned_kam?: string | null
+          brands?: string[] | null
+          company_name?: string
+          created_at?: string
+          entity_status?: string
+          estimated_monthly_volume?: string | null
+          gst_number?: string | null
+          id?: string
+          legal_agreement_status?: string
+          notes?: string | null
+          org_id?: string
+          pan_number?: string | null
+          primary_city?: string
+          registered_address?: string | null
+          registration_doc_status?: string
+          signatory_designation?: string | null
+          signatory_email?: string | null
+          signatory_name?: string | null
+          signatory_phone?: string | null
+          trade_name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ops_audit_log: {
         Row: {
           action: string
