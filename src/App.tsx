@@ -35,6 +35,11 @@ import BrokerWallet from "./pages/broker/BrokerWallet";
 import BrokerProfile from "./pages/broker/BrokerProfile";
 import BrokerHelp from "./pages/broker/BrokerHelp";
 import BrokerWonVehicleDetail from "./pages/broker/BrokerWonVehicleDetail";
+
+// Ops pages
+import OpsLogin from "./pages/ops/OpsLogin";
+import OpsDashboard from "./pages/ops/OpsDashboard";
+
 const queryClient = new QueryClient();
 
 // Protected route wrapper for executives
