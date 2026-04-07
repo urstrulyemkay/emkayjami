@@ -39,6 +39,13 @@ import BrokerWonVehicleDetail from "./pages/broker/BrokerWonVehicleDetail";
 // Ops pages
 import OpsLogin from "./pages/ops/OpsLogin";
 import OpsDashboard from "./pages/ops/OpsDashboard";
+import OpsOemDirectory from "./pages/ops/OpsOemDirectory";
+import OpsOemDetail from "./pages/ops/OpsOemDetail";
+import OpsOemNew from "./pages/ops/OpsOemNew";
+import OpsBrokerDirectory from "./pages/ops/OpsBrokerDirectory";
+import OpsBrokerDetail from "./pages/ops/OpsBrokerDetail";
+import OpsKycReview from "./pages/ops/OpsKycReview";
+import OpsOnboardingPipeline from "./pages/ops/OpsOnboardingPipeline";
 
 const queryClient = new QueryClient();
 
