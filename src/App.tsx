@@ -39,6 +39,13 @@ import BrokerWonVehicleDetail from "./pages/broker/BrokerWonVehicleDetail";
 // Ops pages
 import OpsLogin from "./pages/ops/OpsLogin";
 import OpsDashboard from "./pages/ops/OpsDashboard";
+import OpsOemDirectory from "./pages/ops/OpsOemDirectory";
+import OpsOemDetail from "./pages/ops/OpsOemDetail";
+import OpsOemNew from "./pages/ops/OpsOemNew";
+import OpsBrokerDirectory from "./pages/ops/OpsBrokerDirectory";
+import OpsBrokerDetail from "./pages/ops/OpsBrokerDetail";
+import OpsKycReview from "./pages/ops/OpsKycReview";
+import OpsOnboardingPipeline from "./pages/ops/OpsOnboardingPipeline";
 
 const queryClient = new QueryClient();
 
@@ -229,6 +236,13 @@ const AppRoutes = () => {
       {/* Ops Routes */}
       <Route path="/ops/login" element={<OpsLogin />} />
       <Route path="/ops/dashboard" element={<OpsDashboard />} />
+      <Route path="/ops/entities/oem" element={<OpsOemDirectory />} />
+      <Route path="/ops/entities/oem/new" element={<OpsOemNew />} />
+      <Route path="/ops/entities/oem/:id" element={<OpsOemDetail />} />
+      <Route path="/ops/entities/brokers" element={<OpsBrokerDirectory />} />
+      <Route path="/ops/entities/brokers/:id" element={<OpsBrokerDetail />} />
+      <Route path="/ops/entities/kyc" element={<OpsKycReview />} />
+      <Route path="/ops/entities/onboarding" element={<OpsOnboardingPipeline />} />
       <Route path="/ops/*" element={<OpsDashboard />} />
 
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
