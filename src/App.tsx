@@ -35,6 +35,11 @@ import BrokerWallet from "./pages/broker/BrokerWallet";
 import BrokerProfile from "./pages/broker/BrokerProfile";
 import BrokerHelp from "./pages/broker/BrokerHelp";
 import BrokerWonVehicleDetail from "./pages/broker/BrokerWonVehicleDetail";
+
+// Ops pages
+import OpsLogin from "./pages/ops/OpsLogin";
+import OpsDashboard from "./pages/ops/OpsDashboard";
+
 const queryClient = new QueryClient();
 
 // Protected route wrapper for executives
@@ -220,6 +225,12 @@ const AppRoutes = () => {
       <Route path="/broker/profile" element={<BrokerProfile />} />
       <Route path="/broker/help" element={<BrokerHelp />} />
       <Route path="/broker/won/:id" element={<BrokerWonVehicleDetail />} />
+
+      {/* Ops Routes */}
+      <Route path="/ops/login" element={<OpsLogin />} />
+      <Route path="/ops/dashboard" element={<OpsDashboard />} />
+      <Route path="/ops/*" element={<OpsDashboard />} />
+
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>
