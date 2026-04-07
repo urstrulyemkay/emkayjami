@@ -270,6 +270,7 @@ const AppRoutes = () => {
       <Route path="/ops/trust" element={<OpsTrustCompliance />} />
       <Route path="/ops/disputes" element={<OpsDisputes />} />
       <Route path="/ops/reports" element={<OpsReports />} />
+      <Route path="/ops/settings" element={<OpsSettings />} />
       <Route path="/ops/*" element={<OpsDashboard />} />
 
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
