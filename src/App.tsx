@@ -56,6 +56,9 @@ import OpsSettlements from "./pages/ops/OpsSettlements";
 import OpsPaymentExceptions from "./pages/ops/OpsPaymentExceptions";
 import OpsServiceRequests from "./pages/ops/OpsServiceRequests";
 import OpsRtoTracking from "./pages/ops/OpsRtoTracking";
+import OpsTrustCompliance from "./pages/ops/OpsTrustCompliance";
+import OpsDisputes from "./pages/ops/OpsDisputes";
+import OpsReports from "./pages/ops/OpsReports";
 
 const queryClient = new QueryClient();
 
