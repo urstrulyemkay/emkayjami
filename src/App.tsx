@@ -257,6 +257,8 @@ const AppRoutes = () => {
       <Route path="/ops/auctions/cascade" element={<OpsCascadeMonitor />} />
       <Route path="/ops/logistics/pickups" element={<OpsPickupQueue />} />
       <Route path="/ops/logistics/runners" element={<OpsRunnerDashboard />} />
+      <Route path="/ops/finance/settlements" element={<OpsSettlements />} />
+      <Route path="/ops/finance/exceptions" element={<OpsPaymentExceptions />} />
       <Route path="/ops/*" element={<OpsDashboard />} />
 
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
