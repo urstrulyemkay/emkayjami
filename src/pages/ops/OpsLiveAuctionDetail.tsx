@@ -353,3 +353,219 @@ function DetailRow({ icon: Icon, label, value }: { icon: React.ElementType; labe
     </div>
   );
 }
+
+// Post-Auction Outcome component
+function PostAuctionOutcome({ auction, linkedDeal, linkedCascade, navigate }: {
+  auction: any;
+  linkedDeal: any;
+  linkedCascade: any;
+  navigate: (path: string) => void;
+}) {
+  const outcome = auction.outcome;
+  if (!outcome) return null;
+
+  if (outcome.result === "sold") {
+    return (
+      <Card className="border-2 border-green-300 dark:border-green-700">
+        <CardContent className="p-5">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start gap-3">
+              <div className="rounded-full p-2 bg-green-100 dark:bg-green-900/30">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-green-700 dark:text-green-400">Auction Sold</h3>
+                <p className="text-sm text-muted-foreground mt-0.5">{outcome.reason}</p>
+                <div className="flex gap-6 mt-3 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Winner:</span>
+                    <p className="font-semibold">{outcome.winning_broker}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Winning Bid:</span>
+                    <p className="font-semibold">{formatCurrency(outcome.winning_bid)}</p>
+                  </div>
+                  {linkedDeal && (
+                    <div>
+                      <span className="text-muted-foreground">Deal ID:</span>
+                      <p className="font-semibold">{linkedDeal.deal_id}</p>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-muted-foreground">Ended:</span>
+                    <p className="font-semibold">{outcome.ended_at}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              {linkedDeal && (
+                <Button size="sm" onClick={() => navigate(`/ops/auctions/deals/${linkedDeal.id}`)}>
+                  <ArrowRight className="h-4 w-4 mr-1" /> View Deal
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={() => navigate("/ops/auctions/deals")}>
+                Deal Tracker
+              </Button>
+            </div>
+          </div>
+
+          {/* Deal Progress Summary */}
+          {linkedDeal && (
+            <>
+              <Separator className="my-4" />
+              <div>
+                <h4 className="text-sm font-semibold mb-3">Deal Progress</h4>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  <DealStageCard label="Payment" status={linkedDeal.payment_status} />
+                  <DealStageCard label="Pickup" status={linkedDeal.pickup_status} />
+                  <DealStageCard label="Delivery" status={linkedDeal.deal_status === "delivered" || linkedDeal.deal_status === "completed" ? "done" : "pending"} />
+                  <DealStageCard label="Documentation" status={linkedDeal.documentation_status} />
+                  <DealStageCard label="Overall" status={linkedDeal.deal_status} />
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (outcome.result === "no_sale") {
+    return (
+      <Card className="border-2 border-gray-300 dark:border-gray-600">
+        <CardContent className="p-5">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start gap-3">
+              <div className="rounded-full p-2 bg-gray-100 dark:bg-gray-800">
+                <XCircle className="h-6 w-6 text-gray-500" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-gray-700 dark:text-gray-300">No Sale</h3>
+                <p className="text-sm text-muted-foreground mt-0.5">{outcome.reason}</p>
+                <div className="flex gap-6 mt-3 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Ended:</span>
+                    <p className="font-semibold">{outcome.ended_at}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Total Bids:</span>
+                    <p className="font-semibold">{auction.bid_count}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Button size="sm" variant="outline">
+                <RefreshCw className="h-4 w-4 mr-1" /> Re-list Auction
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => navigate("/ops/auctions/live")}>
+                Back to Auctions
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (outcome.result === "cascading") {
+    return (
+      <Card className="border-2 border-yellow-400 dark:border-yellow-600">
+        <CardContent className="p-5">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start gap-3">
+              <div className="rounded-full p-2 bg-yellow-100 dark:bg-yellow-900/30">
+                <ShieldAlert className="h-6 w-6 text-yellow-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-yellow-700 dark:text-yellow-400">Cascade In Progress</h3>
+                <p className="text-sm text-muted-foreground mt-0.5">{outcome.reason}</p>
+                <div className="flex gap-6 mt-3 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Original Winner:</span>
+                    <p className="font-semibold">{outcome.winning_broker}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Original Bid:</span>
+                    <p className="font-semibold">{formatCurrency(outcome.winning_bid)}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Backed Out:</span>
+                    <p className="font-semibold">{outcome.ended_at}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Button size="sm" onClick={() => navigate("/ops/cascade-monitor")}>
+                <ArrowRight className="h-4 w-4 mr-1" /> View Cascade
+              </Button>
+            </div>
+          </div>
+
+          {/* Cascade Summary */}
+          {linkedCascade && (
+            <>
+              <Separator className="my-4" />
+              <div>
+                <h4 className="text-sm font-semibold mb-3">Cascade Offer Sequence</h4>
+                <div className="space-y-2">
+                  {linkedCascade.offers.map((offer: any, i: number) => (
+                    <div key={i} className={cn(
+                      "flex items-center justify-between rounded-lg border px-3 py-2 text-sm",
+                      offer.status === "offered" && "border-yellow-300 bg-yellow-50 dark:bg-yellow-900/10"
+                    )}>
+                      <div className="flex items-center gap-3">
+                        <span className="font-semibold text-muted-foreground">#{offer.rank}</span>
+                        <span className="font-medium">{offer.broker}</span>
+                        <span className="text-muted-foreground">—</span>
+                        <span className="font-semibold">{formatCurrency(offer.bid_amount)}</span>
+                      </div>
+                      <span className={cn(
+                        "inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize",
+                        offer.status === "offered" ? "bg-yellow-100 text-yellow-800" :
+                        offer.status === "accepted" ? "bg-green-100 text-green-800" :
+                        offer.status === "declined" ? "bg-red-100 text-red-800" :
+                        offer.status === "standby" ? "bg-blue-100 text-blue-800" :
+                        "bg-muted text-muted-foreground"
+                      )}>
+                        {offer.status.replace("_", " ")}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  <span>Floor: ₹{linkedCascade.eligibility_floor.toLocaleString("en-IN")} · Eligible: {linkedCascade.eligible_bids}/{linkedCascade.total_bids} bids · Valid until: {linkedCascade.validity_until}</span>
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return null;
+}
+
+// Deal stage mini card
+function DealStageCard({ label, status }: { label: string; status: string }) {
+  const isComplete = ["released", "delivered", "verified", "done", "completed", "picked_up", "broker_marked_done"].includes(status);
+  const isPending = ["pending", "not_scheduled"].includes(status);
+  return (
+    <div className={cn(
+      "rounded-lg border px-3 py-2 text-center",
+      isComplete ? "border-green-200 bg-green-50 dark:bg-green-900/10" : isPending ? "border-muted" : "border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10"
+    )}>
+      <p className="text-[10px] text-muted-foreground">{label}</p>
+      <p className={cn(
+        "text-xs font-semibold capitalize mt-0.5",
+        isComplete ? "text-green-700 dark:text-green-400" : isPending ? "text-muted-foreground" : "text-yellow-700 dark:text-yellow-400"
+      )}>
+        {status.replace(/_/g, " ")}
+      </p>
+    </div>
+  );
+}
