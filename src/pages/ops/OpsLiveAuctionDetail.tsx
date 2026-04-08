@@ -124,7 +124,7 @@ export default function OpsLiveAuctionDetail() {
             <Button variant="outline" size="sm" onClick={handleRefresh}>
               <RefreshCw className={cn("h-4 w-4 mr-1", isRefreshing && "animate-spin")} /> Refresh
             </Button>
-            {auction.status !== "scheduled" && (
+            {!isEnded && auction.status !== "scheduled" && (
               <>
                 <Button variant="outline" size="sm" className="text-yellow-600 border-yellow-300 hover:bg-yellow-50">
                   <Pause className="h-4 w-4 mr-1" /> Pause
@@ -149,8 +149,8 @@ export default function OpsLiveAuctionDetail() {
 
         {/* Key Metrics Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          <MetricCard icon={Timer} label="Time Remaining" value={`${auction.time_remaining_min} min`}
-            alert={auction.time_remaining_min <= 5} />
+          <MetricCard icon={Timer} label={isEnded ? "Ended At" : "Time Remaining"} value={isEnded ? (auction.outcome?.ended_at || "—") : `${auction.time_remaining_min} min`}
+            alert={!isEnded && auction.time_remaining_min <= 5} />
           <MetricCard icon={Users} label="Total Bids" value={String(auction.bid_count)}
             alert={auction.bid_count === 0} />
           <MetricCard icon={TrendingUp} label="Highest Bid" value={formatCurrency(auction.highest_bid)} />
@@ -161,6 +161,16 @@ export default function OpsLiveAuctionDetail() {
             alert={bidVsExpPct > 0 && bidVsExpPct < 80}
             success={bidVsExpPct >= 100} />
         </div>
+
+        {/* Post-Auction Outcome Banner */}
+        {isEnded && auction.outcome && (
+          <PostAuctionOutcome
+            auction={auction}
+            linkedDeal={linkedDeal}
+            linkedCascade={linkedCascade}
+            navigate={navigate}
+          />
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Auction Details + Activity */}
@@ -279,32 +289,34 @@ export default function OpsLiveAuctionDetail() {
               </CardContent>
             </Card>
 
-            {/* Ops Actions */}
-            <Card className="mt-6">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Operations Actions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <Button variant="outline" size="sm" className="h-auto py-3 flex-col gap-1">
-                    <Clock className="h-4 w-4" />
-                    <span className="text-xs">Extend Time</span>
-                  </Button>
-                  <Button variant="outline" size="sm" className="h-auto py-3 flex-col gap-1">
-                    <MapPin className="h-4 w-4" />
-                    <span className="text-xs">Expand Scope</span>
-                  </Button>
-                  <Button variant="outline" size="sm" className="h-auto py-3 flex-col gap-1">
-                    <Users className="h-4 w-4" />
-                    <span className="text-xs">Re-broadcast</span>
-                  </Button>
-                  <Button variant="outline" size="sm" className="h-auto py-3 flex-col gap-1">
-                    <Eye className="h-4 w-4" />
-                    <span className="text-xs">View Inspection</span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Ops Actions — only for live auctions */}
+            {!isEnded && (
+              <Card className="mt-6">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Operations Actions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <Button variant="outline" size="sm" className="h-auto py-3 flex-col gap-1">
+                      <Clock className="h-4 w-4" />
+                      <span className="text-xs">Extend Time</span>
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-auto py-3 flex-col gap-1">
+                      <MapPin className="h-4 w-4" />
+                      <span className="text-xs">Expand Scope</span>
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-auto py-3 flex-col gap-1">
+                      <Users className="h-4 w-4" />
+                      <span className="text-xs">Re-broadcast</span>
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-auto py-3 flex-col gap-1">
+                      <Eye className="h-4 w-4" />
+                      <span className="text-xs">View Inspection</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
