@@ -64,6 +64,11 @@ export default function OpsLiveAuctionDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const isEnded = auction.status.startsWith("ended_");
+
+  // Find linked deal/cascade
+  const linkedDeal = auction.outcome?.deal_id ? mockDeals.find(d => d.id === auction.outcome!.deal_id) : null;
+  const linkedCascade = auction.outcome?.cascade_id ? mockCascades.find(c => c.id === auction.outcome!.cascade_id) : null;
 
   const auction = mockLiveAuctions.find((a) => a.id === id);
 
