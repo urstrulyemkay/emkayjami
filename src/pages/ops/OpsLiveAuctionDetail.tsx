@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { mockLiveAuctions } from "@/data/auctionOpsMockData";
-import { ArrowLeft, Clock, Users, TrendingUp, AlertTriangle, Eye, Pause, X, RefreshCw, Gavel, MapPin, User, Building2, Timer } from "lucide-react";
+import { mockLiveAuctions, mockDeals, mockCascades } from "@/data/auctionOpsMockData";
+import { ArrowLeft, Clock, Users, TrendingUp, AlertTriangle, Eye, Pause, X, RefreshCw, Gavel, MapPin, User, Building2, Timer, CheckCircle, XCircle, ArrowRight, ShieldAlert } from "lucide-react";
 import { useState } from "react";
 
 const formatCurrency = (v: number) => v > 0 ? `₹${v.toLocaleString("en-IN")}` : "—";
@@ -49,6 +49,9 @@ const statusColors: Record<string, string> = {
   scheduled: "bg-muted text-muted-foreground",
   live: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
   ending_soon: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+  ended_sold: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
+  ended_no_sale: "bg-gray-100 text-gray-700 dark:bg-gray-800/30 dark:text-gray-400",
+  ended_cascading: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
 };
 
 const typeColors: Record<string, string> = {
