@@ -16,7 +16,16 @@ export interface LiveAuctionItem {
   customer_expectation: number;
   bid_vs_expectation: number;
   broadcast_scope: string;
-  status: "scheduled" | "live" | "ending_soon";
+  status: "scheduled" | "live" | "ending_soon" | "ended_sold" | "ended_no_sale" | "ended_cascading";
+  outcome?: {
+    result: "sold" | "no_sale" | "cascading";
+    winning_broker?: string;
+    winning_bid?: number;
+    deal_id?: string;
+    cascade_id?: string;
+    ended_at?: string;
+    reason?: string;
+  };
 }
 
 export const mockLiveAuctions: LiveAuctionItem[] = [
@@ -26,6 +35,9 @@ export const mockLiveAuctions: LiveAuctionItem[] = [
   { id: "auc-004", auction_id: "AUC-2026-1850", vehicle: "Jupiter Classic 2022 TN01CD5678", oem: "Southern Hero", store: "Anna Salai", se: "Kumar S.", auction_type: "extended", duration: "120 min", time_remaining_min: 95, bid_count: 1, highest_bid: 32000, effective_score: 28500, customer_expectation: 35000, bid_vs_expectation: 91, broadcast_scope: "Chennai", status: "live" },
   { id: "auc-005", auction_id: "AUC-2026-1851", vehicle: "FZ-S V3 2019 KA01EF9012", oem: "Yamaha World", store: "Karol Bagh", se: "Amit P.", auction_type: "quick", duration: "30 min", time_remaining_min: 15, bid_count: 6, highest_bid: 48000, effective_score: 42200, customer_expectation: 45000, bid_vs_expectation: 107, broadcast_scope: "Delhi + NCR", status: "live" },
   { id: "auc-006", auction_id: "AUC-2026-1852", vehicle: "Classic 350 2020 KA04GH3456", oem: "Royal Riders", store: "SB Road", se: "Nikhil D.", auction_type: "flexible", duration: "60 min", time_remaining_min: 8, bid_count: 3, highest_bid: 95000, effective_score: 83500, customer_expectation: 100000, bid_vs_expectation: 95, broadcast_scope: "Pune + Mumbai", status: "ending_soon" },
+  { id: "auc-007", auction_id: "AUC-2026-1840", vehicle: "Splendor Plus 2019 KA02TU7890", oem: "Ananda Honda", store: "Koramangala", se: "Pradeep M.", auction_type: "quick", duration: "30 min", time_remaining_min: 0, bid_count: 5, highest_bid: 22000, effective_score: 19500, customer_expectation: 20000, bid_vs_expectation: 110, broadcast_scope: "Bangalore", status: "ended_sold", outcome: { result: "sold", winning_broker: "Rajesh Auto Traders", winning_bid: 22000, deal_id: "deal-001", ended_at: "9:45 AM", reason: "Auction completed successfully" } },
+  { id: "auc-008", auction_id: "AUC-2026-1838", vehicle: "Dio 2020 MH02JK6789", oem: "Metro Bajaj", store: "Andheri", se: "Ravi K.", auction_type: "quick", duration: "30 min", time_remaining_min: 0, bid_count: 0, highest_bid: 0, effective_score: 0, customer_expectation: 30000, bid_vs_expectation: 0, broadcast_scope: "Mumbai", status: "ended_no_sale", outcome: { result: "no_sale", ended_at: "10:30 AM", reason: "No bids received" } },
+  { id: "auc-009", auction_id: "AUC-2026-1903", vehicle: "Honda Activa 6G 2021 KA03MN9876", oem: "Ananda Honda", store: "Indiranagar", se: "Anitha R.", auction_type: "flexible", duration: "60 min", time_remaining_min: 0, bid_count: 5, highest_bid: 44000, effective_score: 38500, customer_expectation: 40000, bid_vs_expectation: 110, broadcast_scope: "Bangalore", status: "ended_cascading", outcome: { result: "cascading", winning_broker: "[Backed Out]", winning_bid: 44000, cascade_id: "cas-001", ended_at: "11:15 AM", reason: "Winner backed out — cascade initiated" } },
 ];
 
 export interface DealItem {

@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { mockLiveAuctions } from "@/data/auctionOpsMockData";
-import { ArrowLeft, Clock, Users, TrendingUp, AlertTriangle, Eye, Pause, X, RefreshCw, Gavel, MapPin, User, Building2, Timer } from "lucide-react";
+import { mockLiveAuctions, mockDeals, mockCascades } from "@/data/auctionOpsMockData";
+import { ArrowLeft, Clock, Users, TrendingUp, AlertTriangle, Eye, Pause, X, RefreshCw, Gavel, MapPin, User, Building2, Timer, CheckCircle, XCircle, ArrowRight, ShieldAlert } from "lucide-react";
 import { useState } from "react";
 
 const formatCurrency = (v: number) => v > 0 ? `₹${v.toLocaleString("en-IN")}` : "—";
@@ -49,6 +49,9 @@ const statusColors: Record<string, string> = {
   scheduled: "bg-muted text-muted-foreground",
   live: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
   ending_soon: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+  ended_sold: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
+  ended_no_sale: "bg-gray-100 text-gray-700 dark:bg-gray-800/30 dark:text-gray-400",
+  ended_cascading: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
 };
 
 const typeColors: Record<string, string> = {
@@ -63,6 +66,11 @@ export default function OpsLiveAuctionDetail() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const auction = mockLiveAuctions.find((a) => a.id === id);
+  const isEnded = auction?.status.startsWith("ended_") ?? false;
+
+  // Find linked deal/cascade
+  const linkedDeal = auction?.outcome?.deal_id ? mockDeals.find(d => d.id === auction.outcome!.deal_id) : null;
+  const linkedCascade = auction?.outcome?.cascade_id ? mockCascades.find(c => c.id === auction.outcome!.cascade_id) : null;
 
   if (!auction) {
     return (
@@ -116,7 +124,7 @@ export default function OpsLiveAuctionDetail() {
             <Button variant="outline" size="sm" onClick={handleRefresh}>
               <RefreshCw className={cn("h-4 w-4 mr-1", isRefreshing && "animate-spin")} /> Refresh
             </Button>
-            {auction.status !== "scheduled" && (
+            {!isEnded && auction.status !== "scheduled" && (
               <>
                 <Button variant="outline" size="sm" className="text-yellow-600 border-yellow-300 hover:bg-yellow-50">
                   <Pause className="h-4 w-4 mr-1" /> Pause
@@ -141,8 +149,8 @@ export default function OpsLiveAuctionDetail() {
 
         {/* Key Metrics Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          <MetricCard icon={Timer} label="Time Remaining" value={`${auction.time_remaining_min} min`}
-            alert={auction.time_remaining_min <= 5} />
+          <MetricCard icon={Timer} label={isEnded ? "Ended At" : "Time Remaining"} value={isEnded ? (auction.outcome?.ended_at || "—") : `${auction.time_remaining_min} min`}
+            alert={!isEnded && auction.time_remaining_min <= 5} />
           <MetricCard icon={Users} label="Total Bids" value={String(auction.bid_count)}
             alert={auction.bid_count === 0} />
           <MetricCard icon={TrendingUp} label="Highest Bid" value={formatCurrency(auction.highest_bid)} />
@@ -153,6 +161,16 @@ export default function OpsLiveAuctionDetail() {
             alert={bidVsExpPct > 0 && bidVsExpPct < 80}
             success={bidVsExpPct >= 100} />
         </div>
+
+        {/* Post-Auction Outcome Banner */}
+        {isEnded && auction.outcome && (
+          <PostAuctionOutcome
+            auction={auction}
+            linkedDeal={linkedDeal}
+            linkedCascade={linkedCascade}
+            navigate={navigate}
+          />
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Auction Details + Activity */}
@@ -271,32 +289,34 @@ export default function OpsLiveAuctionDetail() {
               </CardContent>
             </Card>
 
-            {/* Ops Actions */}
-            <Card className="mt-6">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Operations Actions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <Button variant="outline" size="sm" className="h-auto py-3 flex-col gap-1">
-                    <Clock className="h-4 w-4" />
-                    <span className="text-xs">Extend Time</span>
-                  </Button>
-                  <Button variant="outline" size="sm" className="h-auto py-3 flex-col gap-1">
-                    <MapPin className="h-4 w-4" />
-                    <span className="text-xs">Expand Scope</span>
-                  </Button>
-                  <Button variant="outline" size="sm" className="h-auto py-3 flex-col gap-1">
-                    <Users className="h-4 w-4" />
-                    <span className="text-xs">Re-broadcast</span>
-                  </Button>
-                  <Button variant="outline" size="sm" className="h-auto py-3 flex-col gap-1">
-                    <Eye className="h-4 w-4" />
-                    <span className="text-xs">View Inspection</span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Ops Actions — only for live auctions */}
+            {!isEnded && (
+              <Card className="mt-6">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Operations Actions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <Button variant="outline" size="sm" className="h-auto py-3 flex-col gap-1">
+                      <Clock className="h-4 w-4" />
+                      <span className="text-xs">Extend Time</span>
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-auto py-3 flex-col gap-1">
+                      <MapPin className="h-4 w-4" />
+                      <span className="text-xs">Expand Scope</span>
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-auto py-3 flex-col gap-1">
+                      <Users className="h-4 w-4" />
+                      <span className="text-xs">Re-broadcast</span>
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-auto py-3 flex-col gap-1">
+                      <Eye className="h-4 w-4" />
+                      <span className="text-xs">View Inspection</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
@@ -330,6 +350,222 @@ function DetailRow({ icon: Icon, label, value }: { icon: React.ElementType; labe
         <span>{label}</span>
       </div>
       <span className="font-medium">{value}</span>
+    </div>
+  );
+}
+
+// Post-Auction Outcome component
+function PostAuctionOutcome({ auction, linkedDeal, linkedCascade, navigate }: {
+  auction: any;
+  linkedDeal: any;
+  linkedCascade: any;
+  navigate: (path: string) => void;
+}) {
+  const outcome = auction.outcome;
+  if (!outcome) return null;
+
+  if (outcome.result === "sold") {
+    return (
+      <Card className="border-2 border-green-300 dark:border-green-700">
+        <CardContent className="p-5">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start gap-3">
+              <div className="rounded-full p-2 bg-green-100 dark:bg-green-900/30">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-green-700 dark:text-green-400">Auction Sold</h3>
+                <p className="text-sm text-muted-foreground mt-0.5">{outcome.reason}</p>
+                <div className="flex gap-6 mt-3 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Winner:</span>
+                    <p className="font-semibold">{outcome.winning_broker}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Winning Bid:</span>
+                    <p className="font-semibold">{formatCurrency(outcome.winning_bid)}</p>
+                  </div>
+                  {linkedDeal && (
+                    <div>
+                      <span className="text-muted-foreground">Deal ID:</span>
+                      <p className="font-semibold">{linkedDeal.deal_id}</p>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-muted-foreground">Ended:</span>
+                    <p className="font-semibold">{outcome.ended_at}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              {linkedDeal && (
+                <Button size="sm" onClick={() => navigate(`/ops/auctions/deals/${linkedDeal.id}`)}>
+                  <ArrowRight className="h-4 w-4 mr-1" /> View Deal
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={() => navigate("/ops/auctions/deals")}>
+                Deal Tracker
+              </Button>
+            </div>
+          </div>
+
+          {/* Deal Progress Summary */}
+          {linkedDeal && (
+            <>
+              <Separator className="my-4" />
+              <div>
+                <h4 className="text-sm font-semibold mb-3">Deal Progress</h4>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  <DealStageCard label="Payment" status={linkedDeal.payment_status} />
+                  <DealStageCard label="Pickup" status={linkedDeal.pickup_status} />
+                  <DealStageCard label="Delivery" status={linkedDeal.deal_status === "delivered" || linkedDeal.deal_status === "completed" ? "done" : "pending"} />
+                  <DealStageCard label="Documentation" status={linkedDeal.documentation_status} />
+                  <DealStageCard label="Overall" status={linkedDeal.deal_status} />
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (outcome.result === "no_sale") {
+    return (
+      <Card className="border-2 border-gray-300 dark:border-gray-600">
+        <CardContent className="p-5">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start gap-3">
+              <div className="rounded-full p-2 bg-gray-100 dark:bg-gray-800">
+                <XCircle className="h-6 w-6 text-gray-500" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-gray-700 dark:text-gray-300">No Sale</h3>
+                <p className="text-sm text-muted-foreground mt-0.5">{outcome.reason}</p>
+                <div className="flex gap-6 mt-3 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Ended:</span>
+                    <p className="font-semibold">{outcome.ended_at}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Total Bids:</span>
+                    <p className="font-semibold">{auction.bid_count}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Button size="sm" variant="outline">
+                <RefreshCw className="h-4 w-4 mr-1" /> Re-list Auction
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => navigate("/ops/auctions/live")}>
+                Back to Auctions
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (outcome.result === "cascading") {
+    return (
+      <Card className="border-2 border-yellow-400 dark:border-yellow-600">
+        <CardContent className="p-5">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start gap-3">
+              <div className="rounded-full p-2 bg-yellow-100 dark:bg-yellow-900/30">
+                <ShieldAlert className="h-6 w-6 text-yellow-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-yellow-700 dark:text-yellow-400">Cascade In Progress</h3>
+                <p className="text-sm text-muted-foreground mt-0.5">{outcome.reason}</p>
+                <div className="flex gap-6 mt-3 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Original Winner:</span>
+                    <p className="font-semibold">{outcome.winning_broker}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Original Bid:</span>
+                    <p className="font-semibold">{formatCurrency(outcome.winning_bid)}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Backed Out:</span>
+                    <p className="font-semibold">{outcome.ended_at}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Button size="sm" onClick={() => navigate("/ops/cascade-monitor")}>
+                <ArrowRight className="h-4 w-4 mr-1" /> View Cascade
+              </Button>
+            </div>
+          </div>
+
+          {/* Cascade Summary */}
+          {linkedCascade && (
+            <>
+              <Separator className="my-4" />
+              <div>
+                <h4 className="text-sm font-semibold mb-3">Cascade Offer Sequence</h4>
+                <div className="space-y-2">
+                  {linkedCascade.offers.map((offer: any, i: number) => (
+                    <div key={i} className={cn(
+                      "flex items-center justify-between rounded-lg border px-3 py-2 text-sm",
+                      offer.status === "offered" && "border-yellow-300 bg-yellow-50 dark:bg-yellow-900/10"
+                    )}>
+                      <div className="flex items-center gap-3">
+                        <span className="font-semibold text-muted-foreground">#{offer.rank}</span>
+                        <span className="font-medium">{offer.broker}</span>
+                        <span className="text-muted-foreground">—</span>
+                        <span className="font-semibold">{formatCurrency(offer.bid_amount)}</span>
+                      </div>
+                      <span className={cn(
+                        "inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize",
+                        offer.status === "offered" ? "bg-yellow-100 text-yellow-800" :
+                        offer.status === "accepted" ? "bg-green-100 text-green-800" :
+                        offer.status === "declined" ? "bg-red-100 text-red-800" :
+                        offer.status === "standby" ? "bg-blue-100 text-blue-800" :
+                        "bg-muted text-muted-foreground"
+                      )}>
+                        {offer.status.replace("_", " ")}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  <span>Floor: ₹{linkedCascade.eligibility_floor.toLocaleString("en-IN")} · Eligible: {linkedCascade.eligible_bids}/{linkedCascade.total_bids} bids · Valid until: {linkedCascade.validity_until}</span>
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return null;
+}
+
+// Deal stage mini card
+function DealStageCard({ label, status }: { label: string; status: string }) {
+  const isComplete = ["released", "delivered", "verified", "done", "completed", "picked_up", "broker_marked_done"].includes(status);
+  const isPending = ["pending", "not_scheduled"].includes(status);
+  return (
+    <div className={cn(
+      "rounded-lg border px-3 py-2 text-center",
+      isComplete ? "border-green-200 bg-green-50 dark:bg-green-900/10" : isPending ? "border-muted" : "border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10"
+    )}>
+      <p className="text-[10px] text-muted-foreground">{label}</p>
+      <p className={cn(
+        "text-xs font-semibold capitalize mt-0.5",
+        isComplete ? "text-green-700 dark:text-green-400" : isPending ? "text-muted-foreground" : "text-yellow-700 dark:text-yellow-400"
+      )}>
+        {status.replace(/_/g, " ")}
+      </p>
     </div>
   );
 }

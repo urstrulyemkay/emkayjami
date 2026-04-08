@@ -46,15 +46,15 @@ const columns: QueueColumn<LiveAuctionItem>[] = [
   {
     key: "status", header: "Status",
     render: (row) => {
-      const colors: Record<string, string> = { scheduled: "bg-muted text-muted-foreground", live: "bg-green-100 text-green-800", ending_soon: "bg-red-100 text-red-800" };
-      return <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize", colors[row.status])}>{row.status.replace("_", " ")}</span>;
+      const colors: Record<string, string> = { scheduled: "bg-muted text-muted-foreground", live: "bg-green-100 text-green-800", ending_soon: "bg-red-100 text-red-800", ended_sold: "bg-emerald-100 text-emerald-800", ended_no_sale: "bg-gray-100 text-gray-800", ended_cascading: "bg-yellow-100 text-yellow-800" };
+      return <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize", colors[row.status])}>{row.status.replace(/_/g, " ")}</span>;
     },
   },
 ];
 
 const filters: QueueFilter[] = [
   { key: "auction_type", label: "Type", options: [{ label: "Quick", value: "quick" }, { label: "Flexible", value: "flexible" }, { label: "Extended", value: "extended" }] },
-  { key: "status", label: "Status", options: [{ label: "Scheduled", value: "scheduled" }, { label: "Live", value: "live" }, { label: "Ending Soon", value: "ending_soon" }] },
+  { key: "status", label: "Status", options: [{ label: "Scheduled", value: "scheduled" }, { label: "Live", value: "live" }, { label: "Ending Soon", value: "ending_soon" }, { label: "Sold", value: "ended_sold" }, { label: "No Sale", value: "ended_no_sale" }, { label: "Cascading", value: "ended_cascading" }] },
   { key: "broadcast_scope", label: "City", options: [{ label: "Bangalore", value: "Bangalore" }, { label: "Mumbai", value: "Mumbai" }, { label: "Chennai", value: "Chennai" }, { label: "Delhi", value: "Delhi" }] },
 ];
 
