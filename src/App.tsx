@@ -47,6 +47,7 @@ import OpsBrokerDetail from "./pages/ops/OpsBrokerDetail";
 import OpsKycReview from "./pages/ops/OpsKycReview";
 import OpsOnboardingPipeline from "./pages/ops/OpsOnboardingPipeline";
 import OpsLiveAuctions from "./pages/ops/OpsLiveAuctions";
+import OpsLiveAuctionDetail from "./pages/ops/OpsLiveAuctionDetail";
 import OpsDealTracker from "./pages/ops/OpsDealTracker";
 import OpsDeltaReview from "./pages/ops/OpsDeltaReview";
 import OpsCascadeMonitor from "./pages/ops/OpsCascadeMonitor";
@@ -258,6 +259,7 @@ const AppRoutes = () => {
       <Route path="/ops/entities/kyc" element={<OpsKycReview />} />
       <Route path="/ops/entities/onboarding" element={<OpsOnboardingPipeline />} />
       <Route path="/ops/auctions/live" element={<OpsLiveAuctions />} />
+      <Route path="/ops/auctions/live/:id" element={<OpsLiveAuctionDetail />} />
       <Route path="/ops/auctions/deals" element={<OpsDealTracker />} />
       <Route path="/ops/auctions/delta" element={<OpsDeltaReview />} />
       <Route path="/ops/auctions/cascade" element={<OpsCascadeMonitor />} />
