@@ -63,10 +63,10 @@ const SmDashboard = () => {
             <TimePeriodToggle value={period} onChange={setPeriod} />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <MetricCard label="GMV" value={formatINR(kpis.gmv)} sublabel={`${kpis.deals} deals`} trend={{ delta: 12, positive: true }} icon={<IndianRupee className="w-4 h-4" />} />
-            <MetricCard label="Conversion" value={`${kpis.conversionPct}%`} sublabel="vs reserve" trend={{ delta: 4, positive: true }} icon={<TrendingUp className="w-4 h-4" />} />
-            <MetricCard label="Avg Bids" value={kpis.avgBids} sublabel="per auction" icon={<Gavel className="w-4 h-4" />} />
-            <MetricCard label="Closed" value={kpis.deals} sublabel="this period" icon={<CheckCircle2 className="w-4 h-4" />} />
+            <MetricCard label="GMV" value={formatINR(kpis.gmv)} sublabel={`${kpis.deals} deals`} trend={{ delta: 12, positive: true }} icon={<IndianRupee className="w-4 h-4" />} onClick={() => navigate("/sm/reports")} />
+            <MetricCard label="Conversion" value={`${kpis.conversionPct}%`} sublabel="vs reserve" trend={{ delta: 4, positive: true }} icon={<TrendingUp className="w-4 h-4" />} onClick={() => navigate("/sm/reports")} />
+            <MetricCard label="Avg Bids" value={kpis.avgBids} sublabel="per auction" icon={<Gavel className="w-4 h-4" />} onClick={() => navigate("/sm/auctions")} />
+            <MetricCard label="Closed" value={kpis.deals} sublabel="this period" icon={<CheckCircle2 className="w-4 h-4" />} onClick={() => navigate("/sm/auctions")} />
           </div>
         </div>
 

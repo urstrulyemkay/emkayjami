@@ -33,10 +33,10 @@ const GmDashboard = () => {
         )}
 
         <div className="grid grid-cols-2 gap-3">
-          <MetricCard label="Region GMV (30d)" value={formatINR(ORG_KPIS.gmv30d)} icon={<IndianRupee className="w-4 h-4" />} trend={{ delta: 8, positive: true }} />
-          <MetricCard label="Deals (30d)" value={ORG_KPIS.deals30d} icon={<TrendingUp className="w-4 h-4" />} trend={{ delta: 5, positive: true }} />
-          <MetricCard label="Live Auctions" value={ORG_KPIS.liveAuctions} icon={<Gavel className="w-4 h-4" />} />
-          <MetricCard label="Avg Conversion" value={`${ORG_KPIS.avgConversion}%`} icon={<Building2 className="w-4 h-4" />} />
+          <MetricCard label="Region GMV (30d)" value={formatINR(ORG_KPIS.gmv30d)} icon={<IndianRupee className="w-4 h-4" />} trend={{ delta: 8, positive: true }} onClick={() => navigate("/gm/reports")} />
+          <MetricCard label="Deals (30d)" value={ORG_KPIS.deals30d} icon={<TrendingUp className="w-4 h-4" />} trend={{ delta: 5, positive: true }} onClick={() => navigate("/gm/auctions")} />
+          <MetricCard label="Live Auctions" value={ORG_KPIS.liveAuctions} icon={<Gavel className="w-4 h-4" />} onClick={() => navigate("/gm/auctions")} />
+          <MetricCard label="Avg Conversion" value={`${ORG_KPIS.avgConversion}%`} icon={<Building2 className="w-4 h-4" />} onClick={() => navigate("/gm/stores")} />
         </div>
 
         {/* Store health */}
