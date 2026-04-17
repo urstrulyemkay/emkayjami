@@ -17,15 +17,15 @@ const GmStoreDetail = () => {
   const { storeId } = useParams<{ storeId: string }>();
   const navigate = useNavigate();
   const store = STORES.find((s) => s.id === storeId);
+  const sm = store ? getSm(store.smId) : null;
+  const vehicles = useMemo(() => (store ? vehiclesByStore(store.id) : []), [store]);
+  const auctions = useMemo(() => (store ? auctionsByStore(store.id) : []), [store]);
+  const ses = useMemo(() => (store ? sesByStore(store.id) : []), [store]);
+  const counts = useMemo(() => stageCounts(vehicles), [vehicles]);
+  const kpis = useMemo(() => computePeriodKpis(vehicles, auctions), [vehicles, auctions]);
 
   if (!store) return <div className="p-6">Store not found.</div>;
 
-  const sm = getSm(store.smId);
-  const vehicles = useMemo(() => vehiclesByStore(store.id), [store.id]);
-  const auctions = useMemo(() => auctionsByStore(store.id), [store.id]);
-  const ses = useMemo(() => sesByStore(store.id), [store.id]);
-  const counts = useMemo(() => stageCounts(vehicles), [vehicles]);
-  const kpis = useMemo(() => computePeriodKpis(vehicles, auctions), [vehicles, auctions]);
   const live = auctions.filter((a) => a.status === "live");
   const recent = auctions.filter((a) => a.status === "completed" || a.status === "failed").slice(0, 4);
 
