@@ -62,6 +62,27 @@ import OpsDisputes from "./pages/ops/OpsDisputes";
 import OpsReports from "./pages/ops/OpsReports";
 import OpsSettings from "./pages/ops/OpsSettings";
 
+// OEM Manager pages
+import RoleSelect from "./pages/oem/RoleSelect";
+import NotificationCenter from "./pages/oem/NotificationCenter";
+import SmDashboard from "./pages/sm/SmDashboard";
+import SmPipeline from "./pages/sm/SmPipeline";
+import SmAuctions from "./pages/sm/SmAuctions";
+import SmTeam from "./pages/sm/SmTeam";
+import SmReports from "./pages/sm/SmReports";
+import GmDashboard from "./pages/gm/GmDashboard";
+import GmStores from "./pages/gm/GmStores";
+import GmStoreDetail from "./pages/gm/GmStoreDetail";
+import GmTeam from "./pages/gm/GmTeam";
+import GmAuctions from "./pages/gm/GmAuctions";
+import GmReports from "./pages/gm/GmReports";
+import EaDashboard from "./pages/ea/EaDashboard";
+import EaStores from "./pages/ea/EaStores";
+import EaTeam from "./pages/ea/EaTeam";
+import EaAuctions from "./pages/ea/EaAuctions";
+import EaReports from "./pages/ea/EaReports";
+import EaProfile from "./pages/ea/EaProfile";
+
 const queryClient = new QueryClient();
 
 // Protected route wrapper for executives
@@ -274,6 +295,30 @@ const AppRoutes = () => {
       <Route path="/ops/reports" element={<OpsReports />} />
       <Route path="/ops/settings" element={<OpsSettings />} />
       <Route path="/ops/*" element={<OpsDashboard />} />
+
+      {/* OEM Manager Routes */}
+      <Route path="/role-select" element={<RoleSelect />} />
+      <Route path="/oem/notifications" element={<NotificationCenter />} />
+      <Route path="/sm" element={<Navigate to="/sm/dashboard" replace />} />
+      <Route path="/sm/dashboard" element={<SmDashboard />} />
+      <Route path="/sm/pipeline" element={<SmPipeline />} />
+      <Route path="/sm/auctions" element={<SmAuctions />} />
+      <Route path="/sm/team" element={<SmTeam />} />
+      <Route path="/sm/reports" element={<SmReports />} />
+      <Route path="/gm" element={<Navigate to="/gm/dashboard" replace />} />
+      <Route path="/gm/dashboard" element={<GmDashboard />} />
+      <Route path="/gm/stores" element={<GmStores />} />
+      <Route path="/gm/store/:storeId" element={<GmStoreDetail />} />
+      <Route path="/gm/team" element={<GmTeam />} />
+      <Route path="/gm/auctions" element={<GmAuctions />} />
+      <Route path="/gm/reports" element={<GmReports />} />
+      <Route path="/ea" element={<Navigate to="/ea/dashboard" replace />} />
+      <Route path="/ea/dashboard" element={<EaDashboard />} />
+      <Route path="/ea/stores" element={<EaStores />} />
+      <Route path="/ea/team" element={<EaTeam />} />
+      <Route path="/ea/auctions" element={<EaAuctions />} />
+      <Route path="/ea/reports" element={<EaReports />} />
+      <Route path="/ea/profile" element={<EaProfile />} />
 
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />

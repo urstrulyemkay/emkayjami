@@ -86,6 +86,27 @@ const MockLogin = () => {
             </button>
           ))}
 
+          {/* OEM Managers entry */}
+          <div className="pt-4 border-t mt-6">
+            <p className="text-sm text-muted-foreground uppercase tracking-wider mb-4">
+              OEM Managers
+            </p>
+            <button
+              onClick={() => navigate("/role-select")}
+              className="w-full p-4 rounded-xl border text-left transition-all bg-card text-card-foreground border-border hover:border-foreground/20"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-secondary">
+                  <Briefcase className="w-6 h-6 text-foreground" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-foreground">Continue as Manager</p>
+                  <p className="text-sm text-muted-foreground">SM, GM, or Entity Admin</p>
+                </div>
+              </div>
+            </button>
+          </div>
+
           {/* Broker Login - Separate Flow */}
           <div className="pt-4 border-t mt-6">
             <p className="text-sm text-muted-foreground uppercase tracking-wider mb-4">
