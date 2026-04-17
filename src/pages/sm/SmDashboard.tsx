@@ -119,7 +119,7 @@ const SmDashboard = () => {
             </button>
           </div>
           <div className="space-y-2">
-            {ses.map((se) => <SEPerformanceRow key={se.id} se={se} onClick={() => navigate("/sm/team")} />)}
+            {ses.map((se) => <SEPerformanceRow key={se.id} se={se} onClick={() => navigate(`/sm/team/${se.id}`)} />)}
           </div>
         </div>
 

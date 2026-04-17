@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { OemAppShell } from "@/components/oem/OemAppShell";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -13,6 +14,7 @@ import { Plus, Phone } from "lucide-react";
 import { toast } from "sonner";
 
 const EaTeam = () => {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -75,7 +77,7 @@ const EaTeam = () => {
           </TabsContent>
 
           <TabsContent value="se" className="space-y-2 mt-3">
-            {SES.map((se) => <SEPerformanceRow key={se.id} se={se} />)}
+            {SES.map((se) => <SEPerformanceRow key={se.id} se={se} onClick={() => navigate(`/ea/team/${se.id}`)} />)}
           </TabsContent>
         </Tabs>
       </div>

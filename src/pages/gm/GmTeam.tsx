@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { OemAppShell } from "@/components/oem/OemAppShell";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
@@ -9,6 +10,7 @@ import { SEPerformanceRow } from "@/components/oem/SEPerformanceRow";
 import { Phone, Mail } from "lucide-react";
 
 const GmTeam = () => {
+  const navigate = useNavigate();
   const [storeFilter, setStoreFilter] = useState<string>("all");
   const filteredSms = storeFilter === "all" ? SMS : SMS.filter((s) => s.storeId === storeFilter);
   const filteredSes = storeFilter === "all" ? SES : SES.filter((s) => s.storeId === storeFilter);
@@ -53,7 +55,7 @@ const GmTeam = () => {
             })}
           </TabsContent>
           <TabsContent value="se" className="space-y-2 mt-3">
-            {filteredSes.map((se) => <SEPerformanceRow key={se.id} se={se} />)}
+            {filteredSes.map((se) => <SEPerformanceRow key={se.id} se={se} onClick={() => navigate(`/gm/team/${se.id}`)} />)}
           </TabsContent>
         </Tabs>
       </div>
