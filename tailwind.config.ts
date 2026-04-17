@@ -70,6 +70,21 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // OEM Stage tokens
+        stage: {
+          registered: "hsl(var(--stage-registered))",
+          inspected: "hsl(var(--stage-inspected))",
+          listed: "hsl(var(--stage-listed))",
+          live: "hsl(var(--stage-live))",
+          allocated: "hsl(var(--stage-allocated))",
+          transit: "hsl(var(--stage-transit))",
+          closed: "hsl(var(--stage-closed))",
+          failed: "hsl(var(--stage-failed))",
+        },
+        oem: {
+          DEFAULT: "hsl(var(--oem-primary))",
+          foreground: "hsl(var(--oem-primary-foreground))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
