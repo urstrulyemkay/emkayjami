@@ -27,10 +27,10 @@ const EaDashboard = () => {
 
         {/* Org Scorecard */}
         <div className="grid grid-cols-2 gap-3">
-          <MetricCard label="GMV (MTD)" value={formatINR(ORG_KPIS.gmv30d)} icon={<IndianRupee className="w-4 h-4" />} trend={{ delta: 14, positive: true }} />
-          <MetricCard label="Deals" value={ORG_KPIS.deals30d} icon={<TrendingUp className="w-4 h-4" />} trend={{ delta: 9, positive: true }} />
-          <MetricCard label="Stores" value={ORG.totalStores} icon={<Building2 className="w-4 h-4" />} sublabel="all active" />
-          <MetricCard label="Conversion" value={`${ORG_KPIS.avgConversion}%`} icon={<Users className="w-4 h-4" />} trend={{ delta: 2, positive: true }} />
+          <MetricCard label="GMV (MTD)" value={formatINR(ORG_KPIS.gmv30d)} icon={<IndianRupee className="w-4 h-4" />} trend={{ delta: 14, positive: true }} onClick={() => navigate("/ea/reports")} />
+          <MetricCard label="Deals" value={ORG_KPIS.deals30d} icon={<TrendingUp className="w-4 h-4" />} trend={{ delta: 9, positive: true }} onClick={() => navigate("/ea/auctions")} />
+          <MetricCard label="Stores" value={ORG.totalStores} icon={<Building2 className="w-4 h-4" />} sublabel="all active" onClick={() => navigate("/ea/stores")} />
+          <MetricCard label="Conversion" value={`${ORG_KPIS.avgConversion}%`} icon={<Users className="w-4 h-4" />} trend={{ delta: 2, positive: true }} onClick={() => navigate("/ea/reports")} />
         </div>
 
         {/* GMV trend (6m) */}
