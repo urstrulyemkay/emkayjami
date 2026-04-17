@@ -59,6 +59,20 @@
     --broker-primary-foreground: 0 0% 100%;
     --broker-muted: 25 100% 97%;
 
+    /* OEM Stage Colors - Vehicle Pipeline */
+    --stage-registered: 217 91% 60%;
+    --stage-inspected: 262 83% 58%;
+    --stage-listed: 199 89% 48%;
+    --stage-live: 0 72% 51%;
+    --stage-allocated: 38 92% 50%;
+    --stage-transit: 271 81% 56%;
+    --stage-closed: 160 84% 39%;
+    --stage-failed: 0 0% 45%;
+
+    /* OEM Brand - DriveX Red accent for managers */
+    --oem-primary: 348 100% 45%;
+    --oem-primary-foreground: 0 0% 100%;
+
     /* Sidebar */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 25%;
