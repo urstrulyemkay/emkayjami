@@ -82,6 +82,7 @@ import EaTeam from "./pages/ea/EaTeam";
 import EaAuctions from "./pages/ea/EaAuctions";
 import EaReports from "./pages/ea/EaReports";
 import EaProfile from "./pages/ea/EaProfile";
+import SeDetail from "./pages/oem/SeDetail";
 
 const queryClient = new QueryClient();
 
@@ -304,18 +305,21 @@ const AppRoutes = () => {
       <Route path="/sm/pipeline" element={<SmPipeline />} />
       <Route path="/sm/auctions" element={<SmAuctions />} />
       <Route path="/sm/team" element={<SmTeam />} />
+      <Route path="/sm/team/:seId" element={<SeDetail variant="SM" />} />
       <Route path="/sm/reports" element={<SmReports />} />
       <Route path="/gm" element={<Navigate to="/gm/dashboard" replace />} />
       <Route path="/gm/dashboard" element={<GmDashboard />} />
       <Route path="/gm/stores" element={<GmStores />} />
       <Route path="/gm/store/:storeId" element={<GmStoreDetail />} />
       <Route path="/gm/team" element={<GmTeam />} />
+      <Route path="/gm/team/:seId" element={<SeDetail variant="GM" />} />
       <Route path="/gm/auctions" element={<GmAuctions />} />
       <Route path="/gm/reports" element={<GmReports />} />
       <Route path="/ea" element={<Navigate to="/ea/dashboard" replace />} />
       <Route path="/ea/dashboard" element={<EaDashboard />} />
       <Route path="/ea/stores" element={<EaStores />} />
       <Route path="/ea/team" element={<EaTeam />} />
+      <Route path="/ea/team/:seId" element={<SeDetail variant="EA" />} />
       <Route path="/ea/auctions" element={<EaAuctions />} />
       <Route path="/ea/reports" element={<EaReports />} />
       <Route path="/ea/profile" element={<EaProfile />} />
