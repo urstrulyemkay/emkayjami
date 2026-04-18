@@ -1,0 +1,53 @@
+name: Push daily brief to Notion
+
+on:
+  push:
+    branches:
+      - claude/claude-agents-cron-jobs-UfDyR
+      - main
+    paths:
+      - 'daily-brief/**.md'
+  workflow_dispatch:
+    inputs:
+      file:
+        description: 'Path to brief file (relative to repo root)'
+        required: true
+        default: 'daily-brief/2026-04-18.md'
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r .github/scripts/requirements.txt
+
+      - name: Determine brief file
+        id: pick
+        run: |
+          if [ -n "${{ github.event.inputs.file }}" ]; then
+            echo "file=${{ github.event.inputs.file }}" >> "$GITHUB_OUTPUT"
+          else
+            file=$(git diff --name-only --diff-filter=A HEAD~1 HEAD | grep -E '^daily-brief/.*\.md$' | head -n1 || true)
+            if [ -z "$file" ]; then
+              file=$(git diff --name-only HEAD~1 HEAD | grep -E '^daily-brief/.*\.md$' | head -n1 || true)
+            fi
+            echo "file=$file" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push to Notion
+        if: steps.pick.outputs.file != ''
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DATABASE_ID: '346bf2a958e4802691c8fef785ead03d'
+          BRIEF_FILE: ${{ steps.pick.outputs.file }}
+        run: python .github/scripts/push_to_notion.py
